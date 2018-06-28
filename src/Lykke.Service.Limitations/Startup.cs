@@ -7,6 +7,7 @@ using Lykke.Common.Api.Contract.Responses;
 using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Logs;
+using Lykke.MonitoringServiceApiCaller;
 using Lykke.Service.Limitations.Core.Services;
 using Lykke.Service.Limitations.Modules;
 using Lykke.Service.Limitations.Settings;
