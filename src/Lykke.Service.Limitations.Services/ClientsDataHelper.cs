@@ -38,6 +38,7 @@ namespace Lykke.Service.Limitations.Services
             _stateRepository = stateRepository;
             _log = log;
             _db = connectionMultiplexer.GetDatabase();
+            _opTypeResolver = opTypeResolver;
             _instanceName = redisInstanceName;
             _cacheType = cashType;
         }

@@ -17,8 +17,5 @@ namespace Lykke.Service.Limitations.Core.Domain
 
         /// <summary>Operation UTC timesamp</summary>
         public DateTime DateTime { get; set; }
-
-        /// <summary>Operation expire UTC timesamp</summary>
-        public DateTime ExpireAt { get; set; }
     }
 }

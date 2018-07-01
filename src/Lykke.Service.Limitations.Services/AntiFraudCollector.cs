@@ -50,7 +50,6 @@ namespace Lykke.Service.Limitations.Services
                 Amount = amount,
                 OperationType = operationType,
                 DateTime = now,
-                ExpireAt = now.AddMinutes(ttlInMinutes),
             };
 
             string key = string.Format(_attemptKeyPattern, _instanceName, clientId, operationType, now.ToString(_dataFormat));
