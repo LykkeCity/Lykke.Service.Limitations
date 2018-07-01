@@ -4,7 +4,7 @@ namespace Lykke.Service.Limitations.Core.Repositories
 {
     public interface IClientStateRepository<T>
     {
-        Task SaveClientStateAsync(string clientId, T state);
-        Task<T> LoadClientStateAsync(string clientId);
+        Task SaveClientStateAsync(string filename, T state);
+        Task<T> LoadClientStateAsync(string filename);
     }
 }

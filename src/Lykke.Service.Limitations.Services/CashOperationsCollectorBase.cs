@@ -1,8 +1,9 @@
 ﻿using Common.Log;
-using Microsoft.Extensions.Caching.Distributed;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
 using Lykke.Service.Limitations.Core.Services;
+using StackExchange.Redis;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -18,8 +19,9 @@ namespace Lykke.Service.Limitations.Services
 
         public CashOperationsCollectorBase(
             IClientStateRepository<List<T>> stateRepository,
-            IDistributedCache distributedCache,
             IAntiFraudCollector antiFraudCollector,
+            IConnectionMultiplexer connectionMultiplexer,
+            string redisInstanceName,
             string cashPrefix,
             ICurrencyConverter currencyConverter,
             ILog log)
@@ -29,8 +31,10 @@ namespace Lykke.Service.Limitations.Services
             _log = log;
             _data = new ClientsDataHelper<T>(
                 stateRepository,
-                distributedCache,
                 _log,
+                connectionMultiplexer,
+                GetOperationType,
+                redisInstanceName,
                 cashPrefix);
         }
 
@@ -43,15 +47,15 @@ namespace Lykke.Service.Limitations.Services
 
             item.Asset = converted.Item1;
             item.Volume = converted.Item2;
+            item.OperationType = GetOperationType(item);
 
             await _data.AddDataItemAsync(item);
 
-            CurrencyOperationType operationType = GetOperationType(item);
             await _antiFraudCollector.RemoveOperationAsync(
                 item.ClientId,
                 item.Asset,
                 item.Volume,
-                operationType);
+                item.OperationType.Value);
         }
 
         public Task<bool> RemoveClientOperationAsync(string clientId, string operationId)
@@ -59,9 +63,9 @@ namespace Lykke.Service.Limitations.Services
             return _data.RemoveClientOperationAsync(clientId, operationId);
         }
 
-        public Task CacheClientDataAsync(string clientId)
+        public Task CacheClientDataAsync(string clientId, CurrencyOperationType operationType)
         {
-            return _data.CacheClientDataIfRequiredAsync(clientId);
+            return _data.CacheClientDataIfRequiredAsync(clientId, operationType);
         }
 
         protected abstract CurrencyOperationType GetOperationType(T item);

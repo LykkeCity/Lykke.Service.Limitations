@@ -74,13 +74,13 @@ namespace Lykke.Job.LimitOperationsCollector.Controllers
         /// <inheritdoc />
         [HttpPost("cacheclientdata")]
         [SwaggerOperation("CacheClientData")]
-        public Task CacheClientDataAsync(string clientId)
+        public Task CacheClientDataAsync(string clientId, CurrencyOperationType operationType)
         {
             if (string.IsNullOrWhiteSpace(clientId))
                 throw new ArgumentException(nameof(clientId));
 
-            Task.Run(() => _cashOperationsCollector.CacheClientDataAsync(clientId));
-            Task.Run(() => _cashTransfersCollector.CacheClientDataAsync(clientId));
+            Task.Run(() => _cashOperationsCollector.CacheClientDataAsync(clientId, operationType));
+            Task.Run(() => _cashTransfersCollector.CacheClientDataAsync(clientId, operationType));
 
             return Task.CompletedTask;
         }

@@ -24,13 +24,13 @@ namespace Lykke.Service.Limitations.AzureRepositories
             _container = GetType().Name.ToLower();
         }
 
-        public async Task SaveClientStateAsync(string clientId, List<T> state)
+        public async Task SaveClientStateAsync(string filename, List<T> state)
         {
             try
             {
                 string json = state.ToJson();
                 byte[] data = Encoding.UTF8.GetBytes(json);
-                await _blobStorage.SaveBlobAsync(_container, clientId, data);
+                await _blobStorage.SaveBlobAsync(_container, filename, data);
             }
             catch (Exception exc)
             {
@@ -38,14 +38,14 @@ namespace Lykke.Service.Limitations.AzureRepositories
             }
         }
 
-        public async Task<List<T>> LoadClientStateAsync(string clientId)
+        public async Task<List<T>> LoadClientStateAsync(string filename)
         {
             try
             {
-                bool blobExists = await _blobStorage.HasBlobAsync(_container, clientId);
+                bool blobExists = await _blobStorage.HasBlobAsync(_container, filename);
                 if (!blobExists)
-                    return new List<T>();
-                string json = await _blobStorage.GetAsTextAsync(_container, clientId);
+                    return null;
+                string json = await _blobStorage.GetAsTextAsync(_container, filename);
                 var result = json.DeserializeJson<List<T>>();
                 return result ?? new List<T>();
             }

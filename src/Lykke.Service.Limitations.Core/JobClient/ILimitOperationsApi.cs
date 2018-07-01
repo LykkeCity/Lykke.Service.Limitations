@@ -40,6 +40,6 @@ namespace Lykke.Service.Limitations.Core.JobClient
         /// </summary>
         /// <param name="clientId">Client id.</param>
         [Post("/api/Operations/cacheclientdata")]
-        Task CacheClientDataAsync(string clientId);
+        Task CacheClientDataAsync(string clientId, CurrencyOperationType operationType);
     }
 }

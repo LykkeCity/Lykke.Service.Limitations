@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Caching.Redis;
-using Autofac;
+﻿using Autofac;
 using Common;
 using Common.Log;
 using AzureStorage.Blob;
@@ -13,6 +11,7 @@ using Lykke.Service.Limitations.Core.Repositories;
 using Lykke.Service.Limitations.Services;
 using Lykke.Job.LimitOperationsCollector.Settings;
 using Lykke.Job.LimitOperationsCollector.RabbitSubscribers;
+using StackExchange.Redis;
 
 namespace Lykke.Job.LimitOperationsCollector.Modules
 {
@@ -38,12 +37,9 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                 .As<ILog>()
                 .SingleInstance();
 
-            var redisCache = new RedisCache(new RedisCacheOptions
-            {
-                Configuration = _appSettings.LimitOperationsCollectorJob.RedisConfiguration,
-                InstanceName = _appSettings.LimitOperationsCollectorJob.RedisInstanceName,
-            });
-            builder.RegisterInstance(redisCache).As<IDistributedCache>().SingleInstance();
+            builder.Register(context => ConnectionMultiplexer.Connect(_appSettings.LimitOperationsCollectorJob.RedisConfiguration))
+                .As<IConnectionMultiplexer>()
+                .SingleInstance();
 
             var rateCalculatorClient = new RateCalculatorClient(_appSettings.RateCalculatorServiceClient.ServiceUrl, _log);
             builder.RegisterInstance(rateCalculatorClient).As<IRateCalculatorClient>().SingleInstance();
@@ -101,15 +97,18 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
 
             builder.RegisterType<AntiFraudCollector>()
                 .As<IAntiFraudCollector>()
-                .SingleInstance();
+                .SingleInstance()
+                .WithParameter("redisInstanceName", _appSettings.LimitOperationsCollectorJob.RedisInstanceName);
 
             builder.RegisterType<CashOperationsCollector>()
                 .As<ICashOperationsCollector>()
-                .SingleInstance();
+                .SingleInstance()
+                .WithParameter("redisInstanceName", _appSettings.LimitOperationsCollectorJob.RedisInstanceName);
 
             builder.RegisterType<CashTransfersCollector>()
                 .As<ICashTransfersCollector>()
-                .SingleInstance();
+                .SingleInstance()
+                .WithParameter("redisInstanceName", _appSettings.LimitOperationsCollectorJob.RedisInstanceName);
         }
 
         private void RegisterRabbitMqSubscribers(ContainerBuilder builder)

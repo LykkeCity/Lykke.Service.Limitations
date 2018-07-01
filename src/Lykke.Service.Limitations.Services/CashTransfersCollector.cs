@@ -2,7 +2,7 @@
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
 using Lykke.Service.Limitations.Core.Services;
-using Microsoft.Extensions.Caching.Distributed;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -13,14 +13,16 @@ namespace Lykke.Service.Limitations.Services
     {
         public CashTransfersCollector(
             ICashTransfersRepository stateRepository,
-            IDistributedCache distributedCache,
+            IConnectionMultiplexer connectionMultiplexer,
             IAntiFraudCollector antifraudCollector,
             ICurrencyConverter currencyConverter,
+            string redisInstanceName,
             ILog log)
             : base(
                 stateRepository,
-                distributedCache,
                 antifraudCollector,
+                connectionMultiplexer,
+                redisInstanceName,
                 nameof(CashTransferOperation),
                 currencyConverter,
                 log)
@@ -30,9 +32,10 @@ namespace Lykke.Service.Limitations.Services
         public async Task<(double, bool)> GetCurrentAmountAsync(
             string clientId,
             string asset,
-            LimitationPeriod period)
+            LimitationPeriod period,
+            CurrencyOperationType operationType)
         {
-            (var items, bool notCached) = await _data.GetClientDataAsync(clientId);
+            (var items, bool notCached) = await _data.GetClientDataAsync(clientId, operationType);
             double result = 0;
             DateTime now = DateTime.UtcNow;
             foreach (var item in items)

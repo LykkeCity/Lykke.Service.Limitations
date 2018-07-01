@@ -337,9 +337,10 @@ namespace Lykke.Service.Limitations.Services
             (double transferPeriodValue, bool cashTransfersNotCached) = await _cashTransfersCollector.GetCurrentAmountAsync(
                 clientId,
                 asset,
-                period);
+                period,
+                currencyOperationType);
             if (cashOperationsNotCached || cashTransfersNotCached)
-                await _limitOperationsApi.CacheClientDataAsync(clientId);
+                await _limitOperationsApi.CacheClientDataAsync(clientId, currencyOperationType);
 
             var clientLimit = periodLimits.FirstOrDefault(l => l.ClientId == clientId);
             if (clientLimit != null)

@@ -11,8 +11,7 @@ using Lykke.Service.Limitations.Services;
 using Lykke.Service.Limitations.Settings;
 using Lykke.Service.RateCalculator.Client;
 using Lykke.SettingsReader;
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Caching.Redis;
+using StackExchange.Redis;
 
 namespace Lykke.Service.Limitations.Modules
 {
@@ -38,12 +37,9 @@ namespace Lykke.Service.Limitations.Modules
 
             var settings = _appSettings.LimitationsSettings;
 
-            var redisCache = new RedisCache(new RedisCacheOptions
-            {
-                Configuration = settings.RedisConfiguration,
-                InstanceName = settings.RedisInstanceName,
-            });
-            builder.RegisterInstance(redisCache).As<IDistributedCache>().SingleInstance();
+            builder.Register(context => ConnectionMultiplexer.Connect(settings.RedisConfiguration))
+                .As<IConnectionMultiplexer>()
+                .SingleInstance();
 
             var rateCalculatorClient = new RateCalculatorClient(_appSettings.RateCalculatorServiceClient.ServiceUrl, _log);
             builder.RegisterInstance(rateCalculatorClient).As<IRateCalculatorClient>().SingleInstance();
@@ -99,15 +95,18 @@ namespace Lykke.Service.Limitations.Modules
 
             builder.RegisterType<AntiFraudCollector>()
                 .As<IAntiFraudCollector>()
-                .SingleInstance();
+                .SingleInstance()
+                .WithParameter("redisInstanceName", settings.RedisInstanceName);
 
             builder.RegisterType<CashOperationsCollector>()
                 .As<ICashOperationsCollector>()
-                .SingleInstance();
+                .SingleInstance()
+                .WithParameter("redisInstanceName", settings.RedisInstanceName);
 
             builder.RegisterType<CashTransfersCollector>()
                 .As<ICashTransfersCollector>()
-                .SingleInstance();
+                .SingleInstance()
+                .WithParameter("redisInstanceName", settings.RedisInstanceName);
 
             builder.RegisterType<LimitationChecker>()
                 .As<ILimitationCheck>()

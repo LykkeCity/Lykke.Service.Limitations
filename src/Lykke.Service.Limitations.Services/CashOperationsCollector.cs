@@ -1,8 +1,8 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
-using Common.Log;
+﻿using Common.Log;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
 using Lykke.Service.Limitations.Core.Services;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -13,14 +13,16 @@ namespace Lykke.Service.Limitations.Services
     {
         public CashOperationsCollector(
             ICashOperationsRepository stateRepository,
-            IDistributedCache distributedCache,
+            IConnectionMultiplexer connectionMultiplexer,
             IAntiFraudCollector antifraudCollector,
             ICurrencyConverter currencyConverter,
+            string redisInstanceName,
             ILog log)
             : base(
                 stateRepository,
-                distributedCache,
                 antifraudCollector,
+                connectionMultiplexer,
+                redisInstanceName,
                 nameof(CashOperation),
                 currencyConverter,
                 log)
@@ -50,7 +52,7 @@ namespace Lykke.Service.Limitations.Services
                 default:
                     throw new NotSupportedException($"Operation type {operationType} can't be mapped to CashFlowDirection!");
             }
-            (var items, bool notCached) = await _data.GetClientDataAsync(clientId);
+            (var items, bool notCached) = await _data.GetClientDataAsync(clientId, operationType);
             DateTime now = DateTime.UtcNow;
             double result = 0;
             foreach (var item in items)

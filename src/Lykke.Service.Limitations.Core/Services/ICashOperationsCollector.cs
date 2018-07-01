@@ -17,7 +17,7 @@ namespace Lykke.Service.Limitations.Core.Services
 
         Task<bool> RemoveClientOperationAsync(string clientId, string operationId);
 
-        Task CacheClientDataAsync(string clientId);
+        Task CacheClientDataAsync(string clientId, CurrencyOperationType operationType);
 
         Task AddDataItemAsync(CashOperation item);
     }

@@ -2,8 +2,9 @@
 using Common.Log;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
-using Microsoft.Extensions.Caching.Distributed;
+using StackExchange.Redis;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -13,54 +14,83 @@ namespace Lykke.Service.Limitations.Services
     public class ClientsDataHelper<T>
         where T : ICashOperation
     {
+        private const string _allClientDataKeyPattern = "{0}:{1}:{2}";
+        private const string _clientDataKeyPattern = "{0}:{1}:client:{2}:opType:*";
+        private const string _opTypeKeyPattern = "{0}:{1}:client:{2}:opType:{3}:id:*";
+        private const string _opKeyPattern = "{0}:{1}:client:{2}:opType:{3}:id:{4}";
+
         private readonly IClientStateRepository<List<T>> _stateRepository;
-        private readonly IDistributedCache _distributedCache;
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
         private readonly ILog _log;
-        private readonly string _cacheKeyPrefix;
+        private readonly IDatabase _db;
+        private readonly Func<T, CurrencyOperationType> _opTypeResolver;
+        private readonly string _instanceName;
+        private readonly string _cacheType;
 
         internal ClientsDataHelper(
             IClientStateRepository<List<T>> stateRepository,
-            IDistributedCache distributedCache,
             ILog log,
-            string cashPrefix)
+            IConnectionMultiplexer connectionMultiplexer,
+            Func<T, CurrencyOperationType> opTypeResolver,
+            string redisInstanceName,
+            string cashType)
         {
             _stateRepository = stateRepository;
-            _distributedCache = distributedCache;
             _log = log;
-            _cacheKeyPrefix = $":{cashPrefix}:";
+            _db = connectionMultiplexer.GetDatabase();
+            _instanceName = redisInstanceName;
+            _cacheType = cashType;
         }
 
-        internal async Task<(List<T>, bool)> GetClientDataAsync(string clientId)
+        internal async Task<(List<T>, bool)> GetClientDataAsync(string clientId, CurrencyOperationType? operationType = null)
         {
-            List<T> list;
-            bool notCached;
+            //TODO remove lock after new Limitation service is deployed
             await _lock.WaitAsync();
             try
             {
-                (list, notCached) = await FetchClientDataAsync(clientId);
+                (var list, var notCached) = await FetchClientDataAsync(clientId, operationType);
+                return (list, notCached);
             }
             finally
             {
                 _lock.Release();
             }
-            if (list.Count == 0)
-                return (list, notCached);
-
-            var result = new List<T>(list.Count);
-            result.AddRange(list);
-            return (result, notCached);
         }
 
         internal async Task AddDataItemAsync(T item)
         {
+            var now = DateTime.UtcNow;
+            var ttl = item.DateTime.AddMonths(1).Subtract(now);
+            if (ttl.Ticks <= 0)
+                return;
+
+            if (!item.OperationType.HasValue)
+                item.OperationType = _opTypeResolver(item);
+
             await _lock.WaitAsync();
             try
             {
-                (var clientData, _) = await FetchClientDataAsync(item.ClientId);
+                (var clientData, _) = await FetchClientDataAsync(item.ClientId, item.OperationType);
+
+                var key = string.Format(_opKeyPattern, _instanceName, _cacheType, item.ClientId, item.OperationType.Value, item.Id);
+                bool setResult = await _db.StringSetAsync(key, item.ToJson(), ttl);
+                if (!setResult)
+                    throw new InvalidOperationException($"Error during operations update for client {item.ClientId} with operation type {item.OperationType}");
+
                 clientData.Add(item);
-                await _distributedCache.SetStringAsync(_cacheKeyPrefix + item.ClientId, clientData.ToJson());
+                await _stateRepository.SaveClientStateAsync($"{item.ClientId}-{item.OperationType.Value}", clientData);
+
+                //TODO Remove code below after new Limitations service is deployed + delete lock
+                (clientData, _) = await FetchClientDataAsync(item.ClientId);
+                clientData.Add(item);
+
+                key = string.Format(_allClientDataKeyPattern, _instanceName, _cacheType, item.ClientId);
+                setResult = await _db.StringSetAsync(key, clientData.ToJson());
+                if (!setResult)
+                    throw new InvalidOperationException($"Error during operations update for client {item.ClientId}");
+
                 await _stateRepository.SaveClientStateAsync(item.ClientId, clientData);
+                // remove till here
             }
             finally
             {
@@ -79,12 +109,30 @@ namespace Lykke.Service.Limitations.Services
 
                 for (int i = 0; i < clientData.Count; ++i)
                 {
-                    if (clientData[i].Id != operationId)
+                    var operation = clientData[i];
+                    if (operation.Id != operationId)
                         continue;
 
+                    if (!operation.OperationType.HasValue)
+                        operation.OperationType = _opTypeResolver(operation);
+
+                    string opKey = string.Format(_opKeyPattern, _instanceName, _cacheType, clientId, operation.OperationType.Value, operation.Id);
+                    await _db.KeyDeleteAsync(opKey);
+
+                    (var clientOpTypeData, _) = await FetchClientDataAsync(clientId, operation.OperationType);
+                    clientOpTypeData = clientOpTypeData.Where(o => o.Id != operationId).ToList();
+                    await _stateRepository.SaveClientStateAsync($"{clientId}-{operation.OperationType.Value}", clientOpTypeData);
+
+                    //TODO Remove code below after new Limitations service is deployed + delete lock
                     clientData.RemoveAt(i);
-                    await _distributedCache.SetStringAsync(_cacheKeyPrefix + clientId, clientData.ToJson());
+                    string clientKey = string.Format(_allClientDataKeyPattern, _instanceName, _cacheType, clientId);
+                    bool setResult = await _db.StringSetAsync(clientKey, clientData.ToJson());
+                    if (!setResult)
+                        throw new InvalidOperationException($"Error during operations update for client {clientId}");
+
                     await _stateRepository.SaveClientStateAsync(clientId, clientData);
+                    // remove till here
+
                     return true;
                 }
             }
@@ -96,55 +144,94 @@ namespace Lykke.Service.Limitations.Services
             return false;
         }
 
-        internal async Task CacheClientDataIfRequiredAsync(string clientId)
+        internal async Task CacheClientDataIfRequiredAsync(string clientId, CurrencyOperationType operationType)
         {
-            string clientDataJson = await _distributedCache.GetStringAsync(_cacheKeyPrefix + clientId);
-            if (!string.IsNullOrWhiteSpace(clientDataJson))
-                return;
-
-            await _lock.WaitAsync();
-            try
+            var keysPattern = string.Format(_opTypeKeyPattern, _instanceName, _cacheType, clientId, operationType);
+            RedisResult data = await _db.ScriptEvaluateAsync($"return redis.call('keys', '{keysPattern}')");
+            if (!data.IsNull)
             {
-                var clientState = await _stateRepository.LoadClientStateAsync(clientId);
-                clientDataJson = await _distributedCache.GetStringAsync(_cacheKeyPrefix + clientId);
-                if (!string.IsNullOrWhiteSpace(clientDataJson))
+                var keys = (string[])data;
+                if (keys.Length > 0)
                     return;
-
-                await _distributedCache.SetStringAsync(_cacheKeyPrefix + clientId, clientState.ToJson());
             }
-            finally
+
+            var clientState = await _stateRepository.LoadClientStateAsync($"{clientId}-{operationType}");
+            if (clientState == null)
+                clientState = await _stateRepository.LoadClientStateAsync(clientId);
+
+            var now = DateTime.UtcNow;
+            foreach (var item in clientState)
             {
-                _lock.Release();
+                if (!item.OperationType.HasValue)
+                    item.OperationType = _opTypeResolver(item);
+
+                if (item.OperationType.Value != operationType)
+                    continue;
+
+                var ttl = item.DateTime.AddMonths(1).Subtract(now);
+                if (ttl.Ticks <= 0)
+                    continue;
+
+                var key = string.Format(_opKeyPattern, _instanceName, _cacheType, item.ClientId, item.OperationType.Value, item.Id);
+                bool setResult = await _db.StringSetAsync(key, item.ToJson(), ttl);
+                if (!setResult)
+                    throw new InvalidOperationException($"Error during operations update for client {clientId} with operation type {operationType}");
             }
         }
 
-        private async Task<(List<T>, bool)> FetchClientDataAsync(string clientId)
+        private async Task<(List<T>, bool)> FetchClientDataAsync(string clientId, CurrencyOperationType? operationType = null)
         {
-            List<T> clientState;
-            bool notCached = false;
-            string clientDataJson = await _distributedCache.GetStringAsync(_cacheKeyPrefix + clientId);
-            if (!string.IsNullOrWhiteSpace(clientDataJson))
-            {
-                clientState = clientDataJson.DeserializeJson<List<T>>();
-            }
-            else
-            {
-                clientState = await _stateRepository.LoadClientStateAsync(clientId);
-                notCached = true;
-            }
             var clientData = new List<T>();
-            if (clientState != null)
+            bool notCached = false;
+            var monthAgo = DateTime.UtcNow.Date.AddMonths(-1);
+
+            var opTypes = operationType.HasValue
+                ? new List<CurrencyOperationType>(1) { operationType.Value }
+                : Enum.GetValues(typeof(CurrencyOperationType)).Cast<CurrencyOperationType>().ToList();
+            foreach (var opType in opTypes)
             {
-                var monthAgo = DateTime.UtcNow.Date.AddMonths(-1);
-                foreach (T item in clientState)
+                var keysPattern = string.Format(_opTypeKeyPattern, _instanceName, _cacheType, clientId, operationType);
+                RedisResult data = await _db.ScriptEvaluateAsync($"return redis.call('keys', '{keysPattern}')");
+                if (!data.IsNull)
                 {
-                    if (item.DateTime < monthAgo)
+                    var keys = (string[])data;
+                    if (keys.Length > 0)
+                    {
+                        var operationJsons = await _db.StringGetAsync(keys.Select(k => (RedisKey)k).ToArray());
+                        var operations = operationJsons
+                            .Select(o => o.ToString().DeserializeJson<T>())
+                            .Where(o => !operationType.HasValue || o.OperationType == operationType.Value)
+                            .ToList();
+                        clientData.AddRange(operations);
                         continue;
-
-                    clientData.Add(item);
+                    }
                 }
+                var clientState = await _stateRepository.LoadClientStateAsync($"{clientId}-{opType}");
+                if (clientState == null)
+                {
+                    clientState = await _stateRepository.LoadClientStateAsync(clientId);
+                    var notExpired = clientState.Where(i => i.DateTime > monthAgo);
+                    if (operationType.HasValue)
+                    {
+                        clientData = new List<T>();
+                        foreach (var item in notExpired)
+                        {
+                            if (!item.OperationType.HasValue)
+                                item.OperationType = _opTypeResolver(item);
+                            if (item.OperationType.Value != operationType.Value)
+                                continue;
+                            clientData.Add(item);
+                        }
+                    }
+                    else
+                    {
+                        clientData = notExpired.ToList();
+                    }
+                    return (clientData, true);
+                }
+                notCached = true;
+                clientData.AddRange(clientState.Where(i => i.DateTime > monthAgo));
             }
-
             return (clientData, notCached);
         }
     }

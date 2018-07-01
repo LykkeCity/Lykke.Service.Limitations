@@ -9,6 +9,6 @@ namespace Lykke.Service.Limitations.Core.Domain
         DateTime DateTime { get; }
         double Volume { get; set; }
         string Asset { get; set; }
-        CurrencyOperationType? OperationType { get; }
+        CurrencyOperationType? OperationType { get; set; }
     }
 }

@@ -1,9 +1,10 @@
 ﻿using Common;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Services;
-using Microsoft.Extensions.Caching.Distributed;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,20 +13,25 @@ namespace Lykke.Service.Limitations.Services
     public class AntiFraudCollector : IAntiFraudCollector
     {
         private const double _minDiff = 0.00000001;
+        private const string _dataFormat = "yyyy-MM-dd-HH-mm-ss-fffffff";
+        private const string _allClientDataKeyPattern = "{0}:attempts:{1}";
+        private const string _allAttemptsKeyPattern = "{0}:attempts:client:{1}:opType:*";
+        private const string _opTypeKeyPattern = "{0}:attempts:client:{1}:opType:{2}";
+        private const string _attemptKeyPattern = "{0}:attempts:client:{1}:opType:{2}:time:{3}";
 
-        private readonly IDistributedCache _distributedCache;
+        private readonly IDatabase _db;
+        private readonly string _instanceName;
         private readonly ICurrencyConverter _currencyConverter;
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 
-        private const string _cacheKeyPrefix = ":attempts:";
-
         public AntiFraudCollector(
-
-            IDistributedCache distributedCache,
-            ICurrencyConverter currencyConverter)
+            IConnectionMultiplexer connectionMultiplexer,
+            ICurrencyConverter currencyConverter,
+            string redisInstanceName)
         {
-            _distributedCache = distributedCache;
             _currencyConverter = currencyConverter;
+            _db = connectionMultiplexer.GetDatabase();
+            _instanceName = redisInstanceName;
         }
 
         public async Task AddDataAsync(
@@ -46,13 +52,23 @@ namespace Lykke.Service.Limitations.Services
                 DateTime = now,
                 ExpireAt = now.AddMinutes(ttlInMinutes),
             };
+
+            string key = string.Format(_attemptKeyPattern, _instanceName, clientId, operationType, now.ToString(_dataFormat));
+            bool setResult = await _db.StringSetAsync(key, attempt.ToJson(), TimeSpan.FromMinutes(ttlInMinutes));
+            if (!setResult)
+                throw new InvalidOperationException($"Error during attempt adding for client {clientId}");
+
+            //TODO remove part below after new Limitations service is deployed
             await _lock.WaitAsync();
             try
             {
                 var clientData = await FetchClientDataAsync(clientId);
                 clientData.Add(attempt);
                 string json = clientData.ToJson();
-                await _distributedCache.SetStringAsync(_cacheKeyPrefix + clientId, json);
+                key = string.Format(_allClientDataKeyPattern, _instanceName, clientId);
+                setResult = await _db.StringSetAsync(key, json);
+                if (!setResult)
+                    throw new InvalidOperationException($"Error during attempts update for client {clientId}");
             }
             finally
             {
@@ -70,6 +86,7 @@ namespace Lykke.Service.Limitations.Services
                     attempt.OperationType);
             });
 #pragma warning restore CS4014
+            // till here
         }
 
         public async Task RemoveOperationAsync(
@@ -78,6 +95,26 @@ namespace Lykke.Service.Limitations.Services
             double amount,
             CurrencyOperationType operationType)
         {
+            string keysPattern = string.Format(_opTypeKeyPattern, _instanceName, clientId, operationType);
+            var data = await _db.ScriptEvaluateAsync($"return redis.call('keys', '{keysPattern}')");
+            if (!data.IsNull)
+            {
+                var keys = (string[])data;
+                if (keys.Length > 0)
+                {
+                    var attemptJsons = await _db.StringGetAsync(keys.Select(key => (RedisKey)key).ToArray());
+                    var attemptToDelete = attemptJsons.Where(a => a.HasValue)
+                        .Select(a => a.ToString().DeserializeJson<CurrencyOperationAttempt>())
+                        .FirstOrDefault(i => i.Asset == asset && Math.Abs(amount - i.Amount) < _minDiff);
+                    if (attemptToDelete != null)
+                    {
+                        string key = string.Format(_attemptKeyPattern, _instanceName, clientId, operationType, attemptToDelete.DateTime.ToString(_dataFormat));
+                        await _db.KeyDeleteAsync(key);
+                    }
+                }
+            }
+
+            //TODO remove part below after new Limitations service is deployed
             await _lock.WaitAsync();
             try
             {
@@ -99,7 +136,10 @@ namespace Lykke.Service.Limitations.Services
                     if (removed)
                     {
                         string json = clientData.ToJson();
-                        await _distributedCache.SetStringAsync(_cacheKeyPrefix + clientId, json);
+                        string key = string.Format(_allClientDataKeyPattern, _instanceName, clientId);
+                        bool setResult = await _db.StringSetAsync(key, json);
+                        if (!setResult)
+                            throw new InvalidOperationException($"Error during attempts update for client {clientId}");
                     }
                 }
             }
@@ -107,6 +147,7 @@ namespace Lykke.Service.Limitations.Services
             {
                 _lock.Release();
             }
+            // till here
         }
 
         public async Task<double> GetAttemptsValueAsync(
@@ -114,72 +155,62 @@ namespace Lykke.Service.Limitations.Services
             string asset,
             LimitationType limitType)
         {
-            await _lock.WaitAsync();
-            try
+            double result = 0;
+            var opTypes = LimitMapHelper.MapLimitationType(limitType);
+            foreach (var opType in opTypes)
             {
-                double result = 0;
-                var clientData = await FetchClientDataAsync(clientId);
-                if (clientData.Count > 0)
-                {
-                    var opTypes = LimitMapHelper.MapLimitationType(limitType);
-                    foreach (var item in clientData)
-                    {
-                        if (!opTypes.Contains(item.OperationType))
-                            continue;
+                string keysPattern = string.Format(_opTypeKeyPattern, _instanceName, clientId, opType);
+                var data = await _db.ScriptEvaluateAsync($"return redis.call('keys', '{keysPattern}')");
+                if (data.IsNull)
+                    continue;
 
-                        if (_currencyConverter.IsNotConvertible(asset) && item.Asset == asset)
-                        {
-                            result += item.Amount;
-                        }
-                        else if (!_currencyConverter.IsNotConvertible(asset) && !_currencyConverter.IsNotConvertible(item.Asset))
-                        {
-                            var converted = await _currencyConverter.ConvertAsync(item.Asset, asset, item.Amount);
-                            result += converted.Item2;
-                        }
+                var keys = (string[])data;
+                if (keys.Length == 0)
+                    continue;
+
+                var attemptJsons = await _db.StringGetAsync(keys.Select(key => (RedisKey)key).ToArray());
+                var attempts = attemptJsons.Where(a => a.HasValue)
+                    .Select(a => a.ToString().DeserializeJson<CurrencyOperationAttempt>())
+                    .ToList();
+
+                foreach (var attempt in attempts)
+                {
+                    if (_currencyConverter.IsNotConvertible(asset) && attempt.Asset == asset)
+                    {
+                        result += attempt.Amount;
+                    }
+                    else if (!_currencyConverter.IsNotConvertible(asset) && !_currencyConverter.IsNotConvertible(attempt.Asset))
+                    {
+                        var converted = await _currencyConverter.ConvertAsync(attempt.Asset, asset, attempt.Amount);
+                        result += converted.Item2;
                     }
                 }
-                return result;
             }
-            finally
-            {
-                _lock.Release();
-            }
+            return result;
         }
 
-        public async Task<List<CurrencyOperationAttempt>> GetClientDataAsync(string clientId)
+        public Task<List<CurrencyOperationAttempt>> GetClientDataAsync(string clientId)
         {
-            await _lock.WaitAsync();
-            try
-            {
-                return await FetchClientDataAsync(clientId);
-            }
-            finally
-            {
-                _lock.Release();
-            }
+            return FetchClientDataAsync(clientId);
         }
 
         private async Task<List<CurrencyOperationAttempt>> FetchClientDataAsync(string clientId)
         {
-            var clientDataJson = await _distributedCache.GetStringAsync(_cacheKeyPrefix + clientId);
-            if (string.IsNullOrWhiteSpace(clientDataJson))
+            string keysPattern = string.Format(_allAttemptsKeyPattern, _instanceName, clientId);
+            var data = await _db.ScriptEvaluateAsync($"return redis.call('keys', '{keysPattern}')");
+            if (data.IsNull)
                 return new List<CurrencyOperationAttempt>(0);
-            var clientData = clientDataJson.DeserializeJson<List<CurrencyOperationAttempt>>();
-            if (clientData == null)
-                return new List<CurrencyOperationAttempt>(0);
-            if (clientData.Count > 0)
-            {
-                var now = DateTime.UtcNow;
-                for (int i = 0; i < clientData.Count; i++)
-                {
-                    if (now > clientData[i].ExpireAt)
-                        continue;
 
-                    clientData.RemoveAt(i);
-                    --i;
-                }
-            }
-            return clientData;
+            var keys = (string[])data;
+            if (keys.Length == 0)
+                return new List<CurrencyOperationAttempt>(0);
+
+            var attemptJsons = await _db.StringGetAsync(keys.Select(key => (RedisKey)key).ToArray());
+            var attempts = attemptJsons
+                .Where(a => a.HasValue)
+                .Select(a => a.ToString().DeserializeJson<CurrencyOperationAttempt>())
+                .ToList();
+            return attempts;
         }
     }
 }

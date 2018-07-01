@@ -9,13 +9,14 @@ namespace Lykke.Service.Limitations.Core.Services
         Task<(double, bool)> GetCurrentAmountAsync(
             string clientId,
             string asset,
-            LimitationPeriod period);
+            LimitationPeriod period,
+            CurrencyOperationType operationType);
 
         Task<List<CashTransferOperation>> GetClientDataAsync(string clientId, LimitationPeriod period);
 
         Task<bool> RemoveClientOperationAsync(string clientId, string operationId);
 
-        Task CacheClientDataAsync(string clientId);
+        Task CacheClientDataAsync(string clientId, CurrencyOperationType operationType);
 
         Task AddDataItemAsync(CashTransferOperation item);
     }
