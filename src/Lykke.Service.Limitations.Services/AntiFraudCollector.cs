@@ -108,7 +108,9 @@ namespace Lykke.Service.Limitations.Services
                     var attemptJsons = await _db.StringGetAsync(keys.Select(key => (RedisKey)key).ToArray());
                     var attemptToDelete = attemptJsons.Where(a => a.HasValue)
                         .Select(a => a.ToString().DeserializeJson<CurrencyOperationAttempt>())
-                        .FirstOrDefault(i => i.Asset == asset && Math.Abs(amount - i.Amount) < _minDiff);
+                        .Where(i => i.Asset == asset && Math.Abs(amount - i.Amount) < _minDiff)
+                        .OrderBy(i => i.DateTime)
+                        .FirstOrDefault();
                     if (attemptToDelete != null)
                     {
                         string key = string.Format(_attemptKeyPattern, _instanceName, clientId, operationType, attemptToDelete.DateTime.ToString(_dataFormat));
