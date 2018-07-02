@@ -163,14 +163,13 @@ namespace Lykke.Service.Limitations.Services
             var now = DateTime.UtcNow;
             foreach (var item in clientState)
             {
-                if (!item.OperationType.HasValue)
-                    item.OperationType = _opTypeResolver(item);
-
-                if (item.OperationType.Value != operationType)
-                    continue;
-
                 var ttl = item.DateTime.AddMonths(1).Subtract(now);
                 if (ttl.Ticks <= 0)
+                    continue;
+
+                if (!item.OperationType.HasValue)
+                    item.OperationType = _opTypeResolver(item);
+                if (item.OperationType.Value != operationType)
                     continue;
 
                 var key = string.Format(_opKeyPattern, _instanceName, _cacheType, item.ClientId, item.OperationType.Value, item.Id);
@@ -191,7 +190,7 @@ namespace Lykke.Service.Limitations.Services
                 : Enum.GetValues(typeof(CurrencyOperationType)).Cast<CurrencyOperationType>().ToList();
             foreach (var opType in opTypes)
             {
-                var keysPattern = string.Format(_opTypeKeyPattern, _instanceName, _cacheType, clientId, operationType);
+                var keysPattern = string.Format(_opTypeKeyPattern, _instanceName, _cacheType, clientId, opType);
                 RedisResult data = await _db.ScriptEvaluateAsync($"return redis.call('keys', '{keysPattern}')");
                 if (!data.IsNull)
                 {

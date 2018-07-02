@@ -16,7 +16,7 @@ namespace Lykke.Service.Limitations.Services
         private const string _dataFormat = "yyyy-MM-dd-HH-mm-ss-fffffff";
         private const string _allClientDataKeyPattern = "{0}:attempts:{1}";
         private const string _allAttemptsKeyPattern = "{0}:attempts:client:{1}:opType:*";
-        private const string _opTypeKeyPattern = "{0}:attempts:client:{1}:opType:{2}";
+        private const string _opTypeKeyPattern = "{0}:attempts:client:{1}:opType:{2}:time:*";
         private const string _attemptKeyPattern = "{0}:attempts:client:{1}:opType:{2}:time:{3}";
 
         private readonly IDatabase _db;
