@@ -51,8 +51,8 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
 
             _subscriber = new RabbitMqSubscriber<CashTransferOperation>(settings,
                     new ResilientErrorHandlingStrategy(_log, settings,
-                        retryTimeout: TimeSpan.FromSeconds(10)/*,
-                        next: new DeadQueueErrorHandlingStrategy(_log, settings)*/))
+                        retryTimeout: TimeSpan.FromSeconds(10),
+                        next: new DeadQueueErrorHandlingStrategy(_log, settings)))
                 .SetMessageDeserializer(new JsonMessageDeserializer<CashTransferOperation>())
                 .Subscribe(ProcessMessageAsync)
                 .CreateDefaultBinding()

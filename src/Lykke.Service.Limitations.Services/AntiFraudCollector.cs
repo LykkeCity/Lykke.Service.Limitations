@@ -14,7 +14,8 @@ namespace Lykke.Service.Limitations.Services
     {
         private const double _minDiff = 0.00000001;
         private const string _dataFormat = "yyyy-MM-dd-HH-mm-ss-fffffff";
-        private const string _allClientDataKeyPattern = "{0}:attempts:{1}";
+        private const string _allClientsDataKeyPattern = "{0}:attempts:*";
+        private const string _oldClientDataKeyPattern = "{0}:attempts:{1}";
         private const string _allAttemptsKeyPattern = "{0}:attempts:client:{1}:opType:*";
         private const string _opTypeKeyPattern = "{0}:attempts:client:{1}:opType:{2}:time:*";
         private const string _attemptKeyPattern = "{0}:attempts:client:{1}:opType:{2}:time:{3}";
@@ -32,6 +33,9 @@ namespace Lykke.Service.Limitations.Services
             _currencyConverter = currencyConverter;
             _db = connectionMultiplexer.GetDatabase();
             _instanceName = redisInstanceName;
+
+            //TODO clear old format attempt with method below after new Limitations service is deployed
+            //CleanupOldFormatAttemptsAsync().GetAwaiter().GetResult();
         }
 
         public async Task AddDataAsync(
@@ -53,19 +57,19 @@ namespace Lykke.Service.Limitations.Services
             };
 
             string key = string.Format(_attemptKeyPattern, _instanceName, clientId, operationType, now.ToString(_dataFormat));
-            bool setResult = await _db.StringSetAsync(key, attempt.ToJson(), TimeSpan.FromMinutes(ttlInMinutes));
-            if (!setResult)
+            bool result = await _db.StringSetAsync(key, attempt.ToJson(), TimeSpan.FromMinutes(ttlInMinutes));
+            if (!result)
                 throw new InvalidOperationException($"Error during attempt adding for client {clientId}");
 
             //TODO remove part below after new Limitations service is deployed
             await _lock.WaitAsync();
             try
             {
-                var clientData = await FetchClientDataAsync(clientId);
+                var clientData = await FetchOldClientDataAsync(clientId);
                 clientData.Add(attempt);
                 string json = clientData.ToJson();
-                key = string.Format(_allClientDataKeyPattern, _instanceName, clientId);
-                setResult = await _db.StringSetAsync(key, json);
+                string clientKey = string.Format(_oldClientDataKeyPattern, _instanceName, clientId);
+                bool setResult = await _db.StringSetAsync(clientKey, json);
                 if (!setResult)
                     throw new InvalidOperationException($"Error during attempts update for client {clientId}");
             }
@@ -117,7 +121,7 @@ namespace Lykke.Service.Limitations.Services
             await _lock.WaitAsync();
             try
             {
-                var clientData = await FetchClientDataAsync(clientId);
+                var clientData = await FetchOldClientDataAsync(clientId);
                 if (clientData.Count > 0)
                 {
                     bool removed = false;
@@ -135,8 +139,8 @@ namespace Lykke.Service.Limitations.Services
                     if (removed)
                     {
                         string json = clientData.ToJson();
-                        string key = string.Format(_allClientDataKeyPattern, _instanceName, clientId);
-                        bool setResult = await _db.StringSetAsync(key, json);
+                        string clientKey = string.Format(_oldClientDataKeyPattern, _instanceName, clientId);
+                        bool setResult = await _db.StringSetAsync(clientKey, json);
                         if (!setResult)
                             throw new InvalidOperationException($"Error during attempts update for client {clientId}");
                     }
@@ -188,12 +192,7 @@ namespace Lykke.Service.Limitations.Services
             return result;
         }
 
-        public Task<List<CurrencyOperationAttempt>> GetClientDataAsync(string clientId)
-        {
-            return FetchClientDataAsync(clientId);
-        }
-
-        private async Task<List<CurrencyOperationAttempt>> FetchClientDataAsync(string clientId)
+        public async Task<List<CurrencyOperationAttempt>> GetClientDataAsync(string clientId)
         {
             string keysPattern = string.Format(_allAttemptsKeyPattern, _instanceName, clientId);
             var data = await _db.ScriptEvaluateAsync($"return redis.call('keys', '{keysPattern}')");
@@ -210,6 +209,35 @@ namespace Lykke.Service.Limitations.Services
                 .Select(a => a.ToString().DeserializeJson<CurrencyOperationAttempt>())
                 .ToList();
             return attempts;
+        }
+
+        //TODO remove this method after new Limitations service is deployed
+        private async Task<List<CurrencyOperationAttempt>> FetchOldClientDataAsync(string clientId)
+        {
+            string clientKey = string.Format(_oldClientDataKeyPattern, _instanceName, clientId);
+            var getResult = await _db.StringGetAsync(clientKey);
+            if (!getResult.HasValue)
+                return new List<CurrencyOperationAttempt>();
+
+            var result = getResult.ToString().DeserializeJson<List<CurrencyOperationAttempt>>();
+            return result ?? new List<CurrencyOperationAttempt>();
+        }
+
+        private async Task CleanupOldFormatAttemptsAsync()
+        {
+            string keysPattern = string.Format(_allClientsDataKeyPattern, _instanceName);
+            var data = await _db.ScriptEvaluateAsync($"return redis.call('keys', '{keysPattern}')");
+            if (data.IsNull)
+                return;
+
+            var keys = (string[])data;
+            if (keys.Length == 0)
+                return;
+
+            foreach (var key in keys)
+            {
+                await _db.KeyDeleteAsync(key);
+            }
         }
     }
 }

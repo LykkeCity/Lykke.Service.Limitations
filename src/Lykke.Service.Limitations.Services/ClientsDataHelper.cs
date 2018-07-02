@@ -14,7 +14,7 @@ namespace Lykke.Service.Limitations.Services
     public class ClientsDataHelper<T>
         where T : ICashOperation
     {
-        private const string _allClientDataKeyPattern = "{0}:{1}:{2}";
+        private const string _oldClientDataKeyPattern = "{0}:{1}:{2}";
         private const string _clientDataKeyPattern = "{0}:{1}:client:{2}:opType:*";
         private const string _opTypeKeyPattern = "{0}:{1}:client:{2}:opType:{3}:id:*";
         private const string _opKeyPattern = "{0}:{1}:client:{2}:opType:{3}:id:{4}";
@@ -85,7 +85,7 @@ namespace Lykke.Service.Limitations.Services
                 (clientData, _) = await FetchClientDataAsync(item.ClientId);
                 clientData.Add(item);
 
-                key = string.Format(_allClientDataKeyPattern, _instanceName, _cacheType, item.ClientId);
+                key = string.Format(_oldClientDataKeyPattern, _instanceName, _cacheType, item.ClientId);
                 setResult = await _db.StringSetAsync(key, clientData.ToJson());
                 if (!setResult)
                     throw new InvalidOperationException($"Error during operations update for client {item.ClientId}");
@@ -126,7 +126,7 @@ namespace Lykke.Service.Limitations.Services
 
                     //TODO Remove code below after new Limitations service is deployed + delete lock
                     clientData.RemoveAt(i);
-                    string clientKey = string.Format(_allClientDataKeyPattern, _instanceName, _cacheType, clientId);
+                    string clientKey = string.Format(_oldClientDataKeyPattern, _instanceName, _cacheType, clientId);
                     bool setResult = await _db.StringSetAsync(clientKey, clientData.ToJson());
                     if (!setResult)
                         throw new InvalidOperationException($"Error during operations update for client {clientId}");
