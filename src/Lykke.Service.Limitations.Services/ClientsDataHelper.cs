@@ -159,6 +159,8 @@ namespace Lykke.Service.Limitations.Services
             var clientState = await _stateRepository.LoadClientStateAsync($"{clientId}-{operationType}");
             if (clientState == null)
                 clientState = await _stateRepository.LoadClientStateAsync(clientId);
+            if (clientState == null)
+                return;
 
             var now = DateTime.UtcNow;
             foreach (var item in clientState)
@@ -210,6 +212,9 @@ namespace Lykke.Service.Limitations.Services
                 if (clientState == null)
                 {
                     clientState = await _stateRepository.LoadClientStateAsync(clientId);
+                    if (clientState == null)
+                        continue;
+
                     var notExpired = clientState.Where(i => i.DateTime > monthAgo);
                     if (operationType.HasValue)
                     {
