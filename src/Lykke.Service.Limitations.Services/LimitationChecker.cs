@@ -25,6 +25,7 @@ namespace Lykke.Service.Limitations.Services
         private readonly List<CashOperationLimitation> _limits;
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
         private readonly ISwiftTransferLimitationsRepository _swiftTransferLimitationsRepository;
+        private readonly ILog _log;
 
         public LimitationChecker(
             ICashOperationsCollector cashOperationsCollector,
@@ -44,6 +45,7 @@ namespace Lykke.Service.Limitations.Services
             _limitOperationsApi = limitOperationsApi;
             _attemptRetainInMinutes = attemptRetainInMinutes > 0 ? attemptRetainInMinutes : 1;
             _swiftTransferLimitationsRepository = swiftTransferLimitationsRepository;
+            _log = log;
             if (limits == null)
             {
                 _limits = new List<CashOperationLimitation>(0);
@@ -55,7 +57,7 @@ namespace Lykke.Service.Limitations.Services
                 {
                     if (!limit.IsValid())
                     {
-                        log.WriteWarning(nameof(LimitationChecker), "C-tor", "Invalid limit in settings: " + limit.ToJson());
+                        _log.WriteWarning(nameof(LimitationChecker), "C-tor", "Invalid limit in settings: " + limit.ToJson());
                         continue;
                     }
                     _limits.Add(limit);
@@ -109,7 +111,9 @@ namespace Lykke.Service.Limitations.Services
             var typeLimits = _limits.Where(l => limitationTypes.Contains(l.LimitationType));
             if (!typeLimits.Any())
             {
-                await _limitOperationsApi.AddOperationAttemptAsync(
+                try
+                {
+                    await _limitOperationsApi.AddOperationAttemptAsync(
                     clientId,
                     originalAsset,
                     originalAmount,
@@ -117,6 +121,11 @@ namespace Lykke.Service.Limitations.Services
                         ? _cashOperationsTimeoutInMinutes
                         : _attemptRetainInMinutes,
                     currencyOperationType);
+                }
+                catch (Exception ex)
+                {
+                    _log.WriteError(nameof(CheckCashOperationLimitAsync), new { Type = "Attempt", clientId, originalAmount, originalAsset }, ex);
+                }
                 return new LimitationCheckResult { IsValid = true };
             }
 
@@ -180,7 +189,9 @@ namespace Lykke.Service.Limitations.Services
                         return new LimitationCheckResult { IsValid = false, FailMessage = error };
                 }
 
-                await _limitOperationsApi.AddOperationAttemptAsync(
+                try
+                {
+                    await _limitOperationsApi.AddOperationAttemptAsync(
                     clientId,
                     originalAsset,
                     originalAmount,
@@ -188,6 +199,11 @@ namespace Lykke.Service.Limitations.Services
                         ? _cashOperationsTimeoutInMinutes
                         : _attemptRetainInMinutes,
                     currencyOperationType);
+                }
+                catch (Exception ex)
+                {
+                    _log.WriteError(nameof(CheckCashOperationLimitAsync), new { Type = "Attempt", clientId, originalAmount, originalAsset }, ex);
+                }
             }
             finally
             {
@@ -221,7 +237,14 @@ namespace Lykke.Service.Limitations.Services
 
         public async Task RemoveClientOperationAsync(string clientId, string operationId)
         {
-            await _limitOperationsApi.RemoveOperationAsync(clientId, operationId);
+            try
+            {
+                await _limitOperationsApi.RemoveOperationAsync(clientId, operationId);
+            }
+            catch (Exception ex)
+            {
+                _log.WriteError(nameof(RemoveClientOperationAsync), new { Type = "Remove", clientId, operationId }, ex);
+            }
         }
 
         private async Task AddRemainingLimitsAsync(string clientId, LimitationPeriod period, ClientData clientData)
@@ -340,7 +363,16 @@ namespace Lykke.Service.Limitations.Services
                 period,
                 currencyOperationType);
             if (cashOperationsNotCached || cashTransfersNotCached)
-                await _limitOperationsApi.CacheClientDataAsync(clientId, currencyOperationType);
+            {
+                try
+                {
+                    await _limitOperationsApi.CacheClientDataAsync(clientId, currencyOperationType);
+                }
+                catch (Exception ex)
+                {
+                    _log.WriteError(nameof(DoPeriodCheckAsync), new { Type = "CachOp", clientId, currencyOperationType }, ex);
+                }
+            }
 
             var clientLimit = periodLimits.FirstOrDefault(l => l.ClientId == clientId);
             if (clientLimit != null)
