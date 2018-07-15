@@ -3,7 +3,6 @@ using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
 using Lykke.Service.Limitations.Core.Services;
 using StackExchange.Redis;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -49,13 +48,14 @@ namespace Lykke.Service.Limitations.Services
             item.Volume = converted.Item2;
             item.OperationType = GetOperationType(item);
 
-            await _data.AddDataItemAsync(item);
+            bool isNewItem = await _data.AddDataItemAsync(item);
 
-            await _antiFraudCollector.RemoveOperationAsync(
-                item.ClientId,
-                item.Asset,
-                item.Volume,
-                item.OperationType.Value);
+            if (isNewItem)
+                await _antiFraudCollector.RemoveOperationAsync(
+                    item.ClientId,
+                    item.Asset,
+                    item.Volume,
+                    item.OperationType.Value);
         }
 
         public Task<bool> RemoveClientOperationAsync(string clientId, string operationId)

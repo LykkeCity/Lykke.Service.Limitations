@@ -58,12 +58,12 @@ namespace Lykke.Service.Limitations.Services
             }
         }
 
-        internal async Task AddDataItemAsync(T item)
+        internal async Task<bool> AddDataItemAsync(T item)
         {
             var now = DateTime.UtcNow;
             var ttl = item.DateTime.AddMonths(1).Subtract(now);
             if (ttl.Ticks <= 0)
-                return;
+                return true;
 
             if (!item.OperationType.HasValue)
                 item.OperationType = _opTypeResolver(item);
@@ -72,6 +72,8 @@ namespace Lykke.Service.Limitations.Services
             try
             {
                 (var clientData, _) = await FetchClientDataAsync(item.ClientId, item.OperationType);
+                if (clientData.Any(i => i.Id == item.Id))
+                    return false;
 
                 var key = string.Format(_opKeyPattern, _instanceName, _cacheType, item.ClientId, item.OperationType.Value, item.Id);
                 bool setResult = await _db.StringSetAsync(key, item.ToJson(), ttl);
@@ -97,6 +99,7 @@ namespace Lykke.Service.Limitations.Services
             {
                 _lock.Release();
             }
+            return true;
         }
 
         internal async Task<bool> RemoveClientOperationAsync(string clientId, string operationId)
