@@ -25,5 +25,7 @@ namespace Lykke.Service.Limitations.Core.Services
             CurrencyOperationType operationType);
 
         Task<List<CurrencyOperationAttempt>> GetClientDataAsync(string clientId);
+
+        Task PerformStartupCleanupAsync();
     }
 }

@@ -71,15 +71,23 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
 
         private async Task ProcessMessageAsync(CashOperation item)
         {
-            await _cashOperationsCollector.AddDataItemAsync(
-                new Service.Limitations.Core.Domain.CashOperation
-                {
-                    Id = item.Id,
-                    ClientId = item.ClientId,
-                    Asset = item.Asset,
-                    Volume = item.Volume,
-                    DateTime = item.DateTime,
-                });
+            try
+            {
+                await _cashOperationsCollector.AddDataItemAsync(
+                    new Service.Limitations.Core.Domain.CashOperation
+                    {
+                        Id = item.Id,
+                        ClientId = item.ClientId,
+                        Asset = item.Asset,
+                        Volume = item.Volume,
+                        DateTime = item.DateTime,
+                    });
+            }
+            catch (Exception ex)
+            {
+                _log.WriteError(nameof(ProcessMessageAsync), item, ex);
+                throw;
+            }
         }
 
         public void Dispose()

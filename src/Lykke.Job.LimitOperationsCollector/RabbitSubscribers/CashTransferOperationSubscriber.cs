@@ -125,7 +125,7 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
             }
             catch (Exception exc)
             {
-                _log.WriteError(nameof(ProcessMessageAsync), item.ToJson(), exc);
+                _log.WriteError(nameof(ProcessMessageAsync), item, exc);
             }
         }
 
