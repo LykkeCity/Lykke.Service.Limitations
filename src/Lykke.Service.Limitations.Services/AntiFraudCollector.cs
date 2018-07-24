@@ -15,7 +15,7 @@ namespace Lykke.Service.Limitations.Services
     {
         private const double _minDiff = 0.00000001;
         private const string _dataFormat = "yyyy-MM-dd-HH-mm-ss-fffffff";
-        private const string _allOLdClientsDataKeyPattern = "{0}:attempts:*";
+        private const string _allOldClientsDataKeyPattern = "{0}:attempts:*";
         private const string _oldClientDataKeyPattern = "{0}:attempts:{1}";
         private const string _allAttemptsKeyPattern = "{0}:attempts:client:{1}:opType:*";
         private const string _opTypeKeyPattern = "{0}:attempts:client:{1}:opType:{2}:time:*";
@@ -234,7 +234,7 @@ namespace Lykke.Service.Limitations.Services
 
         private async Task CleanupOldFormatAttemptsAsync()
         {
-            string keysPattern = string.Format(_allOLdClientsDataKeyPattern, _instanceName);
+            string keysPattern = string.Format(_allOldClientsDataKeyPattern, _instanceName);
             var data = await _db.ScriptEvaluateAsync($"return redis.call('keys', '{keysPattern}')");
             if (data.IsNull)
                 return;
