@@ -1,4 +1,5 @@
 ﻿using Common;
+using Common.Log;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Services;
 using StackExchange.Redis;
@@ -14,7 +15,7 @@ namespace Lykke.Service.Limitations.Services
     {
         private const double _minDiff = 0.00000001;
         private const string _dataFormat = "yyyy-MM-dd-HH-mm-ss-fffffff";
-        private const string _allClientsDataKeyPattern = "{0}:attempts:*";
+        private const string _allOldClientsDataKeyPattern = "{0}:attempts:*";
         private const string _oldClientDataKeyPattern = "{0}:attempts:{1}";
         private const string _allAttemptsKeyPattern = "{0}:attempts:client:{1}:opType:*";
         private const string _opTypeKeyPattern = "{0}:attempts:client:{1}:opType:{2}:time:*";
@@ -23,19 +24,19 @@ namespace Lykke.Service.Limitations.Services
         private readonly IDatabase _db;
         private readonly string _instanceName;
         private readonly ICurrencyConverter _currencyConverter;
+        private readonly ILog _log;
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 
         public AntiFraudCollector(
             IConnectionMultiplexer connectionMultiplexer,
             ICurrencyConverter currencyConverter,
-            string redisInstanceName)
+            string redisInstanceName,
+            ILog log)
         {
             _currencyConverter = currencyConverter;
+            _log = log;
             _db = connectionMultiplexer.GetDatabase();
             _instanceName = redisInstanceName;
-
-            //TODO clear old format attempt with method below after new Limitations service is deployed
-            //CleanupOldFormatAttemptsAsync().GetAwaiter().GetResult();
         }
 
         public async Task AddDataAsync(
@@ -213,6 +214,12 @@ namespace Lykke.Service.Limitations.Services
             return attempts;
         }
 
+        public async Task PerformStartupCleanupAsync()
+        {
+            await RemoveNotStringValuesAsync();
+            //await CleanupOldFormatAttemptsAsync()
+        }
+
         //TODO remove this method after new Limitations service is deployed
         private async Task<List<CurrencyOperationAttempt>> FetchOldClientDataAsync(string clientId)
         {
@@ -227,7 +234,7 @@ namespace Lykke.Service.Limitations.Services
 
         private async Task CleanupOldFormatAttemptsAsync()
         {
-            string keysPattern = string.Format(_allClientsDataKeyPattern, _instanceName);
+            string keysPattern = string.Format(_allOldClientsDataKeyPattern, _instanceName);
             var data = await _db.ScriptEvaluateAsync($"return redis.call('keys', '{keysPattern}')");
             if (data.IsNull)
                 return;
@@ -239,6 +246,36 @@ namespace Lykke.Service.Limitations.Services
             foreach (var key in keys)
             {
                 await _db.KeyDeleteAsync(key);
+            }
+        }
+
+        private async Task RemoveNotStringValuesAsync()
+        {
+            string allKeysPattern = $"{_instanceName}:*";
+            var data = await _db.ScriptEvaluateAsync($"return redis.call('keys', '{allKeysPattern}')");
+            if (data.IsNull)
+                return;
+
+            var keys = (string[])data;
+            if (keys.Length == 0)
+                return;
+
+            var deletedTypes = new HashSet<string>();
+            var keysToDelete = new List<string>();
+            foreach (var key in keys)
+            {
+                var type = await _db.KeyTypeAsync(key);
+                if (type == RedisType.String)
+                    continue;
+
+                keysToDelete.Add(key);
+                deletedTypes.Add(type.ToString());
+            }
+
+            if (keysToDelete.Count > 0)
+            {
+                await _db.KeyDeleteAsync(keysToDelete.Select(i => (RedisKey)i).ToArray());
+                _log.WriteWarning(nameof(RemoveNotStringValuesAsync), null, $"Deleted {keysToDelete.Count} items of types {string.Join(',', deletedTypes)}");
             }
         }
     }
