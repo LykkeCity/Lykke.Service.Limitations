@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Lykke.Common.Log;
 
 namespace Lykke.Service.Limitations.Services
 {
@@ -28,10 +29,10 @@ namespace Lykke.Service.Limitations.Services
             IConnectionMultiplexer connectionMultiplexer,
             ICurrencyConverter currencyConverter,
             string redisInstanceName,
-            ILog log)
+            ILogFactory log)
         {
             _currencyConverter = currencyConverter;
-            _log = log;
+            _log = log.CreateLog(this);
             _db = connectionMultiplexer.GetDatabase();
             _instanceName = redisInstanceName;
         }

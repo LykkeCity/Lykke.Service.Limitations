@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Lykke.Common.Log;
 
 namespace Lykke.Service.Limitations.Services
 {
@@ -29,14 +30,14 @@ namespace Lykke.Service.Limitations.Services
 
         internal ClientsDataHelper(
             IClientStateRepository<List<T>> stateRepository,
-            ILog log,
+            ILogFactory logFactory,
             IConnectionMultiplexer connectionMultiplexer,
             Func<T, CurrencyOperationType> opTypeResolver,
             string redisInstanceName,
             string cashType)
         {
             _stateRepository = stateRepository;
-            _log = log;
+            _log = logFactory.CreateLog(this);
             _db = connectionMultiplexer.GetDatabase();
             _opTypeResolver = opTypeResolver;
             _instanceName = redisInstanceName;

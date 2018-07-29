@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Services;
+using Lykke.Service.Limitations.Services.Contracts.FxPaygate;
 
 namespace Lykke.Job.LimitOperationsCollector.Cqrs
 {

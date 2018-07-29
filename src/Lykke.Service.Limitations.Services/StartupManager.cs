@@ -7,21 +7,33 @@ namespace Lykke.Service.Limitations.Services
 {
     public class StartupManager : IStartupManager
     {
+        private readonly IAntiFraudCollector _antiFraudCollector;
+        private readonly ICashOperationsCollector _cashOperationsCollector;
+        private readonly ICashTransfersCollector _cashTransfersCollector;
         private readonly List<IStartable> _startables = new List<IStartable>();
+
+        public StartupManager(IAntiFraudCollector antiFraudCollector, ICashOperationsCollector cashOperationsCollector, ICashTransfersCollector cashTransfersCollector)
+        {
+            _antiFraudCollector = antiFraudCollector;
+            _cashOperationsCollector = cashOperationsCollector;
+            _cashTransfersCollector = cashTransfersCollector;
+        }
 
         public void Register(IStartable startable)
         {
             _startables.Add(startable);
         }
 
-        public Task StartAsync()
+        public async Task StartAsync()
         {
             foreach (var item in _startables)
             {
                 item.Start();
             }
 
-            return Task.CompletedTask;
+            await _antiFraudCollector.PerformStartupCleanupAsync();
+            await _cashOperationsCollector.PerformStartupCleanupAsync();
+            await _cashTransfersCollector.PerformStartupCleanupAsync();
         }
     }
 }

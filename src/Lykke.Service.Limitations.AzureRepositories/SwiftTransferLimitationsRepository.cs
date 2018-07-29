@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Lykke.Common.Log;
 
 namespace Lykke.Service.Limitations.AzureRepositories
 {
@@ -20,10 +21,10 @@ namespace Lykke.Service.Limitations.AzureRepositories
         private readonly INoSQLTableStorage<SwiftTransferLimitationEntity> _tableStorage;
         private readonly ILog _log;
 
-        public SwiftTransferLimitationsRepository(INoSQLTableStorage<SwiftTransferLimitationEntity> tableStorage, ILog log)
+        public SwiftTransferLimitationsRepository(INoSQLTableStorage<SwiftTransferLimitationEntity> tableStorage, ILogFactory logFactory)
         {
             _tableStorage = tableStorage;
-            _log = log;
+            _log = logFactory.CreateLog(this);
         }
 
         public async Task<IReadOnlyCollection<SwiftTransferLimitation>> GetAllAsync()

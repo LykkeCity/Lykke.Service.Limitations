@@ -10,7 +10,7 @@ namespace Lykke.Service.Limitations.AzureRepositories
     {
         private readonly INoSQLTableStorage<PaymentTransactionEntity> _tableStorage;
 
-        public PaymentTransactionsRepository(INoSQLTableStorage<PaymentTransactionEntity> tableStorage, ILog log)
+        public PaymentTransactionsRepository(INoSQLTableStorage<PaymentTransactionEntity> tableStorage)
         {
             _tableStorage = tableStorage;
         }

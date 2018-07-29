@@ -4,48 +4,48 @@ using Lykke.Service.RateCalculator.Client;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Lykke.Common.Log;
 
 namespace Lykke.Service.Limitations.Services
 {
     public class CurrencyConverter : ICurrencyConverter
     {
-        private const string _conversionBaseAsset = "USD";
+        private const string ConversionBaseAsset = "USD";
 
-        private HashSet<string> _convertibleCurrencies;
+        private readonly HashSet<string> _convertibleCurrencies;
 
         private readonly IRateCalculatorClient _rateCalculatorClient;
         private readonly ILog _log;
 
-        public string DefaultAsset { get { return _conversionBaseAsset; } }
+        public string DefaultAsset => ConversionBaseAsset;
 
         public CurrencyConverter(
             List<string> convertibleCurrencies,
             IRateCalculatorClient rateCalculatorClient,
-            ILog log)
+            ILogFactory logFactory)
         {
             _convertibleCurrencies = new HashSet<string>(convertibleCurrencies);
             _rateCalculatorClient = rateCalculatorClient;
-            _log = log;
+            _log = logFactory.CreateLog(this);
         }
 
-        public async Task<Tuple<string, double>> ConvertAsync(
+        public async Task<(string assetTo, double convertedAmount)> ConvertAsync(
             string assetFrom,
             string assetTo,
             double amount,
             bool forceConvesion = false)
         {
             if (assetFrom == assetTo || IsNotConvertible(assetFrom) && !forceConvesion)
-                return new Tuple<string, double>(assetFrom, amount);
+                return (assetFrom, amount);
 
             double convertedAmount = await _rateCalculatorClient.GetAmountInBaseAsync(assetFrom, amount, assetTo);
 
             if (amount != 0 && convertedAmount == 0)
-                _log.WriteWarning(
-                    nameof(CurrencyConverter),
+                _log.Warning(                    
                     nameof(ConvertAsync),
                     $"Conversion from {amount} {assetFrom} to {assetTo} resulted in 0.");
 
-            return new Tuple<string, double>(assetTo, convertedAmount);
+            return (assetTo, convertedAmount);
         }
 
         public bool IsNotConvertible(string asset)

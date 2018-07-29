@@ -1,38 +1,26 @@
-﻿using JetBrains.Annotations;
+﻿using System;
+using JetBrains.Annotations;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.SettingsReader.Attributes;
 using System.Collections.Generic;
+using Lykke.Sdk.Settings;
 
 namespace Lykke.Service.Limitations.Settings
 {
     [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
-    public class AppSettings
+    public class AppSettings : BaseAppSettings
     {
         public LimitationsSettings LimitationsSettings { get; set; }
-
-        public SlackNotificationsSettings SlackNotifications { get; set; }
-
-        public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
-
+        
         public RateCalculatorServiceClient RateCalculatorServiceClient { get; set; }
+        public AssetServiceClient AssetsServiceClient { get; set; }
+
+        public RabbitMqSettings SagasRabbitMq { get; set; }
     }
 
-    public class SlackNotificationsSettings
+    public class AssetServiceClient
     {
-        public AzureQueuePublicationSettings AzureQueue { get; set; }
-    }
-
-    public class AzureQueuePublicationSettings
-    {
-        public string ConnectionString { get; set; }
-
-        public string QueueName { get; set; }
-    }
-
-    public class MonitoringServiceClientSettings
-    {
-        [HttpCheck("api/isalive", false)]
-        public string MonitoringServiceUrl { get; set; }
+        public string ServiceUrl { get; set; }        
     }
 
     public class RateCalculatorServiceClient
@@ -55,6 +43,8 @@ namespace Lykke.Service.Limitations.Settings
 
         [AzureTableCheck]
         public string LimitationSettingsConnectionString { get; set; }
+        [AzureTableCheck]
+        public string ClientPersonalInfoConnString { get; set; }
 
         [HttpCheck("api/isalive", false)]
         public string LimitOperationsJobUrl { get; set; }
@@ -66,11 +56,14 @@ namespace Lykke.Service.Limitations.Settings
         public List<string> ConvertibleAssets { get; set; }
     }
 
+    public class RabbitMqSettings
+    {
+        public string RabbitConnectionString { get; set; }
+    }
+
     public class AzureTableSettings
     {
         [AzureTableCheck]
-        public string ConnectionString { get; set; }
-
-        public string TableName { get; set; }
+        public string ConnectionString { get; set; }        
     }
 }

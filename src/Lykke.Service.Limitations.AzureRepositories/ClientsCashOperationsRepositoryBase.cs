@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Lykke.Common.Log;
 
 namespace Lykke.Service.Limitations.AzureRepositories
 {
@@ -17,10 +18,10 @@ namespace Lykke.Service.Limitations.AzureRepositories
         protected readonly ILog _log;
         protected readonly string _container;
 
-        public ClientsCashOperationsRepositoryBase(IBlobStorage blobStorage, ILog log)
+        public ClientsCashOperationsRepositoryBase(IBlobStorage blobStorage, ILogFactory logFactory)
         {
             _blobStorage = blobStorage;
-            _log = log;
+            _log = logFactory.CreateLog(this);
             _container = GetType().Name.ToLower();
         }
 
@@ -34,7 +35,7 @@ namespace Lykke.Service.Limitations.AzureRepositories
             }
             catch (Exception exc)
             {
-                _log.WriteWarning(nameof(CashOperationsStateRepository), nameof(SaveClientStateAsync), exc.GetBaseException().Message);
+                _log.Warning(exc.GetBaseException().Message, exc);
             }
         }
 
@@ -51,7 +52,7 @@ namespace Lykke.Service.Limitations.AzureRepositories
             }
             catch (Exception exc)
             {
-                _log.WriteError(nameof(CashOperationsStateRepository), nameof(LoadClientStateAsync), exc);
+                _log.Error(exc);
                 throw;
             }
         }

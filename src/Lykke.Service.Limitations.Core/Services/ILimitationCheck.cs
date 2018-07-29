@@ -7,7 +7,7 @@ namespace Lykke.Service.Limitations.Core.Services
     {
         Task<LimitationCheckResult> CheckCashOperationLimitAsync(
             string clientId,
-            string asset,
+            string assetId,
             double amount,
             CurrencyOperationType direction);
 

@@ -1,6 +1,6 @@
 ﻿using ProtoBuf;
 
-namespace Lykke.Job.LimitOperationsCollector.Cqrs
+namespace Lykke.Service.Limitations.Services.Contracts.FxPaygate
 {
     [ProtoContract]
     public class TransferCreatedEvent
