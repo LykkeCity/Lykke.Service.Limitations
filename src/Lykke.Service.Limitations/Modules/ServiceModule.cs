@@ -74,6 +74,17 @@ namespace Lykke.Service.Limitations.Modules
                 .RegisterInstance(swiftTransferLimitationsRepository)
                 .As<ISwiftTransferLimitationsRepository>()
                 .SingleInstance();
+
+            var accumulatedDepostStorage = AzureTableStorage<AccumulatedDepositPeriodEntity>.Create(
+                _settingsManager.ConnectionString(s => s.BlobStorageConnectionString),
+                "AccumulatedDeposits",
+                _log);
+
+            builder.RegisterType<AccumulatedDepositRepository>()
+                .As<IAccumulatedDepositRepository>()
+                .WithParameter(TypedParameter.From(accumulatedDepostStorage))
+                .SingleInstance();
+
         }
 
         private void RegisterServices(ContainerBuilder builder)
