@@ -14,6 +14,7 @@ namespace Lykke.Service.Limitations.Services
         public CashOperationsCollector(
             ICashOperationsRepository stateRepository,
             IConnectionMultiplexer connectionMultiplexer,
+            IAccumulatedDepositAggregator accumulatedDepositAggregator,
             IAntiFraudCollector antifraudCollector,
             ICurrencyConverter currencyConverter,
             string redisInstanceName,
@@ -22,6 +23,7 @@ namespace Lykke.Service.Limitations.Services
                 stateRepository,
                 antifraudCollector,
                 connectionMultiplexer,
+                accumulatedDepositAggregator,
                 redisInstanceName,
                 nameof(CashOperation),
                 currencyConverter,

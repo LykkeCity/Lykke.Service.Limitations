@@ -113,6 +113,11 @@ namespace Lykke.Service.Limitations.Modules
                 .SingleInstance()
                 .WithParameter("limits", settings.Limits)
                 .WithParameter("attemptRetainInMinutes", settings.AttemptRetainInMinutes);
+
+            builder.RegisterType<AccumulatedDepositAggregator>()
+                .As<IAccumulatedDepositAggregator>()
+                .SingleInstance();
+
         }
     }
 }
