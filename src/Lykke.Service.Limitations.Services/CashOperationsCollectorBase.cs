@@ -14,12 +14,14 @@ namespace Lykke.Service.Limitations.Services
         protected readonly ClientsDataHelper<T> _data;
         protected readonly ICurrencyConverter _currencyConverter;
         protected readonly IAntiFraudCollector _antiFraudCollector;
+        protected readonly IAccumulatedDepositAggregator _accumulatedDepositAggregator;
         protected readonly ILog _log;
 
         public CashOperationsCollectorBase(
             IClientStateRepository<List<T>> stateRepository,
             IAntiFraudCollector antiFraudCollector,
             IConnectionMultiplexer connectionMultiplexer,
+            IAccumulatedDepositAggregator accumulatedDepositAggregator,
             string redisInstanceName,
             string cashPrefix,
             ICurrencyConverter currencyConverter,
@@ -27,6 +29,7 @@ namespace Lykke.Service.Limitations.Services
         {
             _currencyConverter = currencyConverter;
             _antiFraudCollector = antiFraudCollector;
+            _accumulatedDepositAggregator = accumulatedDepositAggregator;
             _log = log;
             _data = new ClientsDataHelper<T>(
                 stateRepository,
@@ -51,11 +54,29 @@ namespace Lykke.Service.Limitations.Services
             bool isNewItem = await _data.AddDataItemAsync(item);
 
             if (isNewItem)
+            {
                 await _antiFraudCollector.RemoveOperationAsync(
                     item.ClientId,
                     originAsset,
                     originVolume,
                     item.OperationType.Value);
+
+
+                bool isAssetConvertible = !_currencyConverter.IsNotConvertible(item.Asset);
+
+                if (isAssetConvertible)
+                {
+                    if (item.OperationType == CurrencyOperationType.CardCashIn || item.OperationType == CurrencyOperationType.SwiftTransfer)
+                    {
+                        await _accumulatedDepositAggregator.AggregateTotalAsync(
+                            item.ClientId,
+                            item.Asset,
+                            item.Volume,
+                            item.OperationType.Value
+                            );
+                    }
+                }
+            }
         }
 
         public Task<bool> RemoveClientOperationAsync(string clientId, string operationId)

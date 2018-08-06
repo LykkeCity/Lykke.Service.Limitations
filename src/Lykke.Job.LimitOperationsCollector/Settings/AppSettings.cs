@@ -55,6 +55,9 @@ namespace Lykke.Job.LimitOperationsCollector.Settings
         [AzureTableCheck]
         public string PaymentTransactionsConnectionString { get; set; }
 
+        [AzureTableCheck]
+        public string DepositAccumulationConnectionString { get; set; }
+
         public RabbitMqSettings Rabbit { get; set; }
     }
 

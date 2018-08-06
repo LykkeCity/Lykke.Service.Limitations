@@ -14,5 +14,9 @@ namespace Lykke.Service.Limitations.Core.Services
         Task<ClientData> GetClientDataAsync(string clientData, LimitationPeriod period);
 
         Task RemoveClientOperationAsync(string clientId, string operationId);
+
+        Task<AccumulatedDepositsModel> GetAccumulatedDepositsAsync(string clientId);
+
+        
     }
 }

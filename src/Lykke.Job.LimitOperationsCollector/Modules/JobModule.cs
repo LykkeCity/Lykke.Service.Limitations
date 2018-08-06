@@ -74,6 +74,17 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                 .As<IPaymentTransactionsRepository>()
                 .WithParameter(TypedParameter.From(paymentsStorage))
                 .SingleInstance();
+
+            var accumulatedDepostStorage = AzureTableStorage<AccumulatedDepositPeriodEntity>.Create(
+                _settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString),
+                "AccumulatedDeposits",
+                _log);
+
+            builder.RegisterType<AccumulatedDepositRepository>()
+                .As<IAccumulatedDepositRepository>()
+                .WithParameter(TypedParameter.From(accumulatedDepostStorage))
+                .SingleInstance();
+
         }
 
         private void ReagisterServices(ContainerBuilder builder)
@@ -109,6 +120,11 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                 .As<ICashTransfersCollector>()
                 .SingleInstance()
                 .WithParameter("redisInstanceName", _appSettings.LimitOperationsCollectorJob.RedisInstanceName);
+
+            builder.RegisterType<AccumulatedDepositAggregator>()
+                .As<IAccumulatedDepositAggregator>()
+                .SingleInstance();
+
         }
 
         private void RegisterRabbitMqSubscribers(ContainerBuilder builder)
