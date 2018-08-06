@@ -26,7 +26,7 @@ namespace Lykke.Service.Limitations.Client
 
         public async Task<AutorestClient.Models.IsAliveResponse> IsAlive()
         {
-            return await _service.ApiIsAliveGetAsync();
+            return await _service.IsAliveAsync();
         }
 
         public async Task<LimitationCheckResponse> CheckAsync(
@@ -40,19 +40,19 @@ namespace Lykke.Service.Limitations.Client
                 ClientId = clientId,
                 Asset = asset,
                 Amount = amount,
-                OperationType = operationType.ToString(),
+                OperationType = (AutorestClient.Models.CurrencyOperationType)operationType,
             };
             var result = await _service.ApiLimitationsPostAsync(request);
             return new LimitationCheckResponse
             {
-                IsValid = result.IsValid.HasValue ? result.IsValid.Value : false,
+                IsValid = result.IsValid,
                 FailMessage = result.FailMessage,
             };
         }
 
         public async Task<ClientDataResponse> GetClientDataAsync(string clientId, LimitationPeriod period)
         {
-            var result = await _service.ApiLimitationsGetClientDataPostAsync(clientId, period.ToString());
+            var result = await _service.ApiLimitationsGetClientDataPostAsync((AutorestClient.Models.LimitationPeriod)period, clientId);
             return new ClientDataResponse
             {
                 RemainingLimits = result.RemainingLimits.Select(i => RemainingLimitation.FromModel(i)).ToList(),
@@ -65,6 +65,41 @@ namespace Lykke.Service.Limitations.Client
         public async Task RemoveClientOperationAsync(string clientId, string operationId)
         {
             await _service.ApiLimitationsRemoveClientOperationDeleteAsync(clientId, operationId);
+        }
+
+        public async Task<AccumulatedAmountsResponse> GetAccumulatedAmountsAsync(string clientId)
+        {
+            var accumulatedAmountsModel = await _service.ApiLimitationsGetAccumulatedAmountsPostAsync(clientId);
+            return new AccumulatedAmountsResponse
+            {
+                Deposit1DaySwift = accumulatedAmountsModel.Deposit1DaySwift,
+                Deposit30DaysSwift = accumulatedAmountsModel.Deposit30DaysSwift,
+                DepositTotalSwift = accumulatedAmountsModel.DepositTotalSwift,
+                Deposit1DayCards = accumulatedAmountsModel.Deposit1DayCards,
+                Deposit30DaysCards = accumulatedAmountsModel.Deposit30DaysCards,
+                DepositTotalCards = accumulatedAmountsModel.DepositTotalCards,
+
+                Deposit1DayFiat = accumulatedAmountsModel.Deposit1DayFiat,
+                Deposit1DayNonFiat = accumulatedAmountsModel.Deposit1DayNonFiat,
+                Deposit30DaysFiat = accumulatedAmountsModel.Deposit30DaysFiat,
+                Deposit30DaysNonFiat = accumulatedAmountsModel.Deposit30DaysNonFiat,
+                DepositTotalFiat = accumulatedAmountsModel.DepositTotalFiat,
+                DepositTotalNonFiat = accumulatedAmountsModel.DepositTotalNonFiat,
+
+                Withdrawal1DaySwift = accumulatedAmountsModel.Withdrawal1DaySwift,
+                Withdrawal30DaysSwift = accumulatedAmountsModel.Withdrawal30DaysSwift,
+                WithdrawalTotalSwift = accumulatedAmountsModel.WithdrawalTotalSwift,
+                Withdrawal1DayCards = accumulatedAmountsModel.Withdrawal1DayCards,
+                Withdrawal30DaysCards = accumulatedAmountsModel.Withdrawal30DaysCards,
+                WithdrawalTotalCards = accumulatedAmountsModel.WithdrawalTotalCards,
+
+                Withdrawal1DayFiat = accumulatedAmountsModel.Withdrawal1DayFiat,
+                Withdrawal1DayNonFiat = accumulatedAmountsModel.Withdrawal1DayNonFiat,
+                Withdrawal30DaysFiat = accumulatedAmountsModel.Withdrawal30DaysFiat,
+                Withdrawal30DaysNonFiat = accumulatedAmountsModel.Withdrawal30DaysNonFiat,
+                WithdrawalTotalFiat = accumulatedAmountsModel.WithdrawalTotalFiat,
+                WithdrawalTotalNonFiat = accumulatedAmountsModel.WithdrawalTotalNonFiat
+            };
         }
     }
 }

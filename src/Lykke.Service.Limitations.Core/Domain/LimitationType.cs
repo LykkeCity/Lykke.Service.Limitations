@@ -3,7 +3,13 @@
     public enum LimitationType
     {
         CardCashIn,
+        CardCashOut,
+        CryptoCashIn,
         CryptoCashOut,
-        CardAndSwiftCashIn,
+        SwiftCashIn,
+        SwiftCashOut,
+        OverallCashIn,
+        OverallCashOut,
+        CardAndSwiftCashIn
     }
 }

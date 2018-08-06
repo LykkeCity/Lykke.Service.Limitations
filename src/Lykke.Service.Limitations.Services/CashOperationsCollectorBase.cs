@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
 using Lykke.Service.Limitations.Core.Services;
+using System;
 
 namespace Lykke.Service.Limitations.Services
 {
@@ -13,17 +14,19 @@ namespace Lykke.Service.Limitations.Services
         protected readonly ClientsDataHelper<T> _data;
         protected readonly ICurrencyConverter _currencyConverter;
         protected readonly IAntiFraudCollector _antiFraudCollector;
-
+        protected readonly IAccumulatedDepositAggregator _accumulatedDepositAggregator;
         internal CashOperationsCollectorBase(
             IClientStateRepository<List<T>> stateRepository,
             IAntiFraudCollector antiFraudCollector,
             IConnectionMultiplexer connectionMultiplexer,
+            IAccumulatedDepositAggregator accumulatedDepositAggregator,
             string redisInstanceName,
             string cashPrefix,
             ICurrencyConverter currencyConverter)
         {
             _currencyConverter = currencyConverter;
             _antiFraudCollector = antiFraudCollector;
+            _accumulatedDepositAggregator = accumulatedDepositAggregator;
             _data = new ClientsDataHelper<T>(
                 stateRepository,
                 connectionMultiplexer,
@@ -32,7 +35,7 @@ namespace Lykke.Service.Limitations.Services
                 cashPrefix);
         }
 
-        public virtual async Task AddDataItemAsync(T item)
+        public virtual async Task AddDataItemAsync(T item, bool setOperationType = true)
         {
             string originAsset = item.Asset;
             double originVolume = item.Volume;
@@ -41,16 +44,59 @@ namespace Lykke.Service.Limitations.Services
 
             item.Asset = converted.Item1;
             item.Volume = converted.Item2;
-            item.OperationType = GetOperationType(item);
+            item.RateToUsd = 1;
+
+            if (item.Asset != _currencyConverter.DefaultAsset)
+            // no conversion to USD happend
+            // rate to USD should be calculated and saved too
+            {
+                var rateUsdConverted = await _currencyConverter.ConvertAsync(originAsset, _currencyConverter.DefaultAsset, 1, true);
+                item.RateToUsd = rateUsdConverted.convertedAmount;
+            }
+
+            if (setOperationType)
+            {
+                item.OperationType = GetOperationType(item);
+            }
 
             bool isNewItem = await _data.AddDataItemAsync(item);
 
             if (isNewItem)
+            {
                 await _antiFraudCollector.RemoveOperationAsync(
                     item.ClientId,
                     originAsset,
                     originVolume,
                     item.OperationType.Value);
+
+                // aggregate Lifetime totals in USD
+                switch(item.OperationType)
+                {
+                    case CurrencyOperationType.CardCashIn:
+                    case CurrencyOperationType.SwiftTransfer:
+                    case CurrencyOperationType.SwiftTransferOut:
+                    //case CurrencyOperationType.CryptoCashOut:
+
+                        if (item.Asset != _currencyConverter.DefaultAsset) 
+                            // no conversion to USD happend
+                            // convert to USD for Lifetime totals calculation
+                        {
+                            // force convertation fot crypto, tokens, etc
+                            converted = await _currencyConverter.ConvertAsync(item.Asset, _currencyConverter.DefaultAsset, item.Volume, true);
+                            item.Asset = converted.Item1;
+                            item.Volume = converted.Item2;
+                        }
+
+                        await _accumulatedDepositAggregator.AggregateTotalAsync(
+                            item.ClientId,
+                            item.Asset,
+                            Math.Abs(item.Volume),
+                            item.OperationType.Value
+                            );
+                        break;
+                }
+
+            }
         }
 
         public Task<bool> RemoveClientOperationAsync(string clientId, string operationId)
@@ -69,5 +115,6 @@ namespace Lykke.Service.Limitations.Services
         }
 
         protected abstract CurrencyOperationType GetOperationType(T item);
+
     }
 }

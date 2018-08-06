@@ -1,5 +1,4 @@
-﻿using System;
-using Autofac;
+﻿using Autofac;
 using AzureStorage.Blob;
 using AzureStorage.Tables;
 using Lykke.Common.Cache;
@@ -16,6 +15,8 @@ using Lykke.Service.Limitations.Settings;
 using Lykke.Service.RateCalculator.Client;
 using Lykke.SettingsReader;
 using StackExchange.Redis;
+using System;
+using System.Linq;
 
 namespace Lykke.Service.Limitations.Modules
 {
@@ -62,6 +63,37 @@ namespace Lykke.Service.Limitations.Modules
             builder.RegisterType<SwiftTransferLimitationsRepository>().As<ISwiftTransferLimitationsRepository>().SingleInstance();
             builder.RegisterType<CallTimeLimitsRepository>().As<ICallTimeLimitsRepository>().SingleInstance();
             builder.RegisterType<LimitSettingsRepository>().As<ILimitSettingsRepository>().SingleInstance();
+
+
+            builder.Register(ctx => AzureTableStorage<AccumulatedAmountsPeriodEntity>.Create(_appSettings.ConnectionString(x => x.LimitationsSettings.TiersConnectionString), "AccumulatedAmounts", ctx.Resolve<ILogFactory>())).SingleInstance();
+            builder.RegisterType<AccumulatedAmountsRepository>().As<IAccumulatedDepositRepository>().SingleInstance();
+
+            builder.Register(ctx => AzureTableStorage<TierEntity>.Create(_appSettings.ConnectionString(s => s.LimitationsSettings.TiersConnectionString), "Tiers", ctx.Resolve<ILogFactory>())).SingleInstance();
+            builder.RegisterType<TierRepository>().As<ITierRepository>().SingleInstance();
+
+            builder.Register(ctx => AzureTableStorage<ClientTierEntity>.Create(_appSettings.ConnectionString(s => s.LimitationsSettings.TiersConnectionString), "ClientTiers", ctx.Resolve<ILogFactory>())).SingleInstance();
+            builder.RegisterType<ClientTierRepository>().As<IClientTierRepository>().SingleInstance();
+
+            builder.Register(ctx => AzureTableStorage<ClientTierLogEntity>.Create(_appSettings.ConnectionString(s => s.LimitationsSettings.TiersConnectionString), "ClientTierLogs", ctx.Resolve<ILogFactory>())).SingleInstance();
+            builder.RegisterType<ClientTierLogRepository>().As<IClientTierLogRepository>().SingleInstance();
+
+
+
+            var accumulatedDepostStorage = AzureTableStorage<AccumulatedDepositPeriodEntity>.Create(
+                _settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString),
+                "AccumulatedDeposits",
+                _log);
+
+            builder.Register(ctx => AzureTableStorage<TierEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "Tiers", _log)).SingleInstance();
+            builder.RegisterType<TierRepository>().As<ITierRepository>().SingleInstance();
+
+            builder.Register(ctx => AzureTableStorage<ClientTierEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "ClientTiers", _log)).SingleInstance();
+            builder.RegisterType<ClientTierRepository>().As<IClientTierRepository>().SingleInstance();
+
+            builder.Register(ctx => AzureTableStorage<ClientTierLogEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "ClientTierLogs", _log)).SingleInstance();
+            builder.RegisterType<ClientTierLogRepository>().As<IClientTierLogRepository>().SingleInstance();
+
+
         }
 
         private void RegisterServices(ContainerBuilder builder)
@@ -99,9 +131,14 @@ namespace Lykke.Service.Limitations.Modules
             builder.RegisterType<LimitationChecker>()
                 .As<ILimitationCheck>()
                 .SingleInstance()
-                .WithParameter("limits", settings.Limits)
-                .WithParameter("attemptRetainInMinutes", settings.AttemptRetainInMinutes);            
-            
+                .WithParameter("convertibleCurrencies", settings.ConvertibleAssets)
+                .WithParameter("attemptRetainInMinutes", settings.AttemptRetainInMinutes);
+
+            builder.RegisterType<AccumulatedDepositAggregator>()
+                .As<IAccumulatedDepositAggregator>()
+                .SingleInstance();
+
+
             builder.Register(ctx =>
             {
                 var assetService = ctx.Resolve<IAssetsService>();

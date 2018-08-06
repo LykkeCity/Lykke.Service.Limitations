@@ -11,6 +11,8 @@ namespace Lykke.Service.Limitations.Services
     public class CurrencyConverter : ICurrencyConverter
     {
         private const string ConversionBaseAsset = "USD";
+        private const string InternalBitcoinAsset = "BTC";
+        private const string InternalEthereumAsset = "ETH";
 
         private readonly HashSet<string> _convertibleCurrencies;
 
@@ -18,6 +20,9 @@ namespace Lykke.Service.Limitations.Services
         private readonly ILog _log;
 
         public string DefaultAsset => ConversionBaseAsset;
+        public string BitcoinAsset => InternalBitcoinAsset;
+        public string EthereumAsset => InternalEthereumAsset;
+
 
         public CurrencyConverter(
             List<string> convertibleCurrencies,
@@ -52,5 +57,51 @@ namespace Lykke.Service.Limitations.Services
         {
             return !_convertibleCurrencies.Contains(asset);
         }
+
+        public async Task<double> GetRateToUsd(Dictionary<string, double> cachedRates, string asset, double? rateToUsd)
+        {
+            if (rateToUsd != null && rateToUsd.HasValue)
+            {
+                return rateToUsd.Value;
+            }
+
+            if (asset != DefaultAsset)
+            {
+                double rate = 1;
+                if (!cachedRates.TryGetValue(asset, out rate))
+                {
+                    var (convertedAsset, convertedRate) = await ConvertAsync(asset, DefaultAsset, 1, forceConvesion: true);
+
+                    if (convertedRate == 0) // cross conversion try via BTC
+                    {
+                        (convertedAsset, convertedRate) = await ConvertAsync(asset, BitcoinAsset, 1, forceConvesion: true);
+                        if (convertedRate != 0)
+                        {
+                            double btcRate = await GetRateToUsd(cachedRates, BitcoinAsset, null);
+                            convertedRate = convertedRate * btcRate;
+                        }
+                    }
+
+                    if (convertedRate == 0) // cross conversion try via ETH
+                    {
+                        (convertedAsset, convertedRate) = await ConvertAsync(asset, EthereumAsset, 1, forceConvesion: true);
+                        if (convertedRate != 0)
+                        {
+                            double ethRate = await GetRateToUsd(cachedRates, EthereumAsset, null);
+                            convertedRate = convertedRate * ethRate;
+                        }
+                    }
+
+                    cachedRates[asset] = convertedRate;
+                    rate = convertedRate;
+                }
+                return rate;
+            }
+            else
+            {
+                return 1;
+            }
+        }
+
     }
 }

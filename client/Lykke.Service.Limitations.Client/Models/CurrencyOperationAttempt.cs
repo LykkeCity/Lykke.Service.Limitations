@@ -27,9 +27,9 @@ namespace Lykke.Service.Limitations.Client.Models
             return new CurrencyOperationAttempt
             {
                 ClientId = model.ClientId,
-                Amount = model.Amount.Value,
+                Amount = model.Amount,
                 Asset = model.Asset,
-                OperationType = (CurrencyOperationType)Enum.Parse(typeof(CurrencyOperationType), model.OperationType),
+                OperationType = (CurrencyOperationType)model.OperationType
             };
         }
     }

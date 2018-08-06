@@ -15,7 +15,10 @@ namespace Lykke.Service.Limitations.Settings
         public RateCalculatorServiceClient RateCalculatorServiceClient { get; set; }
         public AssetServiceClient AssetsServiceClient { get; set; }
 
-        public RabbitMqSettings SagasRabbitMq { get; set; }
+        public RabbitMqSagasSettings SagasRabbitMq { get; set; }
+    }
+
+        public RabbitMqSagasSettings SagasRabbitMq { get; set; }
     }
 
     public class AssetServiceClient
@@ -47,11 +50,13 @@ namespace Lykke.Service.Limitations.Settings
         public string GlobalSettingsConnString { get; set; }
 
         [HttpCheck("api/isalive")]
+        [AzureTableCheck]
+        public string TiersConnectionString { get; set; }
+
+        [HttpCheck("api/isalive")]
         public string LimitOperationsJobUrl { get; set; }
 
         public int AttemptRetainInMinutes { get; set; }
-
-        public List<CashOperationLimitation> Limits { get; set; }
 
         public List<string> ConvertibleAssets { get; set; }
     }
@@ -66,4 +71,19 @@ namespace Lykke.Service.Limitations.Settings
         [AzureTableCheck]
         public string ConnectionString { get; set; }        
     }
+
+    public class RabbitMqSagasSettings
+    {
+        [AmqpCheck]
+        public string RabbitConnectionString { get; set; }
+
+    }
+
+    public class RabbitMqSagasSettings
+    {
+        [AmqpCheck]
+        public string RabbitConnectionString { get; set; }
+
+    }
+
 }

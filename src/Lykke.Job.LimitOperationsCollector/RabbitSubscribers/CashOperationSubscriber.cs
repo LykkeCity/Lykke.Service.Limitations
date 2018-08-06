@@ -8,6 +8,7 @@ using Lykke.MatchingEngine.Connector.Models.RabbitMq;
 using Lykke.RabbitMqBroker;
 using Lykke.RabbitMqBroker.Subscriber;
 using Lykke.Service.Limitations.Core.Services;
+using Lykke.Service.Operations.Client;
 
 namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
 {
@@ -17,18 +18,21 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
         private readonly string _connectionString;
         private readonly string _exchangeName;
         private readonly ICashOperationsCollector _cashOperationsCollector;
+        private readonly IOperationsClient _operationsClient;
 
         private RabbitMqSubscriber<CashOperation> _subscriber;
         private RabbitMqSubscriber<CashOperation> _oldSubscriber;
 
         public CashOperationSubscriber(
             ICashOperationsCollector cashOperationsCollector,
+            IOperationsClient operationsClient,
             IStartupManager startupManager,
             ILogFactory log,
             string connectionString,
             string exchangeName)
         {
             _cashOperationsCollector = cashOperationsCollector;
+            _operationsClient = operationsClient;
             _log = log.CreateLog(this);
             _connectionString = connectionString;
             _exchangeName = exchangeName;
@@ -75,14 +79,14 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
             try
             {
                 await _cashOperationsCollector.AddDataItemAsync(
-                    new Service.Limitations.Core.Domain.CashOperation
-                    {
-                        Id = item.Id,
-                        ClientId = item.ClientId,
-                        Asset = item.Asset,
-                        Volume = item.Volume,
-                        DateTime = item.DateTime,
-                    });
+                new Service.Limitations.Core.Domain.CashOperation
+                {
+                    Id = item.Id,
+                    ClientId = item.ClientId,
+                    Asset = item.Asset,
+                    Volume = item.Volume,
+                    DateTime = item.DateTime,
+                });
             }
             catch (Exception ex)
             {

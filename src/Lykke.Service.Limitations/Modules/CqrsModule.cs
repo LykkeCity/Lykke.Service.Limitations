@@ -8,6 +8,8 @@ using Lykke.Messaging.Contract;
 using Lykke.Messaging.RabbitMq;
 using Lykke.Messaging.Serialization;
 using Lykke.Service.Assets.Contract.Events;
+using Lykke.Service.Kyc.Abstractions.Domain.Profile;
+using Lykke.Service.Limitations.Models;
 using Lykke.Service.Limitations.Projections;
 using Lykke.Service.Limitations.Settings;
 using Lykke.SettingsReader;
@@ -28,7 +30,9 @@ namespace Lykke.Service.Limitations.Modules
             var rabbitMqSettings = new RabbitMQ.Client.ConnectionFactory { Uri = _appSettings.CurrentValue.SagasRabbitMq.RabbitConnectionString };
 
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>().SingleInstance();
+
             builder.RegisterType<AssetsProjection>();
+            builder.RegisterType<NotificationProjection>();
 
             builder.Register(ctx =>  new MessagingEngine(ctx.Resolve<ILogFactory>(),
                 new TransportResolver(new Dictionary<string, TransportInfo>
@@ -48,10 +52,13 @@ namespace Lykke.Service.Limitations.Modules
 
                     Register.DefaultEndpointResolver(new RabbitMqConventionEndpointResolver("RabbitMq", SerializationFormat.MessagePack, environment: "lykke", exclusiveQueuePostfix: "k8s")),
 
-                    Register.BoundedContext("limitations")                        
-                        .ListeningEvents(typeof(AssetCreatedEvent), typeof(AssetUpdatedEvent)).From("assets").On("events")                        
-                        .WithProjection(typeof(AssetsProjection), "assets"));
-
+                    Register.BoundedContext("limitations")
+                        .ListeningEvents(typeof(AssetCreatedEvent), typeof(AssetUpdatedEvent)).From("assets").On("events")
+                            .WithProjection(typeof(AssetsProjection), "assets")
+                        .ListeningEvents(typeof(ChangeStatusEvent)).From("kyc").On("events")
+                            .WithEndpointResolver(new RabbitMqConventionEndpointResolver("RabbitMq", SerializationFormat.ProtoBuf, environment: "lykke", exclusiveQueuePostfix: "k8s"))
+                            .WithProjection(typeof(NotificationProjection), "kyc"));
+                    
             }).As<ICqrsEngine>().AutoActivate().SingleInstance();
         }
     }

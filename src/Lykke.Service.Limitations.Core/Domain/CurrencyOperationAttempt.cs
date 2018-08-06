@@ -10,6 +10,8 @@ namespace Lykke.Service.Limitations.Core.Domain
 
         public double Amount { get; set; }
 
+        public double RateToUsd { get; set; }
+
         public string Asset { get; set; }
 
         [JsonConverter(typeof(StringEnumConverter))]

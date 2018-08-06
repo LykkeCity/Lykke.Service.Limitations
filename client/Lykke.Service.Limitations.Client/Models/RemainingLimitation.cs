@@ -23,9 +23,9 @@ namespace Lykke.Service.Limitations.Client.Models
         {
             return new RemainingLimitation
             {
-                LimitationType = (LimitationType)Enum.Parse(typeof(LimitationType), model.LimitationType),
+                LimitationType = (LimitationType)model.LimitationType,
                 Asset = model.Asset,
-                RemainingAmount = model.RemainingAmount.Value,
+                RemainingAmount = model.RemainingAmount,
             };
         }
     }

@@ -13,6 +13,7 @@ namespace Lykke.Service.Limitations.Services
         public CashTransfersCollector(
             ICashTransfersRepository stateRepository,
             IConnectionMultiplexer connectionMultiplexer,
+            IAccumulatedDepositAggregator accumulatedDepositAggregator,
             IAntiFraudCollector antifraudCollector,
             ICurrencyConverter currencyConverter,
             string redisInstanceName)
@@ -20,6 +21,7 @@ namespace Lykke.Service.Limitations.Services
                 stateRepository,
                 antifraudCollector,
                 connectionMultiplexer,
+                accumulatedDepositAggregator,
                 redisInstanceName,
                 nameof(CashTransferOperation),
                 currencyConverter)
@@ -29,9 +31,10 @@ namespace Lykke.Service.Limitations.Services
         public async Task<(double, bool)> GetCurrentAmountAsync(
             string clientId,
             string asset,
-            LimitationPeriod period,
+            CashOperationLimitation limit,
             CurrencyOperationType operationType)
         {
+            Dictionary<string, double> cachedRates = new Dictionary<string, double>();
             (var items, bool notCached) = await _data.GetClientDataAsync(clientId, operationType);
             double result = 0;
             DateTime now = DateTime.UtcNow;
@@ -39,11 +42,24 @@ namespace Lykke.Service.Limitations.Services
             {
                 if (item.Asset != asset)
                     continue;
-                if (period == LimitationPeriod.Day
+                if (limit.Period == LimitationPeriod.Day
                     && now.Subtract(item.DateTime).TotalHours >= 24)
                     continue;
 
-                result += item.Volume;
+                //  limit asset is USD - convert item amount to USD
+                if (limit.Asset == _currencyConverter.DefaultAsset)
+                {
+                    double rateToUsd = await _currencyConverter.GetRateToUsd(cachedRates, item.Asset, item.RateToUsd);
+                    result += item.Volume * rateToUsd;
+                }
+                else
+                {
+                    //  limit asset is not USD - limitation for specific asset
+                    if (item.Asset == asset)
+                    {
+                        result += item.Volume;
+                    }
+                }
             }
             return (result, notCached);
         }

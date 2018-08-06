@@ -14,6 +14,7 @@ using Lykke.Job.LimitOperationsCollector.Settings;
 using Lykke.Job.LimitOperationsCollector.RabbitSubscribers;
 using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
+using Lykke.Service.Operations.Client;
 
 namespace Lykke.Job.LimitOperationsCollector.Modules
 {
@@ -39,6 +40,8 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                 .SingleInstance();
             
             builder.RegisterRateCalculatorClient(_settings.CurrentValue.RateCalculatorServiceClient.ServiceUrl);
+
+            builder.RegisterOperationsClient(_settings.CurrentValue.OperationsServiceClient.ServiceUrl);
 
             ReagisterRepositories(builder);
 
@@ -67,6 +70,16 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
             builder.RegisterType<PaymentTransactionsRepository>()
                 .As<IPaymentTransactionsRepository>()                
                 .SingleInstance();
+
+            builder.Register(ctx => AzureTableStorage<AccumulatedAmountsPeriodEntity>.Create(
+                _settings.ConnectionString(s => s.LimitOperationsCollectorJob.TiersConnectionString),
+                "AccumulatedAmounts",
+                ctx.Resolve<ILogFactory>())).SingleInstance();
+
+            builder.RegisterType<AccumulatedAmountsRepository>()
+                .As<IAccumulatedDepositRepository>()
+                .SingleInstance();
+
         }
 
         private void ReagisterServices(ContainerBuilder builder)
@@ -102,6 +115,16 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                 .As<ICashTransfersCollector>()
                 .SingleInstance()
                 .WithParameter("redisInstanceName", _settings.CurrentValue.LimitOperationsCollectorJob.RedisInstanceName);
+
+            builder.RegisterType<AccumulatedDepositAggregator>()
+                .As<IAccumulatedDepositAggregator>()
+                .SingleInstance();
+
+
+            builder.RegisterType<AccumulatedDepositAggregator>()
+                .As<IAccumulatedDepositAggregator>()
+                .SingleInstance();
+
         }
 
         private void RegisterRabbitMqSubscribers(ContainerBuilder builder)

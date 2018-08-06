@@ -84,5 +84,24 @@ namespace Lykke.Job.LimitOperationsCollector.Controllers
 
             return Task.CompletedTask;
         }
+
+        /// <inheritdoc />
+        [HttpPost("add")]
+        [SwaggerOperation("Add")]
+        public async Task Add(
+            string clientId,
+            string assetId,
+            double amount,
+            CurrencyOperationType currencyOperationType)
+        {
+            CashOperation item = new CashOperation();
+            item.ClientId = clientId;
+            item.Asset = assetId;
+            item.Volume = amount;
+            item.OperationType = currencyOperationType;
+
+            await _cashOperationsCollector.AddDataItemAsync(item);
+        }
+
     }
 }
