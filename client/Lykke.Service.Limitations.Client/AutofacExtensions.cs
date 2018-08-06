@@ -16,6 +16,7 @@ namespace Lykke.Service.Limitations.Client
 
             builder.RegisterInstance(new LimitationsServiceClient(serviceUrl)).As<ILimitationsServiceClient>().SingleInstance();
             builder.RegisterInstance(new SwiftLimitationServiceClient(serviceUrl)).As<ISwiftLimitationServiceClient>().SingleInstance();
+            builder.RegisterInstance(new TiersServiceClient(serviceUrl)).As<ITiersServiceClient>().SingleInstance();
         }
     }
 }

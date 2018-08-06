@@ -16,6 +16,10 @@ namespace Lykke.Service.Limitations.Services
 {
     public class LimitationChecker : ILimitationCheck
     {
+        private const string _swiftLifetimeDepositLimitError = "Operation is not allowed because of Swift Lifetime deposit limitation.";
+        private const string _creditCardLifetimeDepositLimitError = "Operation is not allowed because of Credt cards Lifetime deposit limitation.";
+        private const string _totalLifetimeDepositLimitError = "Operation is not allowed because of Total Lifetime deposit limitation.";
+
         private const int _cashOperationsTimeoutInMinutes = 10;
 
         private readonly int _attemptRetainInMinutes;
@@ -30,6 +34,10 @@ namespace Lykke.Service.Limitations.Services
         private readonly ILimitSettingsRepository _limitSettingsRepository;
         private readonly ICallTimeLimitsRepository _callTimeLimitsRepository;
         private readonly OnDemandDataCache<Asset> _assets;
+        private readonly IAccumulatedDepositRepository _accumulatedDepositRepository;
+        private readonly List<string> _convertibleCurrencies;
+        private readonly ITierRepository _tierRepository;
+        private readonly IClientTierRepository _clientTierRepository;
         private readonly ILog _log;
 
         public LimitationChecker(
@@ -39,8 +47,12 @@ namespace Lykke.Service.Limitations.Services
             IAntiFraudCollector antiFraudCollector,
             ILimitOperationsApi limitOperationsApi,
             List<CashOperationLimitation> limits,
+            List<string> convertibleCurrencies,
             int attemptRetainInMinutes,
             ISwiftTransferLimitationsRepository swiftTransferLimitationsRepository,
+            IAccumulatedDepositRepository accumulatedDepositRepository,
+            ITierRepository tierRepository,
+            IClientTierRepository clientTierRepository,
             ILimitSettingsRepository limitSettingsRepository,
             ICallTimeLimitsRepository callTimeLimitsRepository,
             OnDemandDataCache<Asset> assets, 
@@ -53,6 +65,9 @@ namespace Lykke.Service.Limitations.Services
             _limitOperationsApi = limitOperationsApi;
             _attemptRetainInMinutes = attemptRetainInMinutes > 0 ? attemptRetainInMinutes : 1;
             _swiftTransferLimitationsRepository = swiftTransferLimitationsRepository;
+            _accumulatedDepositRepository = accumulatedDepositRepository;
+            _tierRepository = tierRepository;
+            _clientTierRepository = clientTierRepository;
             _limitSettingsRepository = limitSettingsRepository;
             _callTimeLimitsRepository = callTimeLimitsRepository;
             _assets = assets;
@@ -74,6 +89,7 @@ namespace Lykke.Service.Limitations.Services
                     _limits.Add(limit);
                 }
             }
+            _convertibleCurrencies = convertibleCurrencies;
         }
 
         private async Task<string> CheckSwiftWithdrawLimitations(string asset, decimal amount)
@@ -132,17 +148,59 @@ namespace Lykke.Service.Limitations.Services
                 }
             }
 
-            if (currencyOperationType != CurrencyOperationType.CryptoCashIn && 
-                currencyOperationType != CurrencyOperationType.CryptoCashOut)
+            var limitationTypes = LimitMapHelper.MapOperationType(currencyOperationType);
+            List<CashOperationLimitation> typeLimits = _limits.Where(l => limitationTypes.Contains(l.LimitationType)).ToList();
+
+            if (currencyOperationType != CurrencyOperationType.CryptoCashIn
+                && currencyOperationType != CurrencyOperationType.CryptoCashOut)
             {
                 (assetId, amount) = await _currencyConverter.ConvertAsync(
                     assetId,
                     _currencyConverter.DefaultAsset,
                     amount);
+
+
             }
 
-            var limitationTypes = LimitMapHelper.MapOperationType(currencyOperationType);
-            var typeLimits = _limits.Where(l => limitationTypes.Contains(l.LimitationType));
+            ITier clientTier = await GetClientTierAsync(clientId, originalAsset);
+            if (clientTier != null)  // check all time deposit limits
+            {
+                double accumulatedSwiftDeposits = 0;
+                double accumulatedCardDeposits = 0;
+
+                if (currencyOperationType == CurrencyOperationType.CardCashIn || currencyOperationType == CurrencyOperationType.SwiftTransfer)
+                {
+                    accumulatedSwiftDeposits = await _accumulatedDepositRepository.GetAccumulatedDepositsAsync(clientId, CurrencyOperationType.SwiftTransfer);
+                    accumulatedCardDeposits = await _accumulatedDepositRepository.GetAccumulatedDepositsAsync(clientId, CurrencyOperationType.CardCashIn);
+
+                    switch (currencyOperationType)
+                    {
+                        case CurrencyOperationType.CardCashIn:
+                            if (clientTier.LimitCreditCardsCashInAllTime > 0 && clientTier.LimitCreditCardsCashInAllTime < accumulatedCardDeposits + amount)
+                            {
+                                return new LimitationCheckResult { IsValid = false, FailMessage = _creditCardLifetimeDepositLimitError };
+                            }
+                            break;
+                        case CurrencyOperationType.SwiftTransfer:
+                            if (clientTier.LimitSwiftCashInAllTime > 0 && clientTier.LimitSwiftCashInAllTime < accumulatedSwiftDeposits + amount)
+                            {
+                                return new LimitationCheckResult { IsValid = false, FailMessage = _swiftLifetimeDepositLimitError };
+                            }
+                            break;
+                    }
+
+                    if (clientTier.LimitCreditCardsCashInAllTime > 0 && clientTier.LimitSwiftCashInAllTime > 0 &&
+                        clientTier.LimitTotalCashInAllTime < accumulatedCardDeposits + accumulatedSwiftDeposits + amount)
+                    {
+                        return new LimitationCheckResult { IsValid = false, FailMessage = _creditCardLifetimeDepositLimitError };
+                    }
+
+                    // replace limits with new ones from tier
+                    typeLimits = CreateLimitsFromTier(clientTier, typeLimits, clientId, asset, currencyOperationType);
+                }
+            }
+
+
             if (!typeLimits.Any())
             {
                 try
@@ -189,6 +247,7 @@ namespace Lykke.Service.Limitations.Services
                     false);
                 if (error != null)
                     return new LimitationCheckResult { IsValid = false, FailMessage = error };
+
 
                 if (currencyOperationType == CurrencyOperationType.CryptoCashOut)
                 {
@@ -247,6 +306,106 @@ namespace Lykke.Service.Limitations.Services
             return new LimitationCheckResult { IsValid = true };
         }
 
+        private async Task<ITier> GetClientTierAsync(string clientId, string asset)
+        {
+            ITier clientTier = null;
+
+            bool isFiatCurrency = _convertibleCurrencies.Contains(asset);
+            if (isFiatCurrency)
+            {
+                var clientTierId = await _clientTierRepository.GetClientTierIdAsync(clientId);
+                if (clientTierId != null)
+                {
+                    clientTier = await _tierRepository.LoadTierAsync(clientTierId);
+                }
+            }
+
+            return clientTier;
+        }
+
+        private List<CashOperationLimitation> CreateLimitsFromTier(ITier clientTier, List<CashOperationLimitation> typeLimits, string clientId, string asset, CurrencyOperationType currencyOperationType)
+        {
+            if (clientTier != null)
+            {
+                typeLimits = new List<CashOperationLimitation>();
+
+                if (currencyOperationType == CurrencyOperationType.CardCashIn)
+                {
+                    CreateLimit(typeLimits, clientId, asset, clientTier.LimitCreditCardsCashIn24Hours, LimitationType.CardCashIn, LimitationPeriod.Day);
+                    CreateLimit(typeLimits, clientId, asset, clientTier.LimitCreditCardsCashIn30Days, LimitationType.CardCashIn, LimitationPeriod.Month);
+                }
+
+                if (currencyOperationType == CurrencyOperationType.SwiftTransfer)
+                {
+                    long cardAndSwiftCashIn24HoursLimit = clientTier.LimitCreditCardsCashIn30Days + clientTier.LimitSwiftCashIn30Days;
+                    if (cardAndSwiftCashIn24HoursLimit > 0 && clientTier.LimitTotalCashIn30Days > 0 && cardAndSwiftCashIn24HoursLimit > clientTier.LimitTotalCashIn30Days)
+                    {
+                        cardAndSwiftCashIn24HoursLimit = clientTier.LimitTotalCashIn30Days;
+                    }
+                    CreateLimit(typeLimits, clientId, asset, cardAndSwiftCashIn24HoursLimit, LimitationType.CardAndSwiftCashIn, LimitationPeriod.Day);
+
+                    long cardAndSwiftCashIn30DaysLimit = clientTier.LimitCreditCardsCashIn30Days + clientTier.LimitSwiftCashIn30Days;
+                    if (cardAndSwiftCashIn30DaysLimit > 0 && clientTier.LimitTotalCashIn30Days > 0 && cardAndSwiftCashIn30DaysLimit > clientTier.LimitTotalCashIn30Days)
+                    {
+                        cardAndSwiftCashIn30DaysLimit = clientTier.LimitTotalCashIn30Days;
+                    }
+                    CreateLimit(typeLimits, clientId, asset, cardAndSwiftCashIn30DaysLimit, LimitationType.CardAndSwiftCashIn, LimitationPeriod.Month);
+                }
+            }
+
+            return typeLimits;
+        }
+
+        private List<CashOperationLimitation> CreateLimitsFromTier(ITier clientTier, string clientId, string asset, LimitationPeriod period)
+        {
+            var result = new List<CashOperationLimitation>();
+
+            if (clientTier != null)
+            {
+                switch (period)
+                {
+                    case LimitationPeriod.Day:
+                        CreateLimit(result, clientId, asset, clientTier.LimitCreditCardsCashIn24Hours, LimitationType.CardCashIn, LimitationPeriod.Day);
+
+                        long cardAndSwiftCashIn24HoursLimit = clientTier.LimitCreditCardsCashIn30Days + clientTier.LimitSwiftCashIn30Days;
+                        if (cardAndSwiftCashIn24HoursLimit > 0 && clientTier.LimitTotalCashIn30Days > 0 && cardAndSwiftCashIn24HoursLimit > clientTier.LimitTotalCashIn30Days)
+                        {
+                            cardAndSwiftCashIn24HoursLimit = clientTier.LimitTotalCashIn30Days;
+                        }
+                        CreateLimit(result, clientId, asset, cardAndSwiftCashIn24HoursLimit, LimitationType.CardAndSwiftCashIn, LimitationPeriod.Day);
+                        break;
+                    case LimitationPeriod.Month:
+                        CreateLimit(result, clientId, asset, clientTier.LimitCreditCardsCashIn30Days, LimitationType.CardCashIn, LimitationPeriod.Month);
+
+                        long cardAndSwiftCashIn30DaysLimit = clientTier.LimitCreditCardsCashIn30Days + clientTier.LimitSwiftCashIn30Days;
+                        if (cardAndSwiftCashIn30DaysLimit > 0 && clientTier.LimitTotalCashIn30Days > 0 && cardAndSwiftCashIn30DaysLimit > clientTier.LimitTotalCashIn30Days)
+                        {
+                            cardAndSwiftCashIn30DaysLimit = clientTier.LimitTotalCashIn30Days;
+                        }
+                        CreateLimit(result, clientId, asset, cardAndSwiftCashIn30DaysLimit, LimitationType.CardAndSwiftCashIn, LimitationPeriod.Month);
+                        break;
+                }
+            }
+
+            return result;
+        }
+
+        private static void CreateLimit(List<CashOperationLimitation> typeLimits, string clientId, string asset, long value, LimitationType limitationType, LimitationPeriod limitationPeriod)
+        {
+            if (value > 0)
+            {
+                CashOperationLimitation l = new CashOperationLimitation()
+                {
+                    ClientId = clientId,
+                    Asset = asset,
+                    Limit = value,
+                    LimitationType = limitationType,
+                    Period = limitationPeriod
+                };
+                typeLimits.Add(l);
+            }
+        }
+
         public async Task<ClientData> GetClientDataAsync(string clientId, LimitationPeriod period)
         {
             var result = new ClientData
@@ -285,6 +444,18 @@ namespace Lykke.Service.Limitations.Services
         {
             var result = new List<RemainingLimitation>();
             var periodLimits = _limits.Where(l => l.Period == period);
+
+            ITier clientTier = await GetClientTierAsync(clientId, _currencyConverter.DefaultAsset);
+            if (clientTier != null)  // check all time deposit limits
+            {
+                // remove old limits
+                periodLimits = periodLimits.Where(l => l.LimitationType != LimitationType.CardCashIn && l.LimitationType != LimitationType.CardAndSwiftCashIn);
+
+                // replace with new limits from tiers
+                var additionalPeriodLimits = CreateLimitsFromTier(clientTier, clientId, _currencyConverter.DefaultAsset, period);
+                periodLimits = periodLimits.Union(additionalPeriodLimits);
+            }
+
             foreach (var periodLimit in periodLimits)
             {
                 if (!string.IsNullOrWhiteSpace(periodLimit.ClientId) && clientId != periodLimit.ClientId)
@@ -369,6 +540,7 @@ namespace Lykke.Service.Limitations.Services
                 Asset = limitation.Asset,
                 LimitationType = limitation.LimitationType,
                 RemainingAmount = Math.Max(0, limitation.Limit - sum),
+                LimitAmount = limitation.Limit
             };
         }
 
@@ -483,6 +655,49 @@ namespace Lykke.Service.Limitations.Services
                 default:
                     throw new NotSupportedException($"Limitation period {period} is not supported");
             }
+        }
+
+        public async Task<AccumulatedDepositsModel> GetAccumulatedDepositsAsync(string clientId)
+        {
+            AccumulatedDepositsModel result = new AccumulatedDepositsModel();
+
+            var accumulatedSwiftDeposit = await _accumulatedDepositRepository.GetAccumulatedDepositsAsync(clientId, CurrencyOperationType.SwiftTransfer);
+            var accumulatedCardDeposit = await _accumulatedDepositRepository.GetAccumulatedDepositsAsync(clientId, CurrencyOperationType.CardCashIn);
+            result.AmountTotal = Math.Round(accumulatedSwiftDeposit + accumulatedCardDeposit, 15);
+
+            var dayOperations = (await LoadOperationsAsync(clientId, LimitationPeriod.Day))
+                .Where(o => o.OperationType == CurrencyOperationType.CardCashIn || o.OperationType == CurrencyOperationType.SwiftTransfer);
+            foreach (var op in dayOperations)
+            {
+                result.Amount1Day += op.Volume;
+            }
+            result.Amount1Day = Math.Round(result.Amount1Day, 15);
+
+            var monthOperations = (await LoadOperationsAsync(clientId, LimitationPeriod.Month))
+                .Where(o => o.OperationType == CurrencyOperationType.CardCashIn || o.OperationType == CurrencyOperationType.SwiftTransfer);
+            foreach (var op in monthOperations)
+            {
+                result.Amount30Days += op.Volume;
+            }
+            result.Amount30Days = Math.Round(result.Amount30Days, 15);
+
+            return result;
+        }
+
+        private async Task<IEnumerable<CashOperation>> LoadOperationsAsync(string clientId, LimitationPeriod period)
+        {
+            return (await _cashOperationsCollector.GetClientDataAsync(clientId, period)).Union(
+                (await _cashTransfersCollector.GetClientDataAsync(clientId, period))
+                    .Select(i => new CashOperation
+                    {
+                        Id = i.Id,
+                        ClientId = i.ClientId,
+                        Asset = i.Asset,
+                        Volume = i.Volume,
+                        DateTime = i.DateTime,
+                        OperationType = i.OperationType,
+                    })
+                    .ToList());
         }
     }
 }

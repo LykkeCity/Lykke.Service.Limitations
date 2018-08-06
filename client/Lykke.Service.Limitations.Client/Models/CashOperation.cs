@@ -34,10 +34,10 @@ namespace Lykke.Service.Limitations.Client.Models
             {
                 Id = model.Id,
                 ClientId = model.ClientId,
-                Amount = model.Volume.Value,
+                Amount = model.Volume,
                 Asset = model.Asset,
-                DateTime = model.DateTime.Value,
-                OperationType = (CurrencyOperationType)Enum.Parse(typeof(CurrencyOperationType), model.OperationType),
+                DateTime = model.DateTime,
+                OperationType = (CurrencyOperationType)model.OperationType,
             };
         }
     }

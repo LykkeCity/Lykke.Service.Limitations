@@ -100,6 +100,8 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
 
                 if (paymentTransaction == null || paymentTransaction.PaymentSystem != CashInPaymentSystem.Swift)
                 {
+                    _log.WriteInfo(nameof(CashTransferOperationSubscriber), nameof(CashOperation), item.ToJson());
+
                     var cashOp = new CashOperation
                     {
                         Id = item.Id,
@@ -112,6 +114,8 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
                 }
                 else
                 {
+                    _log.WriteInfo(nameof(CashTransferOperationSubscriber), nameof(CashTransferOperation), item.ToJson());
+
                     var transfer = new Service.Limitations.Core.Domain.CashTransferOperation
                     {
                         Id = item.Id,

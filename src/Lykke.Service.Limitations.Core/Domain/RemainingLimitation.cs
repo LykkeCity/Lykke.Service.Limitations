@@ -11,5 +11,7 @@ namespace Lykke.Service.Limitations.Core.Domain
         public string Asset { get; set; }
 
         public double RemainingAmount { get; set; }
+
+        public double LimitAmount { get; set; }
     }
 }

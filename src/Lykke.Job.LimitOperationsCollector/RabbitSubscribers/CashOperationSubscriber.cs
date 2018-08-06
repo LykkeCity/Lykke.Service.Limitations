@@ -74,6 +74,8 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
         {
             try
             {
+                _log.WriteInfo(nameof(CashOperationSubscriber), nameof(CashOperation), item.ToJson());
+
                 await _cashOperationsCollector.AddDataItemAsync(
                     new Service.Limitations.Core.Domain.CashOperation
                     {

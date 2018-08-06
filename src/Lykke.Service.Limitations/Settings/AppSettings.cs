@@ -15,6 +15,9 @@ namespace Lykke.Service.Limitations.Settings
         public RateCalculatorServiceClient RateCalculatorServiceClient { get; set; }
         public AssetServiceClient AssetsServiceClient { get; set; }
 
+        public RabbitMqSagasSettings SagasRabbitMq { get; set; }
+    }
+
         public RabbitMqSettings SagasRabbitMq { get; set; }
     }
 
@@ -46,6 +49,12 @@ namespace Lykke.Service.Limitations.Settings
         [AzureTableCheck]
         public string GlobalSettingsConnString { get; set; }
 
+        [AzureTableCheck]
+        public string DepositAccumulationConnectionString { get; set; }
+
+        [AzureTableCheck]
+        public string DepositAccumulationConnectionString { get; set; }
+
         [HttpCheck("api/isalive", false)]
         public string LimitOperationsJobUrl { get; set; }
 
@@ -66,4 +75,12 @@ namespace Lykke.Service.Limitations.Settings
         [AzureTableCheck]
         public string ConnectionString { get; set; }        
     }
+
+    public class RabbitMqSagasSettings
+    {
+        [AmqpCheck]
+        public string RabbitConnectionString { get; set; }
+
+    }
+
 }

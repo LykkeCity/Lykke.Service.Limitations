@@ -4,6 +4,7 @@ using AzureStorage.Blob;
 using AzureStorage.Tables;
 using Lykke.Common.Cache;
 using Lykke.Common.Log;
+using Lykke.Common.Log;
 using Lykke.HttpClientGenerator;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Limitations.AzureRepositories;
@@ -16,6 +17,8 @@ using Lykke.Service.Limitations.Settings;
 using Lykke.Service.RateCalculator.Client;
 using Lykke.SettingsReader;
 using StackExchange.Redis;
+using System;
+using System.Linq;
 
 namespace Lykke.Service.Limitations.Modules
 {
@@ -57,6 +60,63 @@ namespace Lykke.Service.Limitations.Modules
             builder.RegisterType<SwiftTransferLimitationsRepository>().As<ISwiftTransferLimitationsRepository>().SingleInstance();
             builder.RegisterType<CallTimeLimitsRepository>().As<ICallTimeLimitsRepository>().SingleInstance();
             builder.RegisterType<LimitSettingsRepository>().As<ILimitSettingsRepository>().SingleInstance();
+
+            var accumulatedDepostStorage = AzureTableStorage<AccumulatedDepositPeriodEntity>.Create(
+                _settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString),
+                "AccumulatedDeposits",
+                _log);
+
+            builder.RegisterType<AccumulatedDepositRepository>()
+                .As<IAccumulatedDepositRepository>()
+                .WithParameter(TypedParameter.From(accumulatedDepostStorage))
+                .SingleInstance();
+
+            var tierStorage = AzureTableStorage<TierEntity>.Create(
+                _settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString),
+                "Tiers",
+                _log);
+            var tierRepository = new TierRepository(tierStorage);
+            builder
+                .RegisterInstance(tierRepository)
+                .As<ITierRepository>()
+                .SingleInstance();
+
+            var clientTierStorage = AzureTableStorage<ClientTierEntity>.Create(
+                _settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString),
+                "ClientTiers",
+                _log);
+            var clientTierRepository = new ClientTierRepository(clientTierStorage);
+            builder
+                .RegisterInstance(clientTierRepository)
+                .As<IClientTierRepository>()
+                .SingleInstance();
+
+            var clientTierLogStorage = AzureTableStorage<ClientTierLogEntity>.Create(
+                _settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString),
+                "ClientTierLogs",
+                _log);
+            var clientTierLogRepository = new ClientTierLogRepository(clientTierLogStorage);
+            builder
+                .RegisterInstance(clientTierLogRepository)
+                .As<IClientTierLogRepository>()
+                .SingleInstance();
+
+
+            var accumulatedDepostStorage = AzureTableStorage<AccumulatedDepositPeriodEntity>.Create(
+                _settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString),
+                "AccumulatedDeposits",
+                _log);
+
+            builder.Register(ctx => AzureTableStorage<TierEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "Tiers", _log)).SingleInstance();
+            builder.RegisterType<TierRepository>().As<ITierRepository>().SingleInstance();
+
+            builder.Register(ctx => AzureTableStorage<ClientTierEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "ClientTiers", _log)).SingleInstance();
+            builder.RegisterType<ClientTierRepository>().As<IClientTierRepository>().SingleInstance();
+
+            builder.Register(ctx => AzureTableStorage<ClientTierLogEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "ClientTierLogs", _log)).SingleInstance();
+            builder.RegisterType<ClientTierLogRepository>().As<IClientTierLogRepository>().SingleInstance();
+
+
         }
 
         private void RegisterServices(ContainerBuilder builder)
@@ -91,12 +151,22 @@ namespace Lykke.Service.Limitations.Modules
                 .SingleInstance()
                 .WithParameter("redisInstanceName", settings.RedisInstanceName);
 
+            // limits from setting for fiat currency for an individual client will be ignored
+            // only tier limits should be used for such purposes
+            Func<CashOperationLimitation, bool> isIndividualFiatLimit = limit => !string.IsNullOrWhiteSpace(limit.ClientId) && settings.ConvertibleAssets.Contains(limit.Asset);
+            var filteredLimits = settings.Limits.Where(limit => !isIndividualFiatLimit(limit)).ToList();
             builder.RegisterType<LimitationChecker>()
                 .As<ILimitationCheck>()
                 .SingleInstance()
-                .WithParameter("limits", settings.Limits)
-                .WithParameter("attemptRetainInMinutes", settings.AttemptRetainInMinutes);            
-            
+                .WithParameter("limits", filteredLimits)
+                .WithParameter("convertibleCurrencies", settings.ConvertibleAssets)
+                .WithParameter("attemptRetainInMinutes", settings.AttemptRetainInMinutes);
+
+            builder.RegisterType<AccumulatedDepositAggregator>()
+                .As<IAccumulatedDepositAggregator>()
+                .SingleInstance();
+
+
             builder.Register(ctx =>
             {
                 var assetService = ctx.Resolve<IAssetsService>();
