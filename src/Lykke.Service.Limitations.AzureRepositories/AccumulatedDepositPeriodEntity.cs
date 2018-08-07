@@ -8,8 +8,6 @@ namespace Lykke.Service.Limitations.AzureRepositories
 {
     public class AccumulatedDepositPeriodEntity : TableEntity, IAccumulatedDepositPeriod
     {
-        public DateTime StartDateTime { get; set; }
-
         public string ClientId { get; set; }
         public string AssetId { get; set; }
         public double Amount { get; set; }

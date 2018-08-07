@@ -37,7 +37,7 @@ namespace Lykke.Service.Limitations.AzureRepositories
             {
                 await _tableStorage.MergeAsync(clientId, GenerateRowKey(assetId), rowData =>
                 {
-                    rowData.Amount = Math.Round(amount, 15);
+                    rowData.Amount = Math.Round(rowData.Amount + amount, 15);
                     return rowData;
                 });
             }
