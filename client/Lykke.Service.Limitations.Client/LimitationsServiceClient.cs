@@ -67,7 +67,7 @@ namespace Lykke.Service.Limitations.Client
             await _service.ApiLimitationsRemoveClientOperationDeleteAsync(clientId, operationId);
         }
 
-        public async Task<AccumulatedDepositsResponse> GetAccumulatedDeposits(string clientId)
+        public async Task<AccumulatedDepositsResponse> GetAccumulatedDepositsAsync(string clientId)
         {
             return await _service.ApiLimitationsGetAccumulatedDepositsPostAsync(clientId);
         }
