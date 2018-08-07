@@ -72,5 +72,21 @@ namespace Lykke.Service.Limitations.Controllers
 
             return Ok();
         }
+
+        [Route("api/[controller]/GetAccumulatedDeposits")]
+        [HttpPost]
+        [Produces("application/json", Type = typeof(AccumulatedDepositsModel))]
+        [ProducesResponseType(typeof(AccumulatedDepositsModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(AccumulatedDepositsModel), (int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> GetAccumulatedDeposits(string clientId)
+        {
+            if (string.IsNullOrWhiteSpace(clientId))
+                return BadRequest(new ClientData());
+
+            AccumulatedDepositsModel result = await _limitationChecker.GetAccumulatedDepositsAsync(clientId);
+
+            return Ok(result);
+        }
+
     }
 }

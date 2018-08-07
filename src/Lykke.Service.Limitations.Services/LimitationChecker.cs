@@ -25,6 +25,7 @@ namespace Lykke.Service.Limitations.Services
         private readonly List<CashOperationLimitation> _limits;
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
         private readonly ISwiftTransferLimitationsRepository _swiftTransferLimitationsRepository;
+        private readonly IAccumulatedDepositRepository _accumulatedDepositRepository;
         private readonly ILog _log;
 
         public LimitationChecker(
@@ -36,6 +37,7 @@ namespace Lykke.Service.Limitations.Services
             List<CashOperationLimitation> limits,
             int attemptRetainInMinutes,
             ISwiftTransferLimitationsRepository swiftTransferLimitationsRepository,
+            IAccumulatedDepositRepository accumulatedDepositRepository,
             ILog log)
         {
             _cashOperationsCollector = cashOperationsCollector;
@@ -45,6 +47,7 @@ namespace Lykke.Service.Limitations.Services
             _limitOperationsApi = limitOperationsApi;
             _attemptRetainInMinutes = attemptRetainInMinutes > 0 ? attemptRetainInMinutes : 1;
             _swiftTransferLimitationsRepository = swiftTransferLimitationsRepository;
+            _accumulatedDepositRepository = accumulatedDepositRepository;
             _log = log;
             if (limits == null)
             {
@@ -449,6 +452,55 @@ namespace Lykke.Service.Limitations.Services
                 default:
                     throw new NotSupportedException($"Limitation period {period} is not supported");
             }
+        }
+
+        public async Task<AccumulatedDepositsModel> GetAccumulatedDepositsAsync(string clientId)
+        {
+            AccumulatedDepositsModel result = new AccumulatedDepositsModel();
+
+            var adr = await _accumulatedDepositRepository.GetAccumulatedDepositsAsync(clientId);
+            if (adr != null)
+            {
+                foreach (var ad in adr)
+                {
+                    result.AmountTotal += ad.Amount;
+                }
+            }
+            result.AmountTotal = Math.Round(result.AmountTotal, 15);
+
+            var dayOperations = (await LoadOperationsAsync(clientId, LimitationPeriod.Day))
+                .Where(o => o.OperationType == CurrencyOperationType.CardCashIn || o.OperationType == CurrencyOperationType.SwiftTransfer);
+            foreach (var op in dayOperations)
+            {
+                result.Amount1Day += op.Volume;
+            }
+            result.Amount1Day = Math.Round(result.Amount1Day, 15);
+
+            var monthOperations = (await LoadOperationsAsync(clientId, LimitationPeriod.Month))
+                .Where(o => o.OperationType == CurrencyOperationType.CardCashIn || o.OperationType == CurrencyOperationType.SwiftTransfer);
+            foreach (var op in monthOperations)
+            {
+                result.Amount30Days += op.Volume;
+            }
+            result.Amount30Days = Math.Round(result.Amount30Days, 15);
+
+            return result;
+        }
+
+        private async Task<IEnumerable<CashOperation>> LoadOperationsAsync(string clientId, LimitationPeriod period)
+        {
+            return (await _cashOperationsCollector.GetClientDataAsync(clientId, period)).Union(
+                (await _cashTransfersCollector.GetClientDataAsync(clientId, period))
+                    .Select(i => new CashOperation
+                    {
+                        Id = i.Id,
+                        ClientId = i.ClientId,
+                        Asset = i.Asset,
+                        Volume = i.Volume,
+                        DateTime = i.DateTime,
+                        OperationType = i.OperationType,
+                    })
+                    .ToList());
         }
     }
 }

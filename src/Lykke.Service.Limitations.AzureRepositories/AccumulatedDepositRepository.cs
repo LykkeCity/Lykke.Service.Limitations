@@ -46,7 +46,7 @@ namespace Lykke.Service.Limitations.AzureRepositories
 
         private string GenerateRowKey(string assetId, CurrencyOperationType operationType)
         {
-            switch(operationType)
+            switch (operationType)
             {
                 case CurrencyOperationType.CardCashIn:
                     return String.Format($"AllTime-Cards");
@@ -54,6 +54,11 @@ namespace Lykke.Service.Limitations.AzureRepositories
                     return String.Format($"AllTime-Swift");
             }
             throw new ArgumentException("Invalid input value", nameof(operationType));
+        }
+
+        public async Task<IEnumerable<IAccumulatedDepositPeriod>> GetAccumulatedDepositsAsync(string clientId)
+        {
+            return await _tableStorage.GetDataAsync(clientId);
         }
 
     }
