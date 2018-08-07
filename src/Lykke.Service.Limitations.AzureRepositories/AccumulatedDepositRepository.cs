@@ -1,4 +1,5 @@
 ﻿using AzureStorage;
+using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
 using Microsoft.WindowsAzure.Storage.Table;
 using System;
@@ -18,14 +19,14 @@ namespace Lykke.Service.Limitations.AzureRepositories
         }
 
 
-        public async Task AggregateTotalAsync(string clientId, string assetId, double amount)
+        public async Task AggregateTotalAsync(string clientId, string assetId, double amount, CurrencyOperationType operationType)
         {
-            IAccumulatedDepositPeriod existingPeriod = await _tableStorage.GetDataAsync(clientId, GenerateRowKey(assetId));
-            if (existingPeriod == null)
+            IAccumulatedDepositPeriod existingRecord = await _tableStorage.GetDataAsync(clientId, GenerateRowKey(assetId, operationType));
+            if (existingRecord == null)
             {
                 AccumulatedDepositPeriodEntity entity = new AccumulatedDepositPeriodEntity();
                 entity.PartitionKey = clientId;
-                entity.RowKey = GenerateRowKey(assetId);
+                entity.RowKey = GenerateRowKey(assetId, operationType);
 
                 entity.ClientId = clientId;
                 entity.AssetId = assetId;
@@ -35,7 +36,7 @@ namespace Lykke.Service.Limitations.AzureRepositories
             }
             else
             {
-                await _tableStorage.MergeAsync(clientId, GenerateRowKey(assetId), rowData =>
+                await _tableStorage.MergeAsync(clientId, GenerateRowKey(assetId, operationType), rowData =>
                 {
                     rowData.Amount = Math.Round(rowData.Amount + amount, 15);
                     return rowData;
@@ -43,9 +44,16 @@ namespace Lykke.Service.Limitations.AzureRepositories
             }
         }
 
-        private string GenerateRowKey(string assetId)
+        private string GenerateRowKey(string assetId, CurrencyOperationType operationType)
         {
-            return String.Format($"AllTime-{assetId}");
+            switch(operationType)
+            {
+                case CurrencyOperationType.CardCashIn:
+                    return String.Format($"AllTime-Cards");
+                case CurrencyOperationType.SwiftTransfer:
+                    return String.Format($"AllTime-Swift");
+            }
+            throw new ArgumentException("Invalid input value", nameof(operationType));
         }
 
     }

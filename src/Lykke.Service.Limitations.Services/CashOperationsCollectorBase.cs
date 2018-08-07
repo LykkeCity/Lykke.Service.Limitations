@@ -61,11 +61,21 @@ namespace Lykke.Service.Limitations.Services
                     item.Volume,
                     item.OperationType.Value);
 
-                await _accumulatedDepositAggregator.AggregateTotalAsync(
-                    item.ClientId,
-                    item.Asset,
-                    item.Volume
-                    );
+
+                bool isAssetConvertible = !_currencyConverter.IsNotConvertible(item.Asset);
+
+                if (isAssetConvertible)
+                {
+                    if (item.OperationType == CurrencyOperationType.CardCashIn || item.OperationType == CurrencyOperationType.SwiftTransfer)
+                    {
+                        await _accumulatedDepositAggregator.AggregateTotalAsync(
+                            item.ClientId,
+                            item.Asset,
+                            item.Volume,
+                            item.OperationType.Value
+                            );
+                    }
+                }
             }
         }
 

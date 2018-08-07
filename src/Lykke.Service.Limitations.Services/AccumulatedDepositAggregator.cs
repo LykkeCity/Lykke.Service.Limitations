@@ -1,4 +1,5 @@
-﻿using Lykke.Service.Limitations.Core.Repositories;
+﻿using Lykke.Service.Limitations.Core.Domain;
+using Lykke.Service.Limitations.Core.Repositories;
 using Lykke.Service.Limitations.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -18,9 +19,9 @@ namespace Lykke.Service.Limitations.Services
             _accumulatedDepositRepository = accumulatedDepositRepository;
         }
 
-        public async Task AggregateTotalAsync(string clientId, string assetId, double amount)
+        public async Task AggregateTotalAsync(string clientId, string assetId, double amount, CurrencyOperationType operationType)
         {
-            await _accumulatedDepositRepository.AggregateTotalAsync(clientId, assetId, amount);
+            await _accumulatedDepositRepository.AggregateTotalAsync(clientId, assetId, amount, operationType);
         }
     }
 }
