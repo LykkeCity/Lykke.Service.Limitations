@@ -76,7 +76,7 @@ namespace Lykke.Service.Limitations.Modules
                 .SingleInstance();
 
             var accumulatedDepostStorage = AzureTableStorage<AccumulatedDepositPeriodEntity>.Create(
-                _settingsManager.ConnectionString(s => s.LimitationSettingsConnectionString),
+                _settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString),
                 "AccumulatedDeposits",
                 _log);
 
