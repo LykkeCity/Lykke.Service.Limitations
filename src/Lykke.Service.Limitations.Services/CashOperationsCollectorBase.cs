@@ -53,8 +53,8 @@ namespace Lykke.Service.Limitations.Services
             if (isNewItem)
                 await _antiFraudCollector.RemoveOperationAsync(
                     item.ClientId,
-                    item.Asset,
-                    item.Volume,
+                    originAsset,
+                    originVolume,
                     item.OperationType.Value);
         }
 
