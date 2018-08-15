@@ -8,6 +8,7 @@ using Lykke.Messaging;
 using Lykke.Messaging.RabbitMq;
 using Lykke.Job.LimitOperationsCollector.Settings;
 using Lykke.Job.LimitOperationsCollector.Cqrs;
+using Lykke.Messaging.Serialization;
 using Lykke.SettingsReader;
 
 namespace Lykke.Job.LimitOperationsCollector.Modules
@@ -44,7 +45,12 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                     new DefaultEndpointProvider(),
                     true,
 
-                    Register.DefaultEndpointResolver(new RabbitMqConventionEndpointResolver("RabbitMq", "protobuf", environment: "lykke", exclusiveQueuePostfix: "k8s")),
+                    Register.DefaultEndpointResolver(
+                        new RabbitMqConventionEndpointResolver(
+                            "RabbitMq",
+                            SerializationFormat.ProtoBuf,
+                            environment: "lykke",
+                            exclusiveQueuePostfix: "k8s")),
 
                     Register.BoundedContext("limitations")
                         .ListeningEvents(typeof(TransferCreatedEvent)).From("me-cy").On("events")

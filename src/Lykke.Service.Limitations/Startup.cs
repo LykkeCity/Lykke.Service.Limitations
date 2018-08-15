@@ -3,6 +3,7 @@ using Autofac.Extensions.DependencyInjection;
 using AzureStorage.Tables;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
@@ -63,15 +64,23 @@ namespace Lykke.Service.Limitations
                 });
 
                 var builder = new ContainerBuilder();
-                var appSettings = Configuration.LoadSettings<AppSettings>();
-                if (appSettings.CurrentValue.MonitoringServiceClient != null)
-                    _monitoringServiceUrl = appSettings.CurrentValue.MonitoringServiceClient.MonitoringServiceUrl;
+                var settingsManager = Configuration.LoadSettings<AppSettings>();
+                var appSettings = settingsManager.CurrentValue;
 
-                Log = CreateLogWithSlack(services, appSettings);
+                Configuration.CheckDependenciesAsync(
+                    appSettings,
+                    appSettings.SlackNotifications.AzureQueue.ConnectionString,
+                    appSettings.SlackNotifications.AzureQueue.QueueName,
+                    $"{AppEnvironment.Name} {AppEnvironment.Version}").GetAwaiter().GetResult();
 
-                builder.RegisterModule(new ServiceModule(appSettings.CurrentValue, appSettings.Nested(x => x.LimitationsSettings), Log));
+                if (settingsManager.CurrentValue.MonitoringServiceClient != null)
+                    _monitoringServiceUrl = settingsManager.CurrentValue.MonitoringServiceClient.MonitoringServiceUrl;
+
+                Log = CreateLogWithSlack(services, settingsManager);
 
                 builder.Populate(services);
+
+                builder.RegisterModule(new ServiceModule(appSettings, settingsManager.Nested(x => x.LimitationsSettings), Log));
 
                 ApplicationContainer = builder.Build();
 

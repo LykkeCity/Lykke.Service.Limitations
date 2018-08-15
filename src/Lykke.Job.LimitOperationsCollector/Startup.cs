@@ -1,13 +1,8 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Autofac;
+﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using AzureStorage.Tables;
 using Common.Log;
+using Lykke.Common;
 using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Common.Api.Contract.Responses;
@@ -18,6 +13,12 @@ using Lykke.SettingsReader;
 using Lykke.MonitoringServiceApiCaller;
 using Lykke.SlackNotification.AzureQueue;
 using Lykke.Service.Limitations.Core.Services;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Threading.Tasks;
 
 namespace Lykke.Job.LimitOperationsCollector
 {
@@ -58,16 +59,24 @@ namespace Lykke.Job.LimitOperationsCollector
 
                 var builder = new ContainerBuilder();
                 var settingsManager = Configuration.LoadSettings<AppSettings>();
-                if (settingsManager.CurrentValue.MonitoringServiceClient != null)
-                    _monitoringServiceUrl = settingsManager.CurrentValue.MonitoringServiceClient.MonitoringServiceUrl;
+                var appSettings = settingsManager.CurrentValue;
+
+                Configuration.CheckDependenciesAsync(
+                    appSettings,
+                    appSettings.SlackNotifications.AzureQueue.ConnectionString,
+                    appSettings.SlackNotifications.AzureQueue.QueueName,
+                    $"{AppEnvironment.Name} {AppEnvironment.Version}").GetAwaiter().GetResult();
+
+                if (appSettings.MonitoringServiceClient != null)
+                    _monitoringServiceUrl = appSettings.MonitoringServiceClient.MonitoringServiceUrl;
 
                 Log = CreateLogWithSlack(services, settingsManager);
 
-                builder.RegisterModule(new JobModule(settingsManager.CurrentValue, settingsManager.Nested(x => x.LimitOperationsCollectorJob), Log));
+                builder.Populate(services);
+
+                builder.RegisterModule(new JobModule(appSettings, settingsManager.Nested(x => x.LimitOperationsCollectorJob), Log));
 
                 builder.RegisterModule(new CqrsModule(Log, settingsManager));
-
-                builder.Populate(services);
 
                 ApplicationContainer = builder.Build();
 
