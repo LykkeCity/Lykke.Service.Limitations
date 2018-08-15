@@ -85,14 +85,17 @@ namespace Lykke.Service.Limitations.Services
 
                 //TODO Remove code below after new Limitations service is deployed + delete lock
                 (clientData, _) = await FetchClientDataAsync(item.ClientId);
-                clientData.Add(item);
+                if (clientData.All(i => i.Id != item.Id))
+                {
+                    clientData.Add(item);
 
-                key = string.Format(_oldClientDataKeyPattern, _instanceName, _cacheType, item.ClientId);
-                setResult = await _db.StringSetAsync(key, clientData.ToJson());
-                if (!setResult)
-                    throw new InvalidOperationException($"Error during operations update for client {item.ClientId}");
+                    key = string.Format(_oldClientDataKeyPattern, _instanceName, _cacheType, item.ClientId);
+                    setResult = await _db.StringSetAsync(key, clientData.ToJson());
+                    if (!setResult)
+                        throw new InvalidOperationException($"Error during operations update for client {item.ClientId}");
 
-                await _stateRepository.SaveClientStateAsync(item.ClientId, clientData);
+                    await _stateRepository.SaveClientStateAsync(item.ClientId, clientData);
+                }
                 // remove till here
             }
             finally
