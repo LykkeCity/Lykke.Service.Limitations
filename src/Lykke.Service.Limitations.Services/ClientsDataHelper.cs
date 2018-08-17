@@ -14,8 +14,8 @@ namespace Lykke.Service.Limitations.Services
     public class ClientsDataHelper<T>
         where T : ICashOperation
     {
-        private const string _oldClientDataKeyPattern = "{0}:{1}:{2}";
-        private const string _clientDataKeyPattern = "{0}:{1}:client:{2}:opType:*";
+        private const string _oldAllClientsDataKeyPattern = "{0}:{1}:*";
+        private const string _allClientsDataKeyPatternPrefix = "{0}:{1}:client:";
         private const string _opTypeKeyPattern = "{0}:{1}:client:{2}:opType:{3}:id:*";
         private const string _opKeyPattern = "{0}:{1}:client:{2}:opType:{3}:id:{4}";
 
@@ -45,17 +45,8 @@ namespace Lykke.Service.Limitations.Services
 
         internal async Task<(List<T>, bool)> GetClientDataAsync(string clientId, CurrencyOperationType? operationType = null)
         {
-            //TODO remove lock after new Limitation service is deployed
-            await _lock.WaitAsync();
-            try
-            {
-                (var list, var notCached) = await FetchClientDataAsync(clientId, operationType);
-                return (list, notCached);
-            }
-            finally
-            {
-                _lock.Release();
-            }
+            var (list, notCached) = await FetchClientDataAsync(clientId, operationType);
+            return (list, notCached);
         }
 
         internal async Task<bool> AddDataItemAsync(T item)
@@ -71,7 +62,7 @@ namespace Lykke.Service.Limitations.Services
             await _lock.WaitAsync();
             try
             {
-                (var clientData, _) = await FetchClientDataAsync(item.ClientId, item.OperationType);
+                var (clientData, _) = await FetchClientDataAsync(item.ClientId, item.OperationType);
                 if (clientData.Any(i => i.Id == item.Id))
                     return false;
 
@@ -81,22 +72,8 @@ namespace Lykke.Service.Limitations.Services
                     throw new InvalidOperationException($"Error during operations update for client {item.ClientId} with operation type {item.OperationType}");
 
                 clientData.Add(item);
+
                 await _stateRepository.SaveClientStateAsync($"{item.ClientId}-{item.OperationType.Value}", clientData);
-
-                //TODO Remove code below after new Limitations service is deployed + delete lock
-                (clientData, _) = await FetchClientDataAsync(item.ClientId);
-                if (clientData.All(i => i.Id != item.Id))
-                {
-                    clientData.Add(item);
-
-                    key = string.Format(_oldClientDataKeyPattern, _instanceName, _cacheType, item.ClientId);
-                    setResult = await _db.StringSetAsync(key, clientData.ToJson());
-                    if (!setResult)
-                        throw new InvalidOperationException($"Error during operations update for client {item.ClientId}");
-
-                    await _stateRepository.SaveClientStateAsync(item.ClientId, clientData);
-                }
-                // remove till here
             }
             finally
             {
@@ -110,13 +87,12 @@ namespace Lykke.Service.Limitations.Services
             await _lock.WaitAsync();
             try
             {
-                (var clientData, _) = await FetchClientDataAsync(clientId);
+                var (clientData, _) = await FetchClientDataAsync(clientId);
                 if (clientData.Count == 0)
                     return false;
 
-                for (int i = 0; i < clientData.Count; ++i)
+                foreach (var operation in clientData)
                 {
-                    var operation = clientData[i];
                     if (operation.Id != operationId)
                         continue;
 
@@ -126,19 +102,9 @@ namespace Lykke.Service.Limitations.Services
                     string opKey = string.Format(_opKeyPattern, _instanceName, _cacheType, clientId, operation.OperationType.Value, operation.Id);
                     await _db.KeyDeleteAsync(opKey);
 
-                    (var clientOpTypeData, _) = await FetchClientDataAsync(clientId, operation.OperationType);
+                    var (clientOpTypeData, _) = await FetchClientDataAsync(clientId, operation.OperationType);
                     clientOpTypeData = clientOpTypeData.Where(o => o.Id != operationId).ToList();
                     await _stateRepository.SaveClientStateAsync($"{clientId}-{operation.OperationType.Value}", clientOpTypeData);
-
-                    //TODO Remove code below after new Limitations service is deployed + delete lock
-                    clientData.RemoveAt(i);
-                    string clientKey = string.Format(_oldClientDataKeyPattern, _instanceName, _cacheType, clientId);
-                    bool setResult = await _db.StringSetAsync(clientKey, clientData.ToJson());
-                    if (!setResult)
-                        throw new InvalidOperationException($"Error during operations update for client {clientId}");
-
-                    await _stateRepository.SaveClientStateAsync(clientId, clientData);
-                    // remove till here
 
                     return true;
                 }
@@ -162,9 +128,8 @@ namespace Lykke.Service.Limitations.Services
                     return;
             }
 
-            var clientState = await _stateRepository.LoadClientStateAsync($"{clientId}-{operationType}");
-            if (clientState == null)
-                clientState = await _stateRepository.LoadClientStateAsync(clientId);
+            var clientState = await _stateRepository.LoadClientStateAsync($"{clientId}-{operationType}")
+                ?? await _stateRepository.LoadClientStateAsync(clientId);
             if (clientState == null)
                 return;
 
@@ -185,6 +150,31 @@ namespace Lykke.Service.Limitations.Services
                 if (!setResult)
                     throw new InvalidOperationException($"Error during operations update for client {clientId} with operation type {operationType}");
             }
+        }
+
+        internal async Task PerformStartupCleanupAsync()
+        {
+            var keysPattern = string.Format(_oldAllClientsDataKeyPattern, _instanceName, _cacheType);
+            RedisResult data = await _db.ScriptEvaluateAsync($"return redis.call('keys', '{keysPattern}')");
+            var allClientPrefix = string.Format(_allClientsDataKeyPatternPrefix, _instanceName, _cacheType);
+            if (data.IsNull)
+                return;
+
+            var keys = (string[])data;
+            if (keys.Length == 0)
+                return;
+
+            int deletedKeysCount = 0;
+            foreach (var key in keys)
+            {
+                if (key.StartsWith(allClientPrefix))
+                    continue;
+
+                await _db.KeyDeleteAsync(key);
+                ++deletedKeysCount;
+            }
+
+            _log.WriteWarning(nameof(PerformStartupCleanupAsync), null, $"Deleted {deletedKeysCount} old format items for {_cacheType}");
         }
 
         private async Task<(List<T>, bool)> FetchClientDataAsync(string clientId, CurrencyOperationType? operationType = null)

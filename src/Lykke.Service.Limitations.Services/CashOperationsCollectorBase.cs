@@ -68,6 +68,11 @@ namespace Lykke.Service.Limitations.Services
             return _data.CacheClientDataIfRequiredAsync(clientId, operationType);
         }
 
+        public Task PerformStartupCleanupAsync()
+        {
+            return _data.PerformStartupCleanupAsync();
+        }
+
         protected abstract CurrencyOperationType GetOperationType(T item);
     }
 }

@@ -134,6 +134,8 @@ namespace Lykke.Job.LimitOperationsCollector
                 Log.WriteMonitor("", Program.EnvInfo, "Started");
 
                 await ApplicationContainer.Resolve<IAntiFraudCollector>().PerformStartupCleanupAsync();
+                await ApplicationContainer.Resolve<ICashOperationsCollector>().PerformStartupCleanupAsync();
+                await ApplicationContainer.Resolve<ICashTransfersCollector>().PerformStartupCleanupAsync();
 
 #if (!DEBUG)
                 await AutoRegistrationInMonitoring.RegisterAsync(Configuration, _monitoringServiceUrl, Log);
