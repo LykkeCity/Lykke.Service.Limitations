@@ -186,6 +186,8 @@ namespace Lykke.Service.Limitations.Services
             var opTypes = operationType.HasValue
                 ? new List<CurrencyOperationType>(1) { operationType.Value }
                 : Enum.GetValues(typeof(CurrencyOperationType)).Cast<CurrencyOperationType>().ToList();
+            List<T> oldAllData = null;
+
             foreach (var opType in opTypes)
             {
                 var keysPattern = string.Format(_opTypeKeyPattern, _instanceName, _cacheType, clientId, opType);
@@ -198,7 +200,6 @@ namespace Lykke.Service.Limitations.Services
                         var operationJsons = await _db.StringGetAsync(keys.Select(k => (RedisKey)k).ToArray());
                         var operations = operationJsons
                             .Select(o => o.ToString().DeserializeJson<T>())
-                            .Where(o => !operationType.HasValue || o.OperationType == operationType.Value)
                             .ToList();
                         clientData.AddRange(operations);
                         continue;
@@ -207,31 +208,32 @@ namespace Lykke.Service.Limitations.Services
                 var clientState = await _stateRepository.LoadClientStateAsync($"{clientId}-{opType}");
                 if (clientState == null)
                 {
-                    clientState = await _stateRepository.LoadClientStateAsync(clientId);
-                    if (clientState == null)
+                    if (oldAllData == null)
+                        oldAllData = await _stateRepository.LoadClientStateAsync(clientId);
+                    if (oldAllData == null || oldAllData.Count == 0)
                         continue;
 
-                    var notExpired = clientState.Where(i => i.DateTime > monthAgo);
-                    if (operationType.HasValue)
+                    var notExpired = oldAllData.Where(i => i.DateTime > monthAgo);
+                    foreach (var item in notExpired)
                     {
-                        clientData = new List<T>();
-                        foreach (var item in notExpired)
-                        {
-                            if (!item.OperationType.HasValue)
-                                item.OperationType = _opTypeResolver(item);
-                            if (item.OperationType.Value != operationType.Value)
-                                continue;
-                            clientData.Add(item);
-                        }
+                        if (!item.OperationType.HasValue)
+                            item.OperationType = _opTypeResolver(item);
+                        if (item.OperationType.Value != opType)
+                            continue;
+
+                        clientData.Add(item);
+                        notCached = true;
                     }
-                    else
-                    {
-                        clientData = notExpired.ToList();
-                    }
-                    return (clientData, true);
                 }
-                notCached = true;
-                clientData.AddRange(clientState.Where(i => i.DateTime > monthAgo));
+                else
+                {
+                    var notExpired = clientState.Where(i => i.DateTime > monthAgo);
+                    if (notExpired.Any())
+                    {
+                        clientData.AddRange(clientState.Where(i => i.DateTime > monthAgo));
+                        notCached = true;
+                    }
+                }
             }
             return (clientData, notCached);
         }
