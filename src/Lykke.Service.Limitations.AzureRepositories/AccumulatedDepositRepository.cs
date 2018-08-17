@@ -21,12 +21,12 @@ namespace Lykke.Service.Limitations.AzureRepositories
 
         public async Task AggregateTotalAsync(string clientId, string assetId, double amount, CurrencyOperationType operationType)
         {
-            IAccumulatedDepositPeriod existingRecord = await _tableStorage.GetDataAsync(clientId, GenerateRowKey(assetId, operationType));
+            IAccumulatedDepositPeriod existingRecord = await _tableStorage.GetDataAsync(clientId, GenerateRowKey(operationType));
             if (existingRecord == null)
             {
                 AccumulatedDepositPeriodEntity entity = new AccumulatedDepositPeriodEntity();
                 entity.PartitionKey = clientId;
-                entity.RowKey = GenerateRowKey(assetId, operationType);
+                entity.RowKey = GenerateRowKey(operationType);
 
                 entity.ClientId = clientId;
                 entity.AssetId = assetId;
@@ -36,7 +36,7 @@ namespace Lykke.Service.Limitations.AzureRepositories
             }
             else
             {
-                await _tableStorage.MergeAsync(clientId, GenerateRowKey(assetId, operationType), rowData =>
+                await _tableStorage.MergeAsync(clientId, GenerateRowKey(operationType), rowData =>
                 {
                     rowData.Amount = Math.Round(rowData.Amount + amount, 15);
                     return rowData;
@@ -44,7 +44,7 @@ namespace Lykke.Service.Limitations.AzureRepositories
             }
         }
 
-        private string GenerateRowKey(string assetId, CurrencyOperationType operationType)
+        private string GenerateRowKey(CurrencyOperationType operationType)
         {
             switch (operationType)
             {
@@ -56,9 +56,16 @@ namespace Lykke.Service.Limitations.AzureRepositories
             throw new ArgumentException("Invalid input value", nameof(operationType));
         }
 
-        public async Task<IEnumerable<IAccumulatedDepositPeriod>> GetAccumulatedDepositsAsync(string clientId)
+        public async Task<double> GetAccumulatedDepositsAsync(string clientId, CurrencyOperationType operationType)
         {
-            return await _tableStorage.GetDataAsync(clientId);
+            switch (operationType)
+            {
+                case CurrencyOperationType.SwiftTransfer:
+                case CurrencyOperationType.CardCashIn:
+                    var depositRecord = await _tableStorage.GetDataAsync(clientId, GenerateRowKey(operationType));
+                    return depositRecord == null ? 0 : depositRecord.Amount;
+            }
+            throw new ArgumentException("Invalid input value", nameof(operationType));
         }
 
     }

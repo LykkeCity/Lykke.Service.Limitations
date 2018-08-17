@@ -26,7 +26,7 @@ namespace Lykke.Service.Limitations.Client
 
         public async Task<AutorestClient.Models.IsAliveResponse> IsAlive()
         {
-            return await _service.ApiIsAliveGetAsync();
+            return await _service.IsAliveAsync();
         }
 
         public async Task<LimitationCheckResponse> CheckAsync(
@@ -40,19 +40,19 @@ namespace Lykke.Service.Limitations.Client
                 ClientId = clientId,
                 Asset = asset,
                 Amount = amount,
-                OperationType = operationType.ToString(),
+                OperationType = (AutorestClient.Models.CurrencyOperationType)operationType,
             };
             var result = await _service.ApiLimitationsPostAsync(request);
             return new LimitationCheckResponse
             {
-                IsValid = result.IsValid.HasValue ? result.IsValid.Value : false,
+                IsValid = result.IsValid,
                 FailMessage = result.FailMessage,
             };
         }
 
         public async Task<ClientDataResponse> GetClientDataAsync(string clientId, LimitationPeriod period)
         {
-            var result = await _service.ApiLimitationsGetClientDataPostAsync(clientId, period.ToString());
+            var result = await _service.ApiLimitationsGetClientDataPostAsync((AutorestClient.Models.LimitationPeriod)period, clientId);
             return new ClientDataResponse
             {
                 RemainingLimits = result.RemainingLimits.Select(i => RemainingLimitation.FromModel(i)).ToList(),
@@ -69,7 +69,13 @@ namespace Lykke.Service.Limitations.Client
 
         public async Task<AccumulatedDepositsResponse> GetAccumulatedDepositsAsync(string clientId)
         {
-            return await _service.ApiLimitationsGetAccumulatedDepositsPostAsync(clientId);
+            var accumulatedDepositsModel = await _service.ApiLimitationsGetAccumulatedDepositsPostAsync(clientId);
+            return new AccumulatedDepositsResponse
+            {
+                Amount1Day = accumulatedDepositsModel.Amount1Day,
+                Amount30Days = accumulatedDepositsModel.Amount30Days,
+                AmountTotal = accumulatedDepositsModel.AmountTotal
+            };
         }
     }
 }

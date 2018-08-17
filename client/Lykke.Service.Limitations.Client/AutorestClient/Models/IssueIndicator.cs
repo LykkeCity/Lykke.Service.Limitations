@@ -10,23 +10,23 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
     using Newtonsoft.Json;
     using System.Linq;
 
-    public partial class SwiftTransferLimitation
+    public partial class IssueIndicator
     {
         /// <summary>
-        /// Initializes a new instance of the SwiftTransferLimitation class.
+        /// Initializes a new instance of the IssueIndicator class.
         /// </summary>
-        public SwiftTransferLimitation()
+        public IssueIndicator()
         {
             CustomInit();
         }
 
         /// <summary>
-        /// Initializes a new instance of the SwiftTransferLimitation class.
+        /// Initializes a new instance of the IssueIndicator class.
         /// </summary>
-        public SwiftTransferLimitation(string asset, double minimalWithdraw)
+        public IssueIndicator(string type, string value)
         {
-            Asset = asset;
-            MinimalWithdraw = minimalWithdraw;
+            Type = type;
+            Value = value;
             CustomInit();
         }
 
@@ -37,13 +37,13 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "Asset")]
-        public string Asset { get; set; }
+        [JsonProperty(PropertyName = "type")]
+        public string Type { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "MinimalWithdraw")]
-        public double MinimalWithdraw { get; set; }
+        [JsonProperty(PropertyName = "value")]
+        public string Value { get; set; }
 
         /// <summary>
         /// Validate the object.
@@ -53,16 +53,13 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (Asset == null)
+            if (Type == null)
             {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Asset");
+                throw new ValidationException(ValidationRules.CannotBeNull, "Type");
             }
-            if (Asset != null)
+            if (Value == null)
             {
-                if (Asset.Length < 1)
-                {
-                    throw new ValidationException(ValidationRules.MinLength, "Asset", 1);
-                }
+                throw new ValidationException(ValidationRules.CannotBeNull, "Value");
             }
         }
     }

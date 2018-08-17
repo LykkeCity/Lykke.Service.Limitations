@@ -1,1 +1,1 @@
-autorest -i http://localhost:3248/swagger/1.0/swagger.json -c CSharp -o AutorestClient -n Lykke.Service.Limitations.Client.AutorestClient
+autorest -i http://localhost:5000/swagger/1.0/swagger.json -c CSharp -o AutorestClient -n Lykke.Service.Limitations.Client.AutorestClient

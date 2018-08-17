@@ -87,6 +87,5 @@ namespace Lykke.Service.Limitations.Controllers
 
             return Ok(result);
         }
-
     }
 }

@@ -6,27 +6,27 @@
 
 namespace Lykke.Service.Limitations.Client.AutorestClient.Models
 {
-    using Microsoft.Rest;
     using Newtonsoft.Json;
     using System.Linq;
 
-    public partial class LimitationCheckResult
+    public partial class AccumulatedDepositsModel
     {
         /// <summary>
-        /// Initializes a new instance of the LimitationCheckResult class.
+        /// Initializes a new instance of the AccumulatedDepositsModel class.
         /// </summary>
-        public LimitationCheckResult()
+        public AccumulatedDepositsModel()
         {
             CustomInit();
         }
 
         /// <summary>
-        /// Initializes a new instance of the LimitationCheckResult class.
+        /// Initializes a new instance of the AccumulatedDepositsModel class.
         /// </summary>
-        public LimitationCheckResult(bool isValid, string failMessage)
+        public AccumulatedDepositsModel(double amountTotal, double amount30Days, double amount1Day)
         {
-            IsValid = isValid;
-            FailMessage = failMessage;
+            AmountTotal = amountTotal;
+            Amount30Days = amount30Days;
+            Amount1Day = amount1Day;
             CustomInit();
         }
 
@@ -37,26 +37,28 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "IsValid")]
-        public bool IsValid { get; set; }
+        [JsonProperty(PropertyName = "AmountTotal")]
+        public double AmountTotal { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "FailMessage")]
-        public string FailMessage { get; set; }
+        [JsonProperty(PropertyName = "Amount30Days")]
+        public double Amount30Days { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "Amount1Day")]
+        public double Amount1Day { get; set; }
 
         /// <summary>
         /// Validate the object.
         /// </summary>
-        /// <exception cref="ValidationException">
+        /// <exception cref="Microsoft.Rest.ValidationException">
         /// Thrown if validation fails
         /// </exception>
         public virtual void Validate()
         {
-            if (FailMessage == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "FailMessage");
-            }
+            //Nothing to validate
         }
     }
 }

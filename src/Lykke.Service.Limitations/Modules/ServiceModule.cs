@@ -4,6 +4,7 @@ using AzureStorage.Tables;
 using Common.Log;
 using Lykke.HttpClientGenerator;
 using Lykke.Service.Limitations.AzureRepositories;
+using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.JobClient;
 using Lykke.Service.Limitations.Core.Repositories;
 using Lykke.Service.Limitations.Core.Services;
@@ -12,6 +13,8 @@ using Lykke.Service.Limitations.Settings;
 using Lykke.Service.RateCalculator.Client;
 using Lykke.SettingsReader;
 using StackExchange.Redis;
+using System;
+using System.Linq;
 
 namespace Lykke.Service.Limitations.Modules
 {
@@ -85,6 +88,26 @@ namespace Lykke.Service.Limitations.Modules
                 .WithParameter(TypedParameter.From(accumulatedDepostStorage))
                 .SingleInstance();
 
+            var tierStorage = AzureTableStorage<TierEntity>.Create(
+                _settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString),
+                "Tiers",
+                _log);
+            var tierRepository = new TierRepository(tierStorage);
+            builder
+                .RegisterInstance(tierRepository)
+                .As<ITierRepository>()
+                .SingleInstance();
+
+            var clientTierStorage = AzureTableStorage<ClientTierEntity>.Create(
+                _settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString),
+                "ClientTiers",
+                _log);
+            var clientTierRepository = new ClientTierRepository(clientTierStorage);
+            builder
+                .RegisterInstance(clientTierRepository)
+                .As<IClientTierRepository>()
+                .SingleInstance();
+
         }
 
         private void RegisterServices(ContainerBuilder builder)
@@ -119,11 +142,17 @@ namespace Lykke.Service.Limitations.Modules
                 .SingleInstance()
                 .WithParameter("redisInstanceName", settings.RedisInstanceName);
 
+            // limits from setting for fiat currency for an individual client will be ignored
+            // only tier limits should be used for such purposes
+            Func<CashOperationLimitation, bool> isIndividualFiatLimit = limit => !string.IsNullOrWhiteSpace(limit.ClientId) && settings.ConvertibleAssets.Contains(limit.Asset);
+            var filteredLimits = settings.Limits.Where(limit => !isIndividualFiatLimit(limit)).ToList();
             builder.RegisterType<LimitationChecker>()
                 .As<ILimitationCheck>()
                 .SingleInstance()
-                .WithParameter("limits", settings.Limits)
-                .WithParameter("attemptRetainInMinutes", settings.AttemptRetainInMinutes);
+                .WithParameter("limits", filteredLimits)
+                .WithParameter("convertibleCurrencies", settings.ConvertibleAssets)
+                .WithParameter("attemptRetainInMinutes", settings.AttemptRetainInMinutes)
+                ;
 
             builder.RegisterType<AccumulatedDepositAggregator>()
                 .As<IAccumulatedDepositAggregator>()
