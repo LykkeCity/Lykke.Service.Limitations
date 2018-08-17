@@ -1309,9 +1309,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
             return _result;
         }
 
-        /// <param name='clientId'>
-        /// </param>
-        /// <param name='tierId'>
+        /// <param name='clientTier'>
         /// </param>
         /// <param name='customHeaders'>
         /// Headers that will be added to request.
@@ -1325,8 +1323,12 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// <return>
         /// A response object containing the response body and response headers.
         /// </return>
-        public async Task<HttpOperationResponse> ApiTiersSetTierToClientPostWithHttpMessagesAsync(string clientId = default(string), string tierId = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<HttpOperationResponse> ApiTiersSetTierToClientPostWithHttpMessagesAsync(ClientTier clientTier = default(ClientTier), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
         {
+            if (clientTier != null)
+            {
+                clientTier.Validate();
+            }
             // Tracing
             bool _shouldTrace = ServiceClientTracing.IsEnabled;
             string _invocationId = null;
@@ -1334,27 +1336,13 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
             {
                 _invocationId = ServiceClientTracing.NextInvocationId.ToString();
                 Dictionary<string, object> tracingParameters = new Dictionary<string, object>();
-                tracingParameters.Add("clientId", clientId);
-                tracingParameters.Add("tierId", tierId);
+                tracingParameters.Add("clientTier", clientTier);
                 tracingParameters.Add("cancellationToken", cancellationToken);
                 ServiceClientTracing.Enter(_invocationId, this, "ApiTiersSetTierToClientPost", tracingParameters);
             }
             // Construct URL
             var _baseUrl = BaseUri.AbsoluteUri;
             var _url = new System.Uri(new System.Uri(_baseUrl + (_baseUrl.EndsWith("/") ? "" : "/")), "api/Tiers/SetTierToClient").ToString();
-            List<string> _queryParameters = new List<string>();
-            if (clientId != null)
-            {
-                _queryParameters.Add(string.Format("ClientId={0}", System.Uri.EscapeDataString(clientId)));
-            }
-            if (tierId != null)
-            {
-                _queryParameters.Add(string.Format("TierId={0}", System.Uri.EscapeDataString(tierId)));
-            }
-            if (_queryParameters.Count > 0)
-            {
-                _url += "?" + string.Join("&", _queryParameters);
-            }
             // Create HTTP transport objects
             var _httpRequest = new HttpRequestMessage();
             HttpResponseMessage _httpResponse = null;
@@ -1377,6 +1365,12 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
 
             // Serialize Request
             string _requestContent = null;
+            if(clientTier != null)
+            {
+                _requestContent = SafeJsonConvert.SerializeObject(clientTier, SerializationSettings);
+                _httpRequest.Content = new StringContent(_requestContent, System.Text.Encoding.UTF8);
+                _httpRequest.Content.Headers.ContentType =System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json-patch+json; charset=utf-8");
+            }
             // Send Request
             if (_shouldTrace)
             {
@@ -1424,61 +1418,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
             return _result;
         }
 
-        /// <param name='limitTotalCashInAllTime'>
-        /// </param>
-        /// <param name='limitTotalCashIn30Days'>
-        /// </param>
-        /// <param name='limitTotalCashIn24Hours'>
-        /// </param>
-        /// <param name='limitTotalCashOutAllTime'>
-        /// </param>
-        /// <param name='limitTotalCashOut30Days'>
-        /// </param>
-        /// <param name='limitTotalCashOut24Hours'>
-        /// </param>
-        /// <param name='limitCreditCardsCashInAllTime'>
-        /// </param>
-        /// <param name='limitCreditCardsCashIn30Days'>
-        /// </param>
-        /// <param name='limitCreditCardsCashIn24Hours'>
-        /// </param>
-        /// <param name='limitCreditCardsCashOutAllTime'>
-        /// </param>
-        /// <param name='limitCreditCardsCashOut30Days'>
-        /// </param>
-        /// <param name='limitCreditCardsCashOut24Hours'>
-        /// </param>
-        /// <param name='limitSwiftCashInAllTime'>
-        /// </param>
-        /// <param name='limitSwiftCashIn30Days'>
-        /// </param>
-        /// <param name='limitSwiftCashIn24Hours'>
-        /// </param>
-        /// <param name='limitSwiftCashOutAllTime'>
-        /// </param>
-        /// <param name='limitSwiftCashOut30Days'>
-        /// </param>
-        /// <param name='limitSwiftCashOut24Hours'>
-        /// </param>
-        /// <param name='limitCryptoCashInAllTime'>
-        /// </param>
-        /// <param name='limitCryptoCashIn30Days'>
-        /// </param>
-        /// <param name='limitCryptoCashIn24Hours'>
-        /// </param>
-        /// <param name='limitCryptoCashOutAllTime'>
-        /// </param>
-        /// <param name='limitCryptoCashOut30Days'>
-        /// </param>
-        /// <param name='limitCryptoCashOut24Hours'>
-        /// </param>
-        /// <param name='isDefault'>
-        /// </param>
-        /// <param name='id'>
-        /// </param>
-        /// <param name='shortName'>
-        /// </param>
-        /// <param name='longName'>
+        /// <param name='tier'>
         /// </param>
         /// <param name='customHeaders'>
         /// Headers that will be added to request.
@@ -1492,8 +1432,12 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// <return>
         /// A response object containing the response body and response headers.
         /// </return>
-        public async Task<HttpOperationResponse> ApiTiersSaveTierPostWithHttpMessagesAsync(long limitTotalCashInAllTime, long limitTotalCashIn30Days, long limitTotalCashIn24Hours, long limitTotalCashOutAllTime, long limitTotalCashOut30Days, long limitTotalCashOut24Hours, long limitCreditCardsCashInAllTime, long limitCreditCardsCashIn30Days, long limitCreditCardsCashIn24Hours, long limitCreditCardsCashOutAllTime, long limitCreditCardsCashOut30Days, long limitCreditCardsCashOut24Hours, long limitSwiftCashInAllTime, long limitSwiftCashIn30Days, long limitSwiftCashIn24Hours, long limitSwiftCashOutAllTime, long limitSwiftCashOut30Days, long limitSwiftCashOut24Hours, long limitCryptoCashInAllTime, long limitCryptoCashIn30Days, long limitCryptoCashIn24Hours, long limitCryptoCashOutAllTime, long limitCryptoCashOut30Days, long limitCryptoCashOut24Hours, bool isDefault, string id = default(string), string shortName = default(string), string longName = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<HttpOperationResponse> ApiTiersSaveTierPostWithHttpMessagesAsync(Tier tier = default(Tier), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
         {
+            if (tier != null)
+            {
+                tier.Validate();
+            }
             // Tracing
             bool _shouldTrace = ServiceClientTracing.IsEnabled;
             string _invocationId = null;
@@ -1501,82 +1445,13 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
             {
                 _invocationId = ServiceClientTracing.NextInvocationId.ToString();
                 Dictionary<string, object> tracingParameters = new Dictionary<string, object>();
-                tracingParameters.Add("id", id);
-                tracingParameters.Add("shortName", shortName);
-                tracingParameters.Add("longName", longName);
-                tracingParameters.Add("limitTotalCashInAllTime", limitTotalCashInAllTime);
-                tracingParameters.Add("limitTotalCashIn30Days", limitTotalCashIn30Days);
-                tracingParameters.Add("limitTotalCashIn24Hours", limitTotalCashIn24Hours);
-                tracingParameters.Add("limitTotalCashOutAllTime", limitTotalCashOutAllTime);
-                tracingParameters.Add("limitTotalCashOut30Days", limitTotalCashOut30Days);
-                tracingParameters.Add("limitTotalCashOut24Hours", limitTotalCashOut24Hours);
-                tracingParameters.Add("limitCreditCardsCashInAllTime", limitCreditCardsCashInAllTime);
-                tracingParameters.Add("limitCreditCardsCashIn30Days", limitCreditCardsCashIn30Days);
-                tracingParameters.Add("limitCreditCardsCashIn24Hours", limitCreditCardsCashIn24Hours);
-                tracingParameters.Add("limitCreditCardsCashOutAllTime", limitCreditCardsCashOutAllTime);
-                tracingParameters.Add("limitCreditCardsCashOut30Days", limitCreditCardsCashOut30Days);
-                tracingParameters.Add("limitCreditCardsCashOut24Hours", limitCreditCardsCashOut24Hours);
-                tracingParameters.Add("limitSwiftCashInAllTime", limitSwiftCashInAllTime);
-                tracingParameters.Add("limitSwiftCashIn30Days", limitSwiftCashIn30Days);
-                tracingParameters.Add("limitSwiftCashIn24Hours", limitSwiftCashIn24Hours);
-                tracingParameters.Add("limitSwiftCashOutAllTime", limitSwiftCashOutAllTime);
-                tracingParameters.Add("limitSwiftCashOut30Days", limitSwiftCashOut30Days);
-                tracingParameters.Add("limitSwiftCashOut24Hours", limitSwiftCashOut24Hours);
-                tracingParameters.Add("limitCryptoCashInAllTime", limitCryptoCashInAllTime);
-                tracingParameters.Add("limitCryptoCashIn30Days", limitCryptoCashIn30Days);
-                tracingParameters.Add("limitCryptoCashIn24Hours", limitCryptoCashIn24Hours);
-                tracingParameters.Add("limitCryptoCashOutAllTime", limitCryptoCashOutAllTime);
-                tracingParameters.Add("limitCryptoCashOut30Days", limitCryptoCashOut30Days);
-                tracingParameters.Add("limitCryptoCashOut24Hours", limitCryptoCashOut24Hours);
-                tracingParameters.Add("isDefault", isDefault);
+                tracingParameters.Add("tier", tier);
                 tracingParameters.Add("cancellationToken", cancellationToken);
                 ServiceClientTracing.Enter(_invocationId, this, "ApiTiersSaveTierPost", tracingParameters);
             }
             // Construct URL
             var _baseUrl = BaseUri.AbsoluteUri;
             var _url = new System.Uri(new System.Uri(_baseUrl + (_baseUrl.EndsWith("/") ? "" : "/")), "api/Tiers/SaveTier").ToString();
-            List<string> _queryParameters = new List<string>();
-            if (id != null)
-            {
-                _queryParameters.Add(string.Format("Id={0}", System.Uri.EscapeDataString(id)));
-            }
-            if (shortName != null)
-            {
-                _queryParameters.Add(string.Format("ShortName={0}", System.Uri.EscapeDataString(shortName)));
-            }
-            if (longName != null)
-            {
-                _queryParameters.Add(string.Format("LongName={0}", System.Uri.EscapeDataString(longName)));
-            }
-            _queryParameters.Add(string.Format("LimitTotalCashInAllTime={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitTotalCashInAllTime, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitTotalCashIn30Days={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitTotalCashIn30Days, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitTotalCashIn24Hours={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitTotalCashIn24Hours, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitTotalCashOutAllTime={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitTotalCashOutAllTime, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitTotalCashOut30Days={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitTotalCashOut30Days, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitTotalCashOut24Hours={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitTotalCashOut24Hours, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitCreditCardsCashInAllTime={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitCreditCardsCashInAllTime, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitCreditCardsCashIn30Days={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitCreditCardsCashIn30Days, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitCreditCardsCashIn24Hours={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitCreditCardsCashIn24Hours, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitCreditCardsCashOutAllTime={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitCreditCardsCashOutAllTime, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitCreditCardsCashOut30Days={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitCreditCardsCashOut30Days, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitCreditCardsCashOut24Hours={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitCreditCardsCashOut24Hours, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitSwiftCashInAllTime={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitSwiftCashInAllTime, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitSwiftCashIn30Days={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitSwiftCashIn30Days, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitSwiftCashIn24Hours={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitSwiftCashIn24Hours, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitSwiftCashOutAllTime={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitSwiftCashOutAllTime, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitSwiftCashOut30Days={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitSwiftCashOut30Days, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitSwiftCashOut24Hours={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitSwiftCashOut24Hours, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitCryptoCashInAllTime={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitCryptoCashInAllTime, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitCryptoCashIn30Days={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitCryptoCashIn30Days, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitCryptoCashIn24Hours={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitCryptoCashIn24Hours, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitCryptoCashOutAllTime={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitCryptoCashOutAllTime, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitCryptoCashOut30Days={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitCryptoCashOut30Days, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("LimitCryptoCashOut24Hours={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(limitCryptoCashOut24Hours, SerializationSettings).Trim('"'))));
-            _queryParameters.Add(string.Format("IsDefault={0}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(isDefault, SerializationSettings).Trim('"'))));
-            if (_queryParameters.Count > 0)
-            {
-                _url += "?" + string.Join("&", _queryParameters);
-            }
             // Create HTTP transport objects
             var _httpRequest = new HttpRequestMessage();
             HttpResponseMessage _httpResponse = null;
@@ -1599,6 +1474,12 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
 
             // Serialize Request
             string _requestContent = null;
+            if(tier != null)
+            {
+                _requestContent = SafeJsonConvert.SerializeObject(tier, SerializationSettings);
+                _httpRequest.Content = new StringContent(_requestContent, System.Text.Encoding.UTF8);
+                _httpRequest.Content.Headers.ContentType =System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json-patch+json; charset=utf-8");
+            }
             // Send Request
             if (_shouldTrace)
             {
@@ -1655,10 +1536,13 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// <exception cref="HttpOperationException">
         /// Thrown when the operation returned an invalid status code
         /// </exception>
+        /// <exception cref="SerializationException">
+        /// Thrown when unable to deserialize the response
+        /// </exception>
         /// <return>
         /// A response object containing the response body and response headers.
         /// </return>
-        public async Task<HttpOperationResponse> ApiTiersLoadTiersPostWithHttpMessagesAsync(Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<HttpOperationResponse<IList<Tier>>> ApiTiersLoadTiersPostWithHttpMessagesAsync(Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             // Tracing
             bool _shouldTrace = ServiceClientTracing.IsEnabled;
@@ -1732,9 +1616,27 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
                 throw ex;
             }
             // Create Result
-            var _result = new HttpOperationResponse();
+            var _result = new HttpOperationResponse<IList<Tier>>();
             _result.Request = _httpRequest;
             _result.Response = _httpResponse;
+            // Deserialize Response
+            if ((int)_statusCode == 200)
+            {
+                _responseContent = await _httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+                try
+                {
+                    _result.Body = SafeJsonConvert.DeserializeObject<IList<Tier>>(_responseContent, DeserializationSettings);
+                }
+                catch (JsonException ex)
+                {
+                    _httpRequest.Dispose();
+                    if (_httpResponse != null)
+                    {
+                        _httpResponse.Dispose();
+                    }
+                    throw new SerializationException("Unable to deserialize the response.", _responseContent, ex);
+                }
+            }
             if (_shouldTrace)
             {
                 ServiceClientTracing.Exit(_invocationId, _result);
@@ -1753,10 +1655,13 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// <exception cref="HttpOperationException">
         /// Thrown when the operation returned an invalid status code
         /// </exception>
+        /// <exception cref="SerializationException">
+        /// Thrown when unable to deserialize the response
+        /// </exception>
         /// <return>
         /// A response object containing the response body and response headers.
         /// </return>
-        public async Task<HttpOperationResponse> ApiTiersLoadTierPostWithHttpMessagesAsync(string id = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<HttpOperationResponse<Tier>> ApiTiersLoadTierPostWithHttpMessagesAsync(string id = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             // Tracing
             bool _shouldTrace = ServiceClientTracing.IsEnabled;
@@ -1840,9 +1745,27 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
                 throw ex;
             }
             // Create Result
-            var _result = new HttpOperationResponse();
+            var _result = new HttpOperationResponse<Tier>();
             _result.Request = _httpRequest;
             _result.Response = _httpResponse;
+            // Deserialize Response
+            if ((int)_statusCode == 200)
+            {
+                _responseContent = await _httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+                try
+                {
+                    _result.Body = SafeJsonConvert.DeserializeObject<Tier>(_responseContent, DeserializationSettings);
+                }
+                catch (JsonException ex)
+                {
+                    _httpRequest.Dispose();
+                    if (_httpResponse != null)
+                    {
+                        _httpResponse.Dispose();
+                    }
+                    throw new SerializationException("Unable to deserialize the response.", _responseContent, ex);
+                }
+            }
             if (_shouldTrace)
             {
                 ServiceClientTracing.Exit(_invocationId, _result);

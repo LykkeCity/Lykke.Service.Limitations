@@ -26,7 +26,7 @@ namespace Lykke.Service.Limitations.Controllers
         [Route("api/[controller]/SetTierToClient")]
         [HttpPost]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        public async Task<IActionResult> SetTierToClient(ClientTier clientTier)
+        public async Task<IActionResult> SetTierToClient([FromBody] ClientTier clientTier)
         {
             await _clientTierRepository.SetClientTierAsync(clientTier.ClientId, clientTier.TierId);
             return Ok();
@@ -35,7 +35,7 @@ namespace Lykke.Service.Limitations.Controllers
         [Route("api/[controller]/SaveTier")]
         [HttpPost]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        public async Task<IActionResult> SaveTier(Tier tier)
+        public async Task<IActionResult> SaveTier([FromBody] Tier tier)
         {
             await _tierRepository.SaveTierAsync(tier);
             return Ok();
@@ -43,7 +43,7 @@ namespace Lykke.Service.Limitations.Controllers
 
         [Route("api/[controller]/LoadTiers")]
         [HttpPost]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(IEnumerable<Tier>), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> LoadTiers()
         {
             return Ok(await _tierRepository.LoadTiersAsync());
@@ -51,7 +51,7 @@ namespace Lykke.Service.Limitations.Controllers
 
         [Route("api/[controller]/LoadTier")]
         [HttpPost]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(Tier), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> LoadTier(string id)
         {
             return Ok(await _tierRepository.LoadTierAsync(id));

@@ -253,167 +253,55 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
             /// <param name='operations'>
             /// The operations group for this extension method.
             /// </param>
-            /// <param name='clientId'>
+            /// <param name='clientTier'>
             /// </param>
-            /// <param name='tierId'>
-            /// </param>
-            public static void ApiTiersSetTierToClientPost(this ILykkelimitationsService operations, string clientId = default(string), string tierId = default(string))
+            public static void ApiTiersSetTierToClientPost(this ILykkelimitationsService operations, ClientTier clientTier = default(ClientTier))
             {
-                operations.ApiTiersSetTierToClientPostAsync(clientId, tierId).GetAwaiter().GetResult();
+                operations.ApiTiersSetTierToClientPostAsync(clientTier).GetAwaiter().GetResult();
             }
 
             /// <param name='operations'>
             /// The operations group for this extension method.
             /// </param>
-            /// <param name='clientId'>
-            /// </param>
-            /// <param name='tierId'>
+            /// <param name='clientTier'>
             /// </param>
             /// <param name='cancellationToken'>
             /// The cancellation token.
             /// </param>
-            public static async Task ApiTiersSetTierToClientPostAsync(this ILykkelimitationsService operations, string clientId = default(string), string tierId = default(string), CancellationToken cancellationToken = default(CancellationToken))
+            public static async Task ApiTiersSetTierToClientPostAsync(this ILykkelimitationsService operations, ClientTier clientTier = default(ClientTier), CancellationToken cancellationToken = default(CancellationToken))
             {
-                (await operations.ApiTiersSetTierToClientPostWithHttpMessagesAsync(clientId, tierId, null, cancellationToken).ConfigureAwait(false)).Dispose();
+                (await operations.ApiTiersSetTierToClientPostWithHttpMessagesAsync(clientTier, null, cancellationToken).ConfigureAwait(false)).Dispose();
             }
 
             /// <param name='operations'>
             /// The operations group for this extension method.
             /// </param>
-            /// <param name='limitTotalCashInAllTime'>
+            /// <param name='tier'>
             /// </param>
-            /// <param name='limitTotalCashIn30Days'>
-            /// </param>
-            /// <param name='limitTotalCashIn24Hours'>
-            /// </param>
-            /// <param name='limitTotalCashOutAllTime'>
-            /// </param>
-            /// <param name='limitTotalCashOut30Days'>
-            /// </param>
-            /// <param name='limitTotalCashOut24Hours'>
-            /// </param>
-            /// <param name='limitCreditCardsCashInAllTime'>
-            /// </param>
-            /// <param name='limitCreditCardsCashIn30Days'>
-            /// </param>
-            /// <param name='limitCreditCardsCashIn24Hours'>
-            /// </param>
-            /// <param name='limitCreditCardsCashOutAllTime'>
-            /// </param>
-            /// <param name='limitCreditCardsCashOut30Days'>
-            /// </param>
-            /// <param name='limitCreditCardsCashOut24Hours'>
-            /// </param>
-            /// <param name='limitSwiftCashInAllTime'>
-            /// </param>
-            /// <param name='limitSwiftCashIn30Days'>
-            /// </param>
-            /// <param name='limitSwiftCashIn24Hours'>
-            /// </param>
-            /// <param name='limitSwiftCashOutAllTime'>
-            /// </param>
-            /// <param name='limitSwiftCashOut30Days'>
-            /// </param>
-            /// <param name='limitSwiftCashOut24Hours'>
-            /// </param>
-            /// <param name='limitCryptoCashInAllTime'>
-            /// </param>
-            /// <param name='limitCryptoCashIn30Days'>
-            /// </param>
-            /// <param name='limitCryptoCashIn24Hours'>
-            /// </param>
-            /// <param name='limitCryptoCashOutAllTime'>
-            /// </param>
-            /// <param name='limitCryptoCashOut30Days'>
-            /// </param>
-            /// <param name='limitCryptoCashOut24Hours'>
-            /// </param>
-            /// <param name='isDefault'>
-            /// </param>
-            /// <param name='id'>
-            /// </param>
-            /// <param name='shortName'>
-            /// </param>
-            /// <param name='longName'>
-            /// </param>
-            public static void ApiTiersSaveTierPost(this ILykkelimitationsService operations, long limitTotalCashInAllTime, long limitTotalCashIn30Days, long limitTotalCashIn24Hours, long limitTotalCashOutAllTime, long limitTotalCashOut30Days, long limitTotalCashOut24Hours, long limitCreditCardsCashInAllTime, long limitCreditCardsCashIn30Days, long limitCreditCardsCashIn24Hours, long limitCreditCardsCashOutAllTime, long limitCreditCardsCashOut30Days, long limitCreditCardsCashOut24Hours, long limitSwiftCashInAllTime, long limitSwiftCashIn30Days, long limitSwiftCashIn24Hours, long limitSwiftCashOutAllTime, long limitSwiftCashOut30Days, long limitSwiftCashOut24Hours, long limitCryptoCashInAllTime, long limitCryptoCashIn30Days, long limitCryptoCashIn24Hours, long limitCryptoCashOutAllTime, long limitCryptoCashOut30Days, long limitCryptoCashOut24Hours, bool isDefault, string id = default(string), string shortName = default(string), string longName = default(string))
+            public static void ApiTiersSaveTierPost(this ILykkelimitationsService operations, Tier tier = default(Tier))
             {
-                operations.ApiTiersSaveTierPostAsync(limitTotalCashInAllTime, limitTotalCashIn30Days, limitTotalCashIn24Hours, limitTotalCashOutAllTime, limitTotalCashOut30Days, limitTotalCashOut24Hours, limitCreditCardsCashInAllTime, limitCreditCardsCashIn30Days, limitCreditCardsCashIn24Hours, limitCreditCardsCashOutAllTime, limitCreditCardsCashOut30Days, limitCreditCardsCashOut24Hours, limitSwiftCashInAllTime, limitSwiftCashIn30Days, limitSwiftCashIn24Hours, limitSwiftCashOutAllTime, limitSwiftCashOut30Days, limitSwiftCashOut24Hours, limitCryptoCashInAllTime, limitCryptoCashIn30Days, limitCryptoCashIn24Hours, limitCryptoCashOutAllTime, limitCryptoCashOut30Days, limitCryptoCashOut24Hours, isDefault, id, shortName, longName).GetAwaiter().GetResult();
+                operations.ApiTiersSaveTierPostAsync(tier).GetAwaiter().GetResult();
             }
 
             /// <param name='operations'>
             /// The operations group for this extension method.
             /// </param>
-            /// <param name='limitTotalCashInAllTime'>
-            /// </param>
-            /// <param name='limitTotalCashIn30Days'>
-            /// </param>
-            /// <param name='limitTotalCashIn24Hours'>
-            /// </param>
-            /// <param name='limitTotalCashOutAllTime'>
-            /// </param>
-            /// <param name='limitTotalCashOut30Days'>
-            /// </param>
-            /// <param name='limitTotalCashOut24Hours'>
-            /// </param>
-            /// <param name='limitCreditCardsCashInAllTime'>
-            /// </param>
-            /// <param name='limitCreditCardsCashIn30Days'>
-            /// </param>
-            /// <param name='limitCreditCardsCashIn24Hours'>
-            /// </param>
-            /// <param name='limitCreditCardsCashOutAllTime'>
-            /// </param>
-            /// <param name='limitCreditCardsCashOut30Days'>
-            /// </param>
-            /// <param name='limitCreditCardsCashOut24Hours'>
-            /// </param>
-            /// <param name='limitSwiftCashInAllTime'>
-            /// </param>
-            /// <param name='limitSwiftCashIn30Days'>
-            /// </param>
-            /// <param name='limitSwiftCashIn24Hours'>
-            /// </param>
-            /// <param name='limitSwiftCashOutAllTime'>
-            /// </param>
-            /// <param name='limitSwiftCashOut30Days'>
-            /// </param>
-            /// <param name='limitSwiftCashOut24Hours'>
-            /// </param>
-            /// <param name='limitCryptoCashInAllTime'>
-            /// </param>
-            /// <param name='limitCryptoCashIn30Days'>
-            /// </param>
-            /// <param name='limitCryptoCashIn24Hours'>
-            /// </param>
-            /// <param name='limitCryptoCashOutAllTime'>
-            /// </param>
-            /// <param name='limitCryptoCashOut30Days'>
-            /// </param>
-            /// <param name='limitCryptoCashOut24Hours'>
-            /// </param>
-            /// <param name='isDefault'>
-            /// </param>
-            /// <param name='id'>
-            /// </param>
-            /// <param name='shortName'>
-            /// </param>
-            /// <param name='longName'>
+            /// <param name='tier'>
             /// </param>
             /// <param name='cancellationToken'>
             /// The cancellation token.
             /// </param>
-            public static async Task ApiTiersSaveTierPostAsync(this ILykkelimitationsService operations, long limitTotalCashInAllTime, long limitTotalCashIn30Days, long limitTotalCashIn24Hours, long limitTotalCashOutAllTime, long limitTotalCashOut30Days, long limitTotalCashOut24Hours, long limitCreditCardsCashInAllTime, long limitCreditCardsCashIn30Days, long limitCreditCardsCashIn24Hours, long limitCreditCardsCashOutAllTime, long limitCreditCardsCashOut30Days, long limitCreditCardsCashOut24Hours, long limitSwiftCashInAllTime, long limitSwiftCashIn30Days, long limitSwiftCashIn24Hours, long limitSwiftCashOutAllTime, long limitSwiftCashOut30Days, long limitSwiftCashOut24Hours, long limitCryptoCashInAllTime, long limitCryptoCashIn30Days, long limitCryptoCashIn24Hours, long limitCryptoCashOutAllTime, long limitCryptoCashOut30Days, long limitCryptoCashOut24Hours, bool isDefault, string id = default(string), string shortName = default(string), string longName = default(string), CancellationToken cancellationToken = default(CancellationToken))
+            public static async Task ApiTiersSaveTierPostAsync(this ILykkelimitationsService operations, Tier tier = default(Tier), CancellationToken cancellationToken = default(CancellationToken))
             {
-                (await operations.ApiTiersSaveTierPostWithHttpMessagesAsync(limitTotalCashInAllTime, limitTotalCashIn30Days, limitTotalCashIn24Hours, limitTotalCashOutAllTime, limitTotalCashOut30Days, limitTotalCashOut24Hours, limitCreditCardsCashInAllTime, limitCreditCardsCashIn30Days, limitCreditCardsCashIn24Hours, limitCreditCardsCashOutAllTime, limitCreditCardsCashOut30Days, limitCreditCardsCashOut24Hours, limitSwiftCashInAllTime, limitSwiftCashIn30Days, limitSwiftCashIn24Hours, limitSwiftCashOutAllTime, limitSwiftCashOut30Days, limitSwiftCashOut24Hours, limitCryptoCashInAllTime, limitCryptoCashIn30Days, limitCryptoCashIn24Hours, limitCryptoCashOutAllTime, limitCryptoCashOut30Days, limitCryptoCashOut24Hours, isDefault, id, shortName, longName, null, cancellationToken).ConfigureAwait(false)).Dispose();
+                (await operations.ApiTiersSaveTierPostWithHttpMessagesAsync(tier, null, cancellationToken).ConfigureAwait(false)).Dispose();
             }
 
             /// <param name='operations'>
             /// The operations group for this extension method.
             /// </param>
-            public static void ApiTiersLoadTiersPost(this ILykkelimitationsService operations)
+            public static IList<Tier> ApiTiersLoadTiersPost(this ILykkelimitationsService operations)
             {
-                operations.ApiTiersLoadTiersPostAsync().GetAwaiter().GetResult();
+                return operations.ApiTiersLoadTiersPostAsync().GetAwaiter().GetResult();
             }
 
             /// <param name='operations'>
@@ -422,9 +310,12 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
             /// <param name='cancellationToken'>
             /// The cancellation token.
             /// </param>
-            public static async Task ApiTiersLoadTiersPostAsync(this ILykkelimitationsService operations, CancellationToken cancellationToken = default(CancellationToken))
+            public static async Task<IList<Tier>> ApiTiersLoadTiersPostAsync(this ILykkelimitationsService operations, CancellationToken cancellationToken = default(CancellationToken))
             {
-                (await operations.ApiTiersLoadTiersPostWithHttpMessagesAsync(null, cancellationToken).ConfigureAwait(false)).Dispose();
+                using (var _result = await operations.ApiTiersLoadTiersPostWithHttpMessagesAsync(null, cancellationToken).ConfigureAwait(false))
+                {
+                    return _result.Body;
+                }
             }
 
             /// <param name='operations'>
@@ -432,9 +323,9 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
             /// </param>
             /// <param name='id'>
             /// </param>
-            public static void ApiTiersLoadTierPost(this ILykkelimitationsService operations, string id = default(string))
+            public static Tier ApiTiersLoadTierPost(this ILykkelimitationsService operations, string id = default(string))
             {
-                operations.ApiTiersLoadTierPostAsync(id).GetAwaiter().GetResult();
+                return operations.ApiTiersLoadTierPostAsync(id).GetAwaiter().GetResult();
             }
 
             /// <param name='operations'>
@@ -445,9 +336,12 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
             /// <param name='cancellationToken'>
             /// The cancellation token.
             /// </param>
-            public static async Task ApiTiersLoadTierPostAsync(this ILykkelimitationsService operations, string id = default(string), CancellationToken cancellationToken = default(CancellationToken))
+            public static async Task<Tier> ApiTiersLoadTierPostAsync(this ILykkelimitationsService operations, string id = default(string), CancellationToken cancellationToken = default(CancellationToken))
             {
-                (await operations.ApiTiersLoadTierPostWithHttpMessagesAsync(id, null, cancellationToken).ConfigureAwait(false)).Dispose();
+                using (var _result = await operations.ApiTiersLoadTierPostWithHttpMessagesAsync(id, null, cancellationToken).ConfigureAwait(false))
+                {
+                    return _result.Body;
+                }
             }
 
     }

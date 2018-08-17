@@ -128,9 +128,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// </param>
         Task<HttpOperationResponse> ApiSwiftLimitationsByAssetDeleteWithHttpMessagesAsync(string asset, Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
-        /// <param name='clientId'>
-        /// </param>
-        /// <param name='tierId'>
+        /// <param name='clientTier'>
         /// </param>
         /// <param name='customHeaders'>
         /// The headers that will be added to request.
@@ -138,63 +136,9 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// <param name='cancellationToken'>
         /// The cancellation token.
         /// </param>
-        Task<HttpOperationResponse> ApiTiersSetTierToClientPostWithHttpMessagesAsync(string clientId = default(string), string tierId = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<HttpOperationResponse> ApiTiersSetTierToClientPostWithHttpMessagesAsync(ClientTier clientTier = default(ClientTier), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
-        /// <param name='limitTotalCashInAllTime'>
-        /// </param>
-        /// <param name='limitTotalCashIn30Days'>
-        /// </param>
-        /// <param name='limitTotalCashIn24Hours'>
-        /// </param>
-        /// <param name='limitTotalCashOutAllTime'>
-        /// </param>
-        /// <param name='limitTotalCashOut30Days'>
-        /// </param>
-        /// <param name='limitTotalCashOut24Hours'>
-        /// </param>
-        /// <param name='limitCreditCardsCashInAllTime'>
-        /// </param>
-        /// <param name='limitCreditCardsCashIn30Days'>
-        /// </param>
-        /// <param name='limitCreditCardsCashIn24Hours'>
-        /// </param>
-        /// <param name='limitCreditCardsCashOutAllTime'>
-        /// </param>
-        /// <param name='limitCreditCardsCashOut30Days'>
-        /// </param>
-        /// <param name='limitCreditCardsCashOut24Hours'>
-        /// </param>
-        /// <param name='limitSwiftCashInAllTime'>
-        /// </param>
-        /// <param name='limitSwiftCashIn30Days'>
-        /// </param>
-        /// <param name='limitSwiftCashIn24Hours'>
-        /// </param>
-        /// <param name='limitSwiftCashOutAllTime'>
-        /// </param>
-        /// <param name='limitSwiftCashOut30Days'>
-        /// </param>
-        /// <param name='limitSwiftCashOut24Hours'>
-        /// </param>
-        /// <param name='limitCryptoCashInAllTime'>
-        /// </param>
-        /// <param name='limitCryptoCashIn30Days'>
-        /// </param>
-        /// <param name='limitCryptoCashIn24Hours'>
-        /// </param>
-        /// <param name='limitCryptoCashOutAllTime'>
-        /// </param>
-        /// <param name='limitCryptoCashOut30Days'>
-        /// </param>
-        /// <param name='limitCryptoCashOut24Hours'>
-        /// </param>
-        /// <param name='isDefault'>
-        /// </param>
-        /// <param name='id'>
-        /// </param>
-        /// <param name='shortName'>
-        /// </param>
-        /// <param name='longName'>
+        /// <param name='tier'>
         /// </param>
         /// <param name='customHeaders'>
         /// The headers that will be added to request.
@@ -202,7 +146,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// <param name='cancellationToken'>
         /// The cancellation token.
         /// </param>
-        Task<HttpOperationResponse> ApiTiersSaveTierPostWithHttpMessagesAsync(long limitTotalCashInAllTime, long limitTotalCashIn30Days, long limitTotalCashIn24Hours, long limitTotalCashOutAllTime, long limitTotalCashOut30Days, long limitTotalCashOut24Hours, long limitCreditCardsCashInAllTime, long limitCreditCardsCashIn30Days, long limitCreditCardsCashIn24Hours, long limitCreditCardsCashOutAllTime, long limitCreditCardsCashOut30Days, long limitCreditCardsCashOut24Hours, long limitSwiftCashInAllTime, long limitSwiftCashIn30Days, long limitSwiftCashIn24Hours, long limitSwiftCashOutAllTime, long limitSwiftCashOut30Days, long limitSwiftCashOut24Hours, long limitCryptoCashInAllTime, long limitCryptoCashIn30Days, long limitCryptoCashIn24Hours, long limitCryptoCashOutAllTime, long limitCryptoCashOut30Days, long limitCryptoCashOut24Hours, bool isDefault, string id = default(string), string shortName = default(string), string longName = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<HttpOperationResponse> ApiTiersSaveTierPostWithHttpMessagesAsync(Tier tier = default(Tier), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <param name='customHeaders'>
         /// The headers that will be added to request.
@@ -210,7 +154,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// <param name='cancellationToken'>
         /// The cancellation token.
         /// </param>
-        Task<HttpOperationResponse> ApiTiersLoadTiersPostWithHttpMessagesAsync(Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<HttpOperationResponse<IList<Tier>>> ApiTiersLoadTiersPostWithHttpMessagesAsync(Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <param name='id'>
         /// </param>
@@ -220,7 +164,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// <param name='cancellationToken'>
         /// The cancellation token.
         /// </param>
-        Task<HttpOperationResponse> ApiTiersLoadTierPostWithHttpMessagesAsync(string id = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<HttpOperationResponse<Tier>> ApiTiersLoadTierPostWithHttpMessagesAsync(string id = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
     }
 }
