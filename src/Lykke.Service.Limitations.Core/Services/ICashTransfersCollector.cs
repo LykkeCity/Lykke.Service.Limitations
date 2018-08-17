@@ -19,5 +19,7 @@ namespace Lykke.Service.Limitations.Core.Services
         Task CacheClientDataAsync(string clientId, CurrencyOperationType operationType);
 
         Task AddDataItemAsync(CashTransferOperation item);
+
+        Task PerformStartupCleanupAsync();
     }
 }
