@@ -45,5 +45,11 @@ namespace Lykke.Service.Limitations.Client
             return await _service.ApiTiersLoadTierPostAsync(id);
         }
 
+        public async Task<Tier> GetClientTier(string id)
+        {
+            return await _service.ApiTiersGetClientTierGetAsync(id);
+        }
+
+
     }
 }
