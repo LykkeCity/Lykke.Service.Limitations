@@ -43,8 +43,9 @@ namespace Lykke.Service.Limitations.Controllers
             if (id != null)
             {
                 result = await _tierRepository.LoadTierAsync(id);
+                return Ok(result);
             }
-            return Ok(result);
+            return Ok();
         }
 
         [Route("api/[controller]/SaveTier")]

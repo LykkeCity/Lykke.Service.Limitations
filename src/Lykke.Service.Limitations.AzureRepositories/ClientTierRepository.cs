@@ -24,7 +24,8 @@ namespace Lykke.Service.Limitations.AzureRepositories
             var e = new ClientTierEntity();
 
             e.PartitionKey = clientId;
-            e.RowKey = tierId;
+            e.RowKey = clientId;
+            e.TierId = tierId;
 
             await _tableStorage.InsertOrReplaceAsync(e);
         }
@@ -32,10 +33,12 @@ namespace Lykke.Service.Limitations.AzureRepositories
         public async Task<string> GetClientTierIdAsync(string clientId)
         {
             var resultTier = (await _tableStorage.GetDataAsync(clientId, clientId));
+            /*
             if (resultTier == null) // no tier for a client - try to load a default tier
             {
                 resultTier = (await _tableStorage.GetDataAsync(_defaultTierKey, _defaultTierKey));
             }
+            */
             return resultTier == null ? null : resultTier.TierId;
         }
 
