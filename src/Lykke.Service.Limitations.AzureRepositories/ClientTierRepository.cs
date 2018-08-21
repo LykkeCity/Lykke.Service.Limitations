@@ -39,6 +39,23 @@ namespace Lykke.Service.Limitations.AzureRepositories
             return resultTier == null ? null : resultTier.TierId;
         }
 
+        public async Task SetDefaultTierAsync(string tierId)
+        {
+            var e = new ClientTierEntity();
+
+            e.PartitionKey = _defaultTierKey;
+            e.RowKey = _defaultTierKey;
+            e.TierId = tierId;
+
+            await _tableStorage.InsertOrReplaceAsync(e);
+        }
+
+        public async Task<string> GetDefaultTierIdAsync()
+        {
+            var e = await _tableStorage.GetDataAsync(_defaultTierKey, _defaultTierKey);
+            return e != null ? e.TierId : null;
+        }
+
 
     }
 }

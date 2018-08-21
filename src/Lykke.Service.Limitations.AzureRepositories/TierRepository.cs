@@ -17,7 +17,7 @@ namespace Lykke.Service.Limitations.AzureRepositories
             _tableStorage = tableStorage;
         }
 
-        public async Task SaveTierAsync(ITier tier)
+        public async Task<string> SaveTierAsync(ITier tier)
         {
             TierEntity e = new TierEntity();
             e.Id = String.IsNullOrWhiteSpace(tier.Id) ? Guid.NewGuid().ToString() : tier.Id;
@@ -56,6 +56,8 @@ namespace Lykke.Service.Limitations.AzureRepositories
             e.RowKey = e.Id;
 
             await _tableStorage.InsertOrReplaceAsync(e);
+
+            return e.Id;
         }
 
         public async Task<IEnumerable<ITier>> LoadTiersAsync()

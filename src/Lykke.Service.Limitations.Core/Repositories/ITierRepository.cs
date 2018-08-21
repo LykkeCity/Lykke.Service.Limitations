@@ -8,7 +8,7 @@ namespace Lykke.Service.Limitations.Core.Repositories
 {
     public interface ITierRepository
     {
-        Task SaveTierAsync(ITier tier);
+        Task<string> SaveTierAsync(ITier tier);
         Task<IEnumerable<ITier>> LoadTiersAsync();
         Task<ITier> LoadTierAsync(string id);
         Task DeleteTierAsync(string id);

@@ -11,5 +11,9 @@ namespace Lykke.Service.Limitations.Core.Repositories
         Task SetClientTierAsync(string clientId, string tierId);
 
         Task<string> GetClientTierIdAsync(string clientId);
+
+        Task SetDefaultTierAsync(string tierId);
+
+        Task<string> GetDefaultTierIdAsync();
     }
 }

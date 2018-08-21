@@ -45,6 +45,7 @@ namespace Lykke.Service.Limitations.AzureRepositories
         public long LimitCryptoCashOut30Days { get; set; }
         public long LimitCryptoCashOut24Hours { get; set; }
 
+        [IgnoreProperty]
         public bool IsDefault { get; set; }
 
     }
