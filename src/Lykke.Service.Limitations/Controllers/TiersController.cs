@@ -14,14 +14,17 @@ namespace Lykke.Service.Limitations.Controllers
     {
         private readonly ITierRepository _tierRepository;
         private readonly IClientTierRepository _clientTierRepository;
+        private readonly IClientTierLogRepository _clientTierLogRepository;
 
         public TiersController(
             ITierRepository tierRepository,
-            IClientTierRepository clientTierRepository
+            IClientTierRepository clientTierRepository,
+            IClientTierLogRepository clientTierLogRepository
             )
         {
             _tierRepository = tierRepository;
             _clientTierRepository = clientTierRepository;
+            _clientTierLogRepository = clientTierLogRepository;
         }
 
         [Route("api/[controller]/SetTierToClient")]
@@ -29,7 +32,12 @@ namespace Lykke.Service.Limitations.Controllers
         [ProducesResponseType((int)HttpStatusCode.OK)]
         public async Task<IActionResult> SetTierToClient([FromBody] ClientTier clientTier)
         {
+            var oldTierId = await _clientTierRepository.GetClientTierIdAsync(clientTier.ClientId);
             await _clientTierRepository.SetClientTierAsync(clientTier.ClientId, clientTier.TierId);
+            if (clientTier.TierId != oldTierId)
+            {
+                await _clientTierLogRepository.WriteLogAsync(clientTier.ClientId, oldTierId, clientTier.TierId, clientTier.Changer);
+            }
             return Ok();
         }
 
@@ -46,6 +54,14 @@ namespace Lykke.Service.Limitations.Controllers
                 return Ok(result);
             }
             return Ok();
+        }
+
+        [Route("api/[controller]/GetClientTierLog")]
+        [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<IClientTierLogRecord>), (int)HttpStatusCode.OK)]
+        public async Task<IActionResult> GetClientTierLog(string clientId)
+        {
+            return Ok(await _clientTierLogRepository.GetLogAsync(clientId));
         }
 
         [Route("api/[controller]/SaveTier")]

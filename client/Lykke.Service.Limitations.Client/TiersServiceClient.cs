@@ -50,6 +50,11 @@ namespace Lykke.Service.Limitations.Client
             return await _service.ApiTiersGetClientTierGetAsync(id);
         }
 
+        public async Task<IList<IClientTierLogRecord>> GetClientTierLog(string id)
+        {
+            return await _service.ApiTiersGetClientTierLogGetAsync(id);
+        }
+
 
     }
 }

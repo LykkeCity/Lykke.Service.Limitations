@@ -10,24 +10,25 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
     using Newtonsoft.Json;
     using System.Linq;
 
-    public partial class ClientTier
+    public partial class IClientTierLogRecord
     {
         /// <summary>
-        /// Initializes a new instance of the ClientTier class.
+        /// Initializes a new instance of the IClientTierLogRecord class.
         /// </summary>
-        public ClientTier()
+        public IClientTierLogRecord()
         {
             CustomInit();
         }
 
         /// <summary>
-        /// Initializes a new instance of the ClientTier class.
+        /// Initializes a new instance of the IClientTierLogRecord class.
         /// </summary>
-        public ClientTier(string clientId, string tierId, string changer)
+        public IClientTierLogRecord(string oldTierId, string newTierId, string changer, System.DateTime changeDate)
         {
-            ClientId = clientId;
-            TierId = tierId;
+            OldTierId = oldTierId;
+            NewTierId = newTierId;
             Changer = changer;
+            ChangeDate = changeDate;
             CustomInit();
         }
 
@@ -38,18 +39,23 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "ClientId")]
-        public string ClientId { get; set; }
+        [JsonProperty(PropertyName = "OldTierId")]
+        public string OldTierId { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "TierId")]
-        public string TierId { get; set; }
+        [JsonProperty(PropertyName = "NewTierId")]
+        public string NewTierId { get; set; }
 
         /// <summary>
         /// </summary>
         [JsonProperty(PropertyName = "Changer")]
         public string Changer { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "ChangeDate")]
+        public System.DateTime ChangeDate { get; set; }
 
         /// <summary>
         /// Validate the object.
@@ -59,13 +65,13 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (ClientId == null)
+            if (OldTierId == null)
             {
-                throw new ValidationException(ValidationRules.CannotBeNull, "ClientId");
+                throw new ValidationException(ValidationRules.CannotBeNull, "OldTierId");
             }
-            if (TierId == null)
+            if (NewTierId == null)
             {
-                throw new ValidationException(ValidationRules.CannotBeNull, "TierId");
+                throw new ValidationException(ValidationRules.CannotBeNull, "NewTierId");
             }
             if (Changer == null)
             {

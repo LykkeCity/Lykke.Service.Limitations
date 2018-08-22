@@ -148,6 +148,16 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// </param>
         Task<HttpOperationResponse<Tier>> ApiTiersGetClientTierGetWithHttpMessagesAsync(string clientId = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <param name='clientId'>
+        /// </param>
+        /// <param name='customHeaders'>
+        /// The headers that will be added to request.
+        /// </param>
+        /// <param name='cancellationToken'>
+        /// The cancellation token.
+        /// </param>
+        Task<HttpOperationResponse<IList<IClientTierLogRecord>>> ApiTiersGetClientTierLogGetWithHttpMessagesAsync(string clientId = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+
         /// <param name='tier'>
         /// </param>
         /// <param name='customHeaders'>

@@ -108,6 +108,16 @@ namespace Lykke.Service.Limitations.Modules
                 .As<IClientTierRepository>()
                 .SingleInstance();
 
+            var clientTierLogStorage = AzureTableStorage<ClientTierLogEntity>.Create(
+                _settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString),
+                "ClientTierLogs",
+                _log);
+            var clientTierLogRepository = new ClientTierLogRepository(clientTierLogStorage);
+            builder
+                .RegisterInstance(clientTierLogRepository)
+                .As<IClientTierLogRepository>()
+                .SingleInstance();
+
         }
 
         private void RegisterServices(ContainerBuilder builder)
