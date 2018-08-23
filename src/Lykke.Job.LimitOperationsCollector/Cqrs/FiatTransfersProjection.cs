@@ -11,19 +11,15 @@ namespace Lykke.Job.LimitOperationsCollector.Cqrs
     public class FiatTransfersProjection
     {
         private readonly ICashOperationsCollector _collector;
-        private readonly ILog _log;
 
-        public FiatTransfersProjection(ICashOperationsCollector collector, ILog log)
+        public FiatTransfersProjection(ICashOperationsCollector collector)
         {
             _collector = collector;
-            _log = log;
         }
 
         [UsedImplicitly]
         private async Task Handle(TransferCreatedEvent evt)
         {
-            _log.WriteInfo(nameof(FiatTransfersProjection), nameof(Handle), evt.ToJson());
-
             await _collector.AddDataItemAsync(new CashOperation
             {
                 Id = evt.TransferId,
