@@ -293,7 +293,7 @@ namespace Lykke.Service.Limitations.Services
 
                 if (currencyOperationType == CurrencyOperationType.CardCashIn)
                 {
-                    CreateLimit(typeLimits, clientId, asset, clientTier.LimitCreditCardsCashOut24Hours, LimitationType.CardCashIn, LimitationPeriod.Day);
+                    CreateLimit(typeLimits, clientId, asset, clientTier.LimitCreditCardsCashIn24Hours, LimitationType.CardCashIn, LimitationPeriod.Day);
                     CreateLimit(typeLimits, clientId, asset, clientTier.LimitCreditCardsCashIn30Days, LimitationType.CardCashIn, LimitationPeriod.Month);
                 }
 
@@ -327,7 +327,7 @@ namespace Lykke.Service.Limitations.Services
                 switch (period)
                 {
                     case LimitationPeriod.Day:
-                        CreateLimit(result, clientId, asset, clientTier.LimitCreditCardsCashOut24Hours, LimitationType.CardCashIn, LimitationPeriod.Day);
+                        CreateLimit(result, clientId, asset, clientTier.LimitCreditCardsCashIn24Hours, LimitationType.CardCashIn, LimitationPeriod.Day);
 
                         long cardAndSwiftCashIn24HoursLimit = clientTier.LimitCreditCardsCashIn30Days + clientTier.LimitSwiftCashIn30Days;
                         if (cardAndSwiftCashIn24HoursLimit > 0 && clientTier.LimitTotalCashIn30Days > 0 && cardAndSwiftCashIn24HoursLimit > clientTier.LimitTotalCashIn30Days)
