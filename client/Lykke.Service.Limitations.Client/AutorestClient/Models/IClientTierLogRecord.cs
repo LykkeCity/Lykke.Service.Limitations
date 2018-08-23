@@ -23,10 +23,10 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the IClientTierLogRecord class.
         /// </summary>
-        public IClientTierLogRecord(string oldTierId, string newTierId, string changer, System.DateTime changeDate)
+        public IClientTierLogRecord(string dataOld, string dataNew, string changer, System.DateTime changeDate)
         {
-            OldTierId = oldTierId;
-            NewTierId = newTierId;
+            DataOld = dataOld;
+            DataNew = dataNew;
             Changer = changer;
             ChangeDate = changeDate;
             CustomInit();
@@ -39,13 +39,13 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "OldTierId")]
-        public string OldTierId { get; set; }
+        [JsonProperty(PropertyName = "DataOld")]
+        public string DataOld { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "NewTierId")]
-        public string NewTierId { get; set; }
+        [JsonProperty(PropertyName = "DataNew")]
+        public string DataNew { get; set; }
 
         /// <summary>
         /// </summary>
@@ -65,13 +65,13 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (OldTierId == null)
+            if (DataOld == null)
             {
-                throw new ValidationException(ValidationRules.CannotBeNull, "OldTierId");
+                throw new ValidationException(ValidationRules.CannotBeNull, "DataOld");
             }
-            if (NewTierId == null)
+            if (DataNew == null)
             {
-                throw new ValidationException(ValidationRules.CannotBeNull, "NewTierId");
+                throw new ValidationException(ValidationRules.CannotBeNull, "DataNew");
             }
             if (Changer == null)
             {
