@@ -2,6 +2,7 @@
 using AzureStorage.Blob;
 using AzureStorage.Tables;
 using Common.Log;
+using Lykke.Common.Log;
 using Lykke.HttpClientGenerator;
 using Lykke.Service.Limitations.AzureRepositories;
 using Lykke.Service.Limitations.Core.Domain;
@@ -78,45 +79,18 @@ namespace Lykke.Service.Limitations.Modules
                 .As<ISwiftTransferLimitationsRepository>()
                 .SingleInstance();
 
-            var accumulatedDepostStorage = AzureTableStorage<AccumulatedDepositPeriodEntity>.Create(
-                _settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString),
-                "AccumulatedDeposits",
-                _log);
+            builder.Register(ctx => AzureTableStorage<AccumulatedDepositPeriodEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "AccumulatedDeposits", _log)).SingleInstance();
+            builder.RegisterType<AccumulatedDepositRepository>().As<IAccumulatedDepositRepository>().SingleInstance();
 
-            builder.RegisterType<AccumulatedDepositRepository>()
-                .As<IAccumulatedDepositRepository>()
-                .WithParameter(TypedParameter.From(accumulatedDepostStorage))
-                .SingleInstance();
+            builder.Register(ctx => AzureTableStorage<TierEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "Tiers", _log)).SingleInstance();
+            builder.RegisterType<TierRepository>().As<ITierRepository>().SingleInstance();
 
-            var tierStorage = AzureTableStorage<TierEntity>.Create(
-                _settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString),
-                "Tiers",
-                _log);
-            var tierRepository = new TierRepository(tierStorage);
-            builder
-                .RegisterInstance(tierRepository)
-                .As<ITierRepository>()
-                .SingleInstance();
+            builder.Register(ctx => AzureTableStorage<ClientTierEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "ClientTiers", _log)).SingleInstance();
+            builder.RegisterType<ClientTierRepository>().As<IClientTierRepository>().SingleInstance();
 
-            var clientTierStorage = AzureTableStorage<ClientTierEntity>.Create(
-                _settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString),
-                "ClientTiers",
-                _log);
-            var clientTierRepository = new ClientTierRepository(clientTierStorage);
-            builder
-                .RegisterInstance(clientTierRepository)
-                .As<IClientTierRepository>()
-                .SingleInstance();
+            builder.Register(ctx => AzureTableStorage<ClientTierLogEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "ClientTierLogs", _log)).SingleInstance();
+            builder.RegisterType<ClientTierLogRepository>().As<IClientTierLogRepository>().SingleInstance();
 
-            var clientTierLogStorage = AzureTableStorage<ClientTierLogEntity>.Create(
-                _settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString),
-                "ClientTierLogs",
-                _log);
-            var clientTierLogRepository = new ClientTierLogRepository(clientTierLogStorage);
-            builder
-                .RegisterInstance(clientTierLogRepository)
-                .As<IClientTierLogRepository>()
-                .SingleInstance();
 
         }
 
