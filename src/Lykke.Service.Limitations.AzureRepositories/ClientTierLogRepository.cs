@@ -1,5 +1,6 @@
 ﻿
 using AzureStorage;
+using Common;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
 using System;
@@ -24,8 +25,8 @@ namespace Lykke.Service.Limitations.AzureRepositories
             e.PartitionKey = clientId;
             e.RowKey = (long.MaxValue - DateTime.UtcNow.Ticks).ToString();
 
-            e.OldTierId = oldTierId;
-            e.NewTierId = newTierId;
+            e.DataOld = oldTierId == null ? null : new JsonData { TierId = oldTierId }.ToJson();
+            e.DataNew = newTierId == null ? null : new JsonData { TierId = newTierId }.ToJson();
             e.ChangeDate = DateTime.UtcNow;
             e.Changer = changer;
 
@@ -37,5 +38,9 @@ namespace Lykke.Service.Limitations.AzureRepositories
             return await _tableStorage.GetDataAsync(clientId);
         }
 
+        private class JsonData
+        {
+            public string TierId { get; set; }
+        }
     }
 }

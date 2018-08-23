@@ -8,8 +8,8 @@ namespace Lykke.Service.Limitations.AzureRepositories
 {
     public class ClientTierLogEntity: TableEntity, IClientTierLogRecord
     {
-        public string OldTierId { get; set; }
-        public string NewTierId { get; set; }
+        public string DataOld { get; set; }
+        public string DataNew { get; set; }
         public string Changer { get; set; }
         public DateTime ChangeDate { get; set; }
     }

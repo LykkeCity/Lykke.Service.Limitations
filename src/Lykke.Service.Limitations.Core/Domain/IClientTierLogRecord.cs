@@ -6,8 +6,8 @@ namespace Lykke.Service.Limitations.Core.Domain
 {
     public interface IClientTierLogRecord
     {
-        string OldTierId { get; set; }
-        string NewTierId { get; set; }
+        string DataOld { get; set; }
+        string DataNew { get; set; }
         string Changer { get; set; }
         DateTime ChangeDate { get; set; }
     }

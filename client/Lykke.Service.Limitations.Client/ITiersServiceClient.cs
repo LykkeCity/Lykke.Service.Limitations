@@ -17,5 +17,8 @@ namespace Lykke.Service.Limitations.Client
         Task<Tier> LoadTier(string id);
 
         Task<Tier> GetClientTier(string id);
+
+        Task<IList<IClientTierLogRecord>> GetClientTierLog(string id);
+
     }
 }
