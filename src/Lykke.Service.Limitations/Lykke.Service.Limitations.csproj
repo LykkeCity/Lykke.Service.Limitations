@@ -30,7 +30,7 @@
     <PackageReference Include="Lykke.Messaging.RabbitMq" Version="2.1.0" />
     <PackageReference Include="Lykke.Sdk" Version="5.2.2" />
     <PackageReference Include="Lykke.MonitoringServiceApiCaller" Version="1.6.2" />
-    <PackageReference Include="Lykke.Service.Assets.Contract" Version="1.1.0" />
+    <PackageReference Include="Lykke.Service.Assets.Contract" Version="3.0.0" />
     <PackageReference Include="Lykke.SlackNotification.AzureQueue" Version="2.0.5" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.4.0" />
     <PackageReference Include="Microsoft.AspNetCore" Version="2.1.2" />
