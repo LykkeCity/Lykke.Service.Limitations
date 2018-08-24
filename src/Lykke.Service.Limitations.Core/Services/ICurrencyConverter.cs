@@ -5,7 +5,7 @@ namespace Lykke.Service.Limitations.Core.Services
 {
     public interface ICurrencyConverter
     {
-        Task<Tuple<string, double>> ConvertAsync(
+        Task<(string assetTo, double convertedAmount)> ConvertAsync(
             string assetFrom,
             string assetTo,
             double amount,

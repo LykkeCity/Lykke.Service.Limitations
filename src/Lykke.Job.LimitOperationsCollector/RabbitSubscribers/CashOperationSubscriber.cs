@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Autofac;
 using Common;
 using Common.Log;
+using Lykke.Common.Log;
 using Lykke.MatchingEngine.Connector.Models.RabbitMq;
 using Lykke.RabbitMqBroker;
 using Lykke.RabbitMqBroker.Subscriber;
@@ -23,12 +24,12 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
         public CashOperationSubscriber(
             ICashOperationsCollector cashOperationsCollector,
             IStartupManager startupManager,
-            ILog log,
+            ILogFactory log,
             string connectionString,
             string exchangeName)
         {
             _cashOperationsCollector = cashOperationsCollector;
-            _log = log;
+            _log = log.CreateLog(this);
             _connectionString = connectionString;
             _exchangeName = exchangeName;
 

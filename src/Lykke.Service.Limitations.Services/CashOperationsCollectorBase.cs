@@ -5,6 +5,7 @@ using Lykke.Service.Limitations.Core.Services;
 using StackExchange.Redis;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Lykke.Common.Log;
 
 namespace Lykke.Service.Limitations.Services
 {
@@ -14,8 +15,7 @@ namespace Lykke.Service.Limitations.Services
         protected readonly ClientsDataHelper<T> _data;
         protected readonly ICurrencyConverter _currencyConverter;
         protected readonly IAntiFraudCollector _antiFraudCollector;
-        protected readonly ILog _log;
-
+        
         public CashOperationsCollectorBase(
             IClientStateRepository<List<T>> stateRepository,
             IAntiFraudCollector antiFraudCollector,
@@ -23,14 +23,13 @@ namespace Lykke.Service.Limitations.Services
             string redisInstanceName,
             string cashPrefix,
             ICurrencyConverter currencyConverter,
-            ILog log)
+            ILogFactory logFactory)
         {
             _currencyConverter = currencyConverter;
-            _antiFraudCollector = antiFraudCollector;
-            _log = log;
+            _antiFraudCollector = antiFraudCollector;            
             _data = new ClientsDataHelper<T>(
                 stateRepository,
-                _log,
+                logFactory,
                 connectionMultiplexer,
                 GetOperationType,
                 redisInstanceName,

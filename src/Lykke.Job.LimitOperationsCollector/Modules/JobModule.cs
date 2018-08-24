@@ -3,6 +3,7 @@ using Common;
 using Common.Log;
 using AzureStorage.Blob;
 using AzureStorage.Tables;
+using Lykke.Common.Log;
 using Lykke.SettingsReader;
 using Lykke.Service.RateCalculator.Client;
 using Lykke.Service.Limitations.AzureRepositories;
@@ -17,32 +18,21 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
 {
     public class JobModule : Module
     {
-        private readonly AppSettings _appSettings;
-        private readonly IReloadingManager<LimitOperationsCollectorSettings> _settingsManager;
-        private readonly ILog _log;
-
+        private readonly IReloadingManager<AppSettings> _settings;
+        
         public JobModule(
-            AppSettings appSettings,
-            IReloadingManager<LimitOperationsCollectorSettings> settingsManager,
-            ILog log)
+            IReloadingManager<AppSettings> settings)
         {
-            _appSettings = appSettings;
-            _settingsManager = settingsManager;
-            _log = log;
+            _settings = settings;
         }
 
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterInstance(_log)
-                .As<ILog>()
-                .SingleInstance();
-
-            builder.Register(context => ConnectionMultiplexer.Connect(_appSettings.LimitOperationsCollectorJob.RedisConfiguration))
+            builder.Register(context => ConnectionMultiplexer.Connect(_settings.CurrentValue.LimitOperationsCollectorJob.RedisConfiguration))
                 .As<IConnectionMultiplexer>()
                 .SingleInstance();
-
-            var rateCalculatorClient = new RateCalculatorClient(_appSettings.RateCalculatorServiceClient.ServiceUrl, _log);
-            builder.RegisterInstance(rateCalculatorClient).As<IRateCalculatorClient>().SingleInstance();
+            
+            builder.RegisterRateCalculatorClient(_settings.CurrentValue.RateCalculatorServiceClient.ServiceUrl);
 
             ReagisterRepositories(builder);
 
@@ -53,26 +43,23 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
 
         private void ReagisterRepositories(ContainerBuilder builder)
         {
-            var blobStorage = AzureBlobStorage.Create(_settingsManager.ConnectionString(s => s.BlobStorageConnectionString));
+            builder.RegisterInstance(AzureBlobStorage.Create(_settings.ConnectionString(s => s.LimitOperationsCollectorJob.BlobStorageConnectionString)));
 
             builder.RegisterType<CashOperationsStateRepository>()
                 .As<ICashOperationsRepository>()
-                .WithParameter(TypedParameter.From(blobStorage))
-                .SingleInstance();
+                .SingleInstance();            
 
             builder.RegisterType<CashTransfersStateRepository>()
-                .As<ICashTransfersRepository>()
-                .WithParameter(TypedParameter.From(blobStorage))
+                .As<ICashTransfersRepository>()                
                 .SingleInstance();
-
-            var paymentsStorage = AzureTableStorage<PaymentTransactionEntity>.Create(
-                _settingsManager.ConnectionString(s => s.PaymentTransactionsConnectionString),
+            
+            builder.Register(ctx => AzureTableStorage<PaymentTransactionEntity>.Create(
+                _settings.ConnectionString(s => s.LimitOperationsCollectorJob.PaymentTransactionsConnectionString),
                 "PaymentTransactions",
-                _log);
+                ctx.Resolve<ILogFactory>())).SingleInstance();
 
             builder.RegisterType<PaymentTransactionsRepository>()
-                .As<IPaymentTransactionsRepository>()
-                .WithParameter(TypedParameter.From(paymentsStorage))
+                .As<IPaymentTransactionsRepository>()                
                 .SingleInstance();
         }
 
@@ -92,23 +79,23 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
 
             builder.RegisterType<CurrencyConverter>()
                 .As<ICurrencyConverter>()
-                .WithParameter("convertibleCurrencies", _appSettings.LimitOperationsCollectorJob.ConvertibleAssets)
+                .WithParameter("convertibleCurrencies", _settings.CurrentValue.LimitOperationsCollectorJob.ConvertibleAssets)
                 .SingleInstance();
 
             builder.RegisterType<AntiFraudCollector>()
                 .As<IAntiFraudCollector>()
                 .SingleInstance()
-                .WithParameter("redisInstanceName", _appSettings.LimitOperationsCollectorJob.RedisInstanceName);
+                .WithParameter("redisInstanceName", _settings.CurrentValue.LimitOperationsCollectorJob.RedisInstanceName);
 
             builder.RegisterType<CashOperationsCollector>()
                 .As<ICashOperationsCollector>()
                 .SingleInstance()
-                .WithParameter("redisInstanceName", _appSettings.LimitOperationsCollectorJob.RedisInstanceName);
+                .WithParameter("redisInstanceName", _settings.CurrentValue.LimitOperationsCollectorJob.RedisInstanceName);
 
             builder.RegisterType<CashTransfersCollector>()
                 .As<ICashTransfersCollector>()
                 .SingleInstance()
-                .WithParameter("redisInstanceName", _appSettings.LimitOperationsCollectorJob.RedisInstanceName);
+                .WithParameter("redisInstanceName", _settings.CurrentValue.LimitOperationsCollectorJob.RedisInstanceName);
         }
 
         private void RegisterRabbitMqSubscribers(ContainerBuilder builder)
@@ -117,15 +104,15 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                 .As<IStopable>()
                 .SingleInstance()
                 .AutoActivate()
-                .WithParameter("connectionString", _appSettings.LimitOperationsCollectorJob.Rabbit.ConnectionString)
-                .WithParameter("exchangeName", _appSettings.LimitOperationsCollectorJob.Rabbit.CashOperationsExchangeName);
+                .WithParameter("connectionString", _settings.CurrentValue.LimitOperationsCollectorJob.Rabbit.ConnectionString)
+                .WithParameter("exchangeName", _settings.CurrentValue.LimitOperationsCollectorJob.Rabbit.CashOperationsExchangeName);
 
             builder.RegisterType<CashTransferOperationSubscriber>()
                 .As<IStopable>()
                 .SingleInstance()
                 .AutoActivate()
-                .WithParameter("connectionString", _appSettings.LimitOperationsCollectorJob.Rabbit.ConnectionString)
-                .WithParameter("exchangeName", _appSettings.LimitOperationsCollectorJob.Rabbit.CashTransfersExchangeName);
+                .WithParameter("connectionString", _settings.CurrentValue.LimitOperationsCollectorJob.Rabbit.ConnectionString)
+                .WithParameter("exchangeName", _settings.CurrentValue.LimitOperationsCollectorJob.Rabbit.CashTransfersExchangeName);
         }
     }
 }

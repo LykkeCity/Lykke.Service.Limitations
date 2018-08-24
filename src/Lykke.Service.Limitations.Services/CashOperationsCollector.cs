@@ -6,6 +6,7 @@ using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Lykke.Common.Log;
 
 namespace Lykke.Service.Limitations.Services
 {
@@ -17,7 +18,7 @@ namespace Lykke.Service.Limitations.Services
             IAntiFraudCollector antifraudCollector,
             ICurrencyConverter currencyConverter,
             string redisInstanceName,
-            ILog log)
+            ILogFactory logFactory)
             : base(
                 stateRepository,
                 antifraudCollector,
@@ -25,7 +26,7 @@ namespace Lykke.Service.Limitations.Services
                 redisInstanceName,
                 nameof(CashOperation),
                 currencyConverter,
-                log)
+                logFactory)
         {
         }
 

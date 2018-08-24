@@ -1,17 +1,16 @@
 ﻿using System.Collections.Generic;
+using Lykke.Sdk.Settings;
 using Lykke.SettingsReader.Attributes;
 
 namespace Lykke.Job.LimitOperationsCollector.Settings
 {
-    public class AppSettings
+    public class AppSettings : BaseAppSettings
     {
         public LimitOperationsCollectorSettings LimitOperationsCollectorJob { get; set; }
-
-        public SlackNotificationsSettings SlackNotifications { get; set; }
-
-        public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
-
+        
         public RateCalculatorServiceClient RateCalculatorServiceClient { get; set; }
+
+        public SagasRabbitMqSettings SagasRabbitMq { get; set; }
     }
 
     public class SlackNotificationsSettings
@@ -55,7 +54,12 @@ namespace Lykke.Job.LimitOperationsCollector.Settings
         [AzureTableCheck]
         public string PaymentTransactionsConnectionString { get; set; }
 
-        public RabbitMqSettings Rabbit { get; set; }
+        public RabbitMqSettings Rabbit { get; set; }      
+    }
+
+    public class SagasRabbitMqSettings
+    {
+        public string RabbitConnectionString { get; set; }
     }
 
     public class RabbitMqSettings
