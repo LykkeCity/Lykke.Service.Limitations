@@ -30,13 +30,15 @@ namespace Lykke.Service.Limitations.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
-            builder.Register(context => ConnectionMultiplexer.Connect(_appSettings.CurrentValue.LimitationsSettings.RedisConfiguration))
+            var settings = _appSettings.CurrentValue;
+
+            builder.Register(context => ConnectionMultiplexer.Connect(settings.LimitationsSettings.RedisConfiguration))
                 .As<IConnectionMultiplexer>()
                 .SingleInstance();
             
-            builder.RegisterRateCalculatorClient(_appSettings.CurrentValue.RateCalculatorServiceClient.ServiceUrl);
-            builder.RegisterAssetsClient(AssetServiceSettings.Create(new Uri(_appSettings.CurrentValue.AssetsServiceClient.ServiceUrl), TimeSpan.MaxValue));
-            builder.RegisterClient<ILimitOperationsApi>(_appSettings.CurrentValue.LimitationsSettings.LimitOperationsJobUrl);
+            builder.RegisterRateCalculatorClient(settings.RateCalculatorServiceClient.ServiceUrl);
+            builder.RegisterAssetsClient(AssetServiceSettings.Create(new Uri(settings.AssetsServiceClient.ServiceUrl), TimeSpan.MaxValue));
+            builder.RegisterClient<ILimitOperationsApi>(settings.LimitationsSettings.LimitOperationsJobUrl);
 
             RegisterRepositories(builder);
 
@@ -48,7 +50,7 @@ namespace Lykke.Service.Limitations.Modules
             builder.Register(ctx => AzureBlobStorage.Create(_appSettings.ConnectionString(s => s.LimitationsSettings.BlobStorageConnectionString))).SingleInstance();
             builder.Register(ctx => AzureTableStorage<SwiftTransferLimitationEntity>.Create(_appSettings.ConnectionString(s => s.LimitationsSettings.LimitationSettingsConnectionString), "SwiftTransferLimitations", ctx.Resolve<ILogFactory>())).SingleInstance();
             builder.Register(ctx => AzureTableStorage<ApiCallHistoryRecord>.Create(_appSettings.ConnectionString(x => x.LimitationsSettings.Log.ConnectionString), "ApiSuccessfulCalls", ctx.Resolve<ILogFactory>())).SingleInstance();
-            builder.Register(ctx => AzureTableStorage<AppGlobalSettingsEntity>.Create(_appSettings.ConnectionString(x => x.LimitationsSettings.ClientPersonalInfoConnString), "Setup", ctx.Resolve<ILogFactory>())).SingleInstance();
+            builder.Register(ctx => AzureTableStorage<AppGlobalSettingsEntity>.Create(_appSettings.ConnectionString(x => x.LimitationsSettings.GlobalSettingsConnString), "Setup", ctx.Resolve<ILogFactory>())).SingleInstance();
 
             builder.RegisterType<CashOperationsStateRepository>().As<ICashOperationsRepository>().SingleInstance();
             builder.RegisterType<CashTransfersStateRepository>().As<ICashTransfersRepository>().SingleInstance();
