@@ -12,6 +12,7 @@ using Lykke.Service.Limitations.Core.Repositories;
 using Lykke.Service.Limitations.Services;
 using Lykke.Job.LimitOperationsCollector.Settings;
 using Lykke.Job.LimitOperationsCollector.RabbitSubscribers;
+using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
 
 namespace Lykke.Job.LimitOperationsCollector.Modules
@@ -65,6 +66,8 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
 
         private void ReagisterServices(ContainerBuilder builder)
         {
+            builder.RegisterType<HostingService>().As<IHostedService>().SingleInstance();
+
             builder.RegisterType<HealthService>()
                 .As<IHealthService>()
                 .SingleInstance();
@@ -102,6 +105,7 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
         {
             builder.RegisterType<CashOperationSubscriber>()
                 .As<IStopable>()
+                .As<IStartable>()
                 .SingleInstance()
                 .AutoActivate()
                 .WithParameter("connectionString", _settings.CurrentValue.LimitOperationsCollectorJob.Rabbit.ConnectionString)
@@ -109,6 +113,7 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
 
             builder.RegisterType<CashTransferOperationSubscriber>()
                 .As<IStopable>()
+                .As<IStartable>()
                 .SingleInstance()
                 .AutoActivate()
                 .WithParameter("connectionString", _settings.CurrentValue.LimitOperationsCollectorJob.Rabbit.ConnectionString)

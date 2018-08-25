@@ -1,40 +1,38 @@
-﻿using Autofac;
-using Lykke.Service.Limitations.Core.Services;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using Autofac;
+using Lykke.Service.Limitations.Core.Services;
+using Microsoft.Extensions.Hosting;
 
 namespace Lykke.Service.Limitations.Services
 {
-    // not working in sdk 5.2.2
-    public class StartupManager : IStartupManager
-    {
+    public class HostingService : IHostedService
+    {        
         private readonly IAntiFraudCollector _antiFraudCollector;
         private readonly ICashOperationsCollector _cashOperationsCollector;
         private readonly ICashTransfersCollector _cashTransfersCollector;
-        private readonly List<IStartable> _startables = new List<IStartable>();
-
-        public StartupManager(IAntiFraudCollector antiFraudCollector, ICashOperationsCollector cashOperationsCollector, ICashTransfersCollector cashTransfersCollector)
+        
+        public HostingService(            
+            IAntiFraudCollector antiFraudCollector, 
+            ICashOperationsCollector cashOperationsCollector, 
+            ICashTransfersCollector cashTransfersCollector)
         {
             _antiFraudCollector = antiFraudCollector;
             _cashOperationsCollector = cashOperationsCollector;
             _cashTransfersCollector = cashTransfersCollector;
         }
 
-        public void Register(IStartable startable)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            _startables.Add(startable);
-        }
-
-        public async Task StartAsync()
-        {
-            foreach (var item in _startables)
-            {
-                item.Start();
-            }
-
             await _antiFraudCollector.PerformStartupCleanupAsync();
             await _cashOperationsCollector.PerformStartupCleanupAsync();
             await _cashTransfersCollector.PerformStartupCleanupAsync();
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
         }
     }
 }
