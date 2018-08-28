@@ -6,7 +6,6 @@
 
 namespace Lykke.Service.Limitations.Client.AutorestClient
 {
-    using Lykke.Service.Limitations.Client.Models;
     using Models;
     using System.Collections;
     using System.Collections.Generic;
@@ -18,9 +17,6 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
     /// </summary>
     public static partial class LykkelimitationsServiceExtensions
     {
-            /// <summary>
-            /// Checks service is alive
-            /// </summary>
             /// <param name='operations'>
             /// The operations group for this extension method.
             /// </param>
@@ -29,9 +25,6 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
                 return operations.IsAliveAsync().GetAwaiter().GetResult();
             }
 
-            /// <summary>
-            /// Checks service is alive
-            /// </summary>
             /// <param name='operations'>
             /// The operations group for this extension method.
             /// </param>
@@ -161,55 +154,6 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
             /// The operations group for this extension method.
             /// </param>
             public static IList<SwiftTransferLimitation> ApiSwiftLimitationsGet(this ILykkelimitationsService operations)
-            {
-                operations.ApiLimitationsRemoveClientOperationDeleteAsync(clientId, operationId).GetAwaiter().GetResult();
-            }
-
-        /// <param name='operations'>
-        /// The operations group for this extension method.
-        /// </param>
-        /// <param name='clientId'>
-        /// </param>
-        /// <param name='operationId'>
-        /// </param>
-        /// <param name='cancellationToken'>
-        /// The cancellation token.
-        /// </param>
-        public static async Task ApiLimitationsRemoveClientOperationDeleteAsync(this ILykkelimitationsService operations, string clientId = default(string), string operationId = default(string), CancellationToken cancellationToken = default(CancellationToken))
-        {
-            (await operations.ApiLimitationsRemoveClientOperationDeleteWithHttpMessagesAsync(clientId, operationId, null, cancellationToken).ConfigureAwait(false)).Dispose();   
-        }
-
-        /// <param name='operations'>
-        /// The operations group for this extension method.
-        /// </param>
-        /// <param name='clientId'>
-        /// </param>
-        public static AccumulatedDepositsResponse ApiLimitationsGetAccumulatedDepositsPost(this ILykkelimitationsService operations, string clientId = default(string))
-        {
-            return operations.ApiLimitationsGetAccumulatedDepositsPostAsync(clientId).GetAwaiter().GetResult();
-        }
-
-        /// <param name='operations'>
-        /// The operations group for this extension method.
-        /// </param>
-        /// <param name='clientId'>
-        /// </param>
-        /// <param name='cancellationToken'>
-        /// The cancellation token.
-        /// </param>
-        public static async Task<AccumulatedDepositsResponse> ApiLimitationsGetAccumulatedDepositsPostAsync(this ILykkelimitationsService operations, string clientId = default(string), CancellationToken cancellationToken = default(CancellationToken))
-        {
-            using (var _result = await operations.ApiLimitationsGetAccumulatedDepositsPostWithHttpMessagesAsync(clientId, null, cancellationToken).ConfigureAwait(false))
-            {
-                return _result.Body;
-            }
-        }
-
-        /// <param name='operations'>
-        /// The operations group for this extension method.
-        /// </param>
-        public static IList<SwiftTransferLimitation> ApiSwiftLimitationsGet(this ILykkelimitationsService operations)
             {
                 return operations.ApiSwiftLimitationsGetAsync().GetAwaiter().GetResult();
             }

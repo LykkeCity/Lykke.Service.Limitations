@@ -6,7 +6,6 @@
 
 namespace Lykke.Service.Limitations.Client.AutorestClient
 {
-    using Lykke.Service.Limitations.Client.Models;
     using Microsoft.Rest;
     using Models;
     using Newtonsoft.Json;
@@ -35,9 +34,6 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         JsonSerializerSettings DeserializationSettings { get; }
 
 
-        /// <summary>
-        /// Checks service is alive
-        /// </summary>
         /// <param name='customHeaders'>
         /// The headers that will be added to request.
         /// </param>
@@ -147,15 +143,6 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// <param name='cancellationToken'>
         /// The cancellation token.
         /// </param>
-        Task<HttpOperationResponse<AccumulatedDepositsResponse>> ApiLimitationsGetAccumulatedDepositsPostWithHttpMessagesAsync(string clientId = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
-
-        /// <param name='customHeaders'>
-        /// The headers that will be added to request.
-        /// </param>
-        /// <param name='cancellationToken'>
-        /// The cancellation token.
-        /// </param>
-        Task<HttpOperationResponse<IList<SwiftTransferLimitation>>> ApiSwiftLimitationsGetWithHttpMessagesAsync(Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
         Task<HttpOperationResponse<Tier>> ApiTiersGetClientTierGetWithHttpMessagesAsync(string clientId = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <param name='clientId'>

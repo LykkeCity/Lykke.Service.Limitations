@@ -18,9 +18,6 @@ namespace Lykke.Service.Limitations.Settings
         public RabbitMqSagasSettings SagasRabbitMq { get; set; }
     }
 
-        public RabbitMqSettings SagasRabbitMq { get; set; }
-    }
-
     public class AssetServiceClient
     {
         public string ServiceUrl { get; set; }        
@@ -48,9 +45,6 @@ namespace Lykke.Service.Limitations.Settings
         public string LimitationSettingsConnectionString { get; set; }
         [AzureTableCheck]
         public string GlobalSettingsConnString { get; set; }
-
-        [AzureTableCheck]
-        public string DepositAccumulationConnectionString { get; set; }
 
         [AzureTableCheck]
         public string DepositAccumulationConnectionString { get; set; }

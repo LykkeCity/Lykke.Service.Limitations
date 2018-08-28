@@ -196,7 +196,7 @@ namespace Lykke.Service.Limitations.Services
                     }
 
                     // replace limits with new ones from tier
-                    typeLimits = CreateLimitsFromTier(clientTier, typeLimits, clientId, asset, currencyOperationType);
+                    typeLimits = CreateLimitsFromTier(clientTier, typeLimits, clientId, assetId, currencyOperationType);
                 }
             }
 

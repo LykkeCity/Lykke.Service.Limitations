@@ -31,7 +31,6 @@ namespace Lykke.Service.Limitations.Services
             _currencyConverter = currencyConverter;
             _antiFraudCollector = antiFraudCollector;
             _accumulatedDepositAggregator = accumulatedDepositAggregator;
-            _log = log;
             _data = new ClientsDataHelper<T>(
                 stateRepository,
                 logFactory,
