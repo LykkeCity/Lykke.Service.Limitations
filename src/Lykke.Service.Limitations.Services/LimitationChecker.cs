@@ -31,13 +31,13 @@ namespace Lykke.Service.Limitations.Services
         private readonly List<CashOperationLimitation> _limits;
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
         private readonly ISwiftTransferLimitationsRepository _swiftTransferLimitationsRepository;
-        private readonly ILimitSettingsRepository _limitSettingsRepository;
-        private readonly ICallTimeLimitsRepository _callTimeLimitsRepository;
-        private readonly OnDemandDataCache<Asset> _assets;
         private readonly IAccumulatedDepositRepository _accumulatedDepositRepository;
         private readonly List<string> _convertibleCurrencies;
         private readonly ITierRepository _tierRepository;
         private readonly IClientTierRepository _clientTierRepository;
+        private readonly ILimitSettingsRepository _limitSettingsRepository;
+        private readonly ICallTimeLimitsRepository _callTimeLimitsRepository;
+        private readonly OnDemandDataCache<Asset> _assets;
         private readonly ILog _log;
 
         public LimitationChecker(

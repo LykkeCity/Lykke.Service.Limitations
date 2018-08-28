@@ -74,20 +74,6 @@ namespace Lykke.Service.Limitations.Modules
             builder.RegisterType<ClientTierLogRepository>().As<IClientTierLogRepository>().SingleInstance();
 
 
-
-            builder.Register(ctx => AzureTableStorage<AccumulatedDepositPeriodEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "AccumulatedDeposits", _log)).SingleInstance();
-            builder.RegisterType<AccumulatedDepositRepository>().As<IAccumulatedDepositRepository>().SingleInstance();
-
-            builder.Register(ctx => AzureTableStorage<TierEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "Tiers", _log)).SingleInstance();
-            builder.RegisterType<TierRepository>().As<ITierRepository>().SingleInstance();
-
-            builder.Register(ctx => AzureTableStorage<ClientTierEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "ClientTiers", _log)).SingleInstance();
-            builder.RegisterType<ClientTierRepository>().As<IClientTierRepository>().SingleInstance();
-
-            builder.Register(ctx => AzureTableStorage<ClientTierLogEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "ClientTierLogs", _log)).SingleInstance();
-            builder.RegisterType<ClientTierLogRepository>().As<IClientTierLogRepository>().SingleInstance();
-
-
         }
 
         private void RegisterServices(ContainerBuilder builder)
