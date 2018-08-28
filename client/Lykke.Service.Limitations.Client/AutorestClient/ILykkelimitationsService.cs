@@ -34,6 +34,9 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         JsonSerializerSettings DeserializationSettings { get; }
 
 
+        /// <summary>
+        /// Checks service is alive
+        /// </summary>
         /// <param name='customHeaders'>
         /// The headers that will be added to request.
         /// </param>

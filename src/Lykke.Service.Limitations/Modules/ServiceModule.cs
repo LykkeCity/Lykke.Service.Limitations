@@ -3,6 +3,7 @@ using AzureStorage.Blob;
 using AzureStorage.Tables;
 using Lykke.Common.Cache;
 using Lykke.Common.Log;
+using Lykke.Common.Log;
 using Lykke.HttpClientGenerator;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Limitations.AzureRepositories;
@@ -73,6 +74,20 @@ namespace Lykke.Service.Limitations.Modules
             builder.RegisterType<ClientTierLogRepository>().As<IClientTierLogRepository>().SingleInstance();
 
 
+
+            builder.Register(ctx => AzureTableStorage<AccumulatedDepositPeriodEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "AccumulatedDeposits", _log)).SingleInstance();
+            builder.RegisterType<AccumulatedDepositRepository>().As<IAccumulatedDepositRepository>().SingleInstance();
+
+            builder.Register(ctx => AzureTableStorage<TierEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "Tiers", _log)).SingleInstance();
+            builder.RegisterType<TierRepository>().As<ITierRepository>().SingleInstance();
+
+            builder.Register(ctx => AzureTableStorage<ClientTierEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "ClientTiers", _log)).SingleInstance();
+            builder.RegisterType<ClientTierRepository>().As<IClientTierRepository>().SingleInstance();
+
+            builder.Register(ctx => AzureTableStorage<ClientTierLogEntity>.Create(_settingsManager.ConnectionString(s => s.DepositAccumulationConnectionString), "ClientTierLogs", _log)).SingleInstance();
+            builder.RegisterType<ClientTierLogRepository>().As<IClientTierLogRepository>().SingleInstance();
+
+
         }
 
         private void RegisterServices(ContainerBuilder builder)
@@ -116,7 +131,8 @@ namespace Lykke.Service.Limitations.Modules
                 .SingleInstance()
                 .WithParameter("limits", filteredLimits)
                 .WithParameter("convertibleCurrencies", settings.ConvertibleAssets)
-                .WithParameter("attemptRetainInMinutes", settings.AttemptRetainInMinutes);
+                .WithParameter("attemptRetainInMinutes", settings.AttemptRetainInMinutes)
+                ;
 
             builder.RegisterType<AccumulatedDepositAggregator>()
                 .As<IAccumulatedDepositAggregator>()
