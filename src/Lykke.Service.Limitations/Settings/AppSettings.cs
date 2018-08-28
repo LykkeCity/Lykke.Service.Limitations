@@ -15,6 +15,8 @@ namespace Lykke.Service.Limitations.Settings
         public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
 
         public RateCalculatorServiceClient RateCalculatorServiceClient { get; set; }
+
+        public RabbitMqSagasSettings SagasRabbitMq { get; set; }
     }
 
     public class SlackNotificationsSettings
@@ -76,4 +78,12 @@ namespace Lykke.Service.Limitations.Settings
 
         public string TableName { get; set; }
     }
+
+    public class RabbitMqSagasSettings
+    {
+        [AmqpCheck]
+        public string RabbitConnectionString { get; set; }
+
+    }
+
 }

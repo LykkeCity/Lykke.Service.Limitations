@@ -82,6 +82,9 @@ namespace Lykke.Service.Limitations
 
                 builder.RegisterModule(new ServiceModule(appSettings, settingsManager.Nested(x => x.LimitationsSettings), Log));
 
+                builder.RegisterModule(new CqrsModule(Log, settingsManager));
+
+
                 ApplicationContainer = builder.Build();
 
                 return new AutofacServiceProvider(ApplicationContainer);
