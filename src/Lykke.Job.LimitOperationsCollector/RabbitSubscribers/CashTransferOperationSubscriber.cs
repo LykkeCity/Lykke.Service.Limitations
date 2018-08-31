@@ -92,10 +92,12 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
                 var op = await _operationsClient.Get(Guid.Parse(item.Id));
                 if (op != null)
                 {
-                    _log.WriteInfo(nameof(CashTransferOperationSubscriber), nameof(ProcessMessageAsync), "Input opearation: \n" + op.ToJson());
+                    _log.WriteInfo(nameof(CashTransferOperationSubscriber), nameof(ProcessMessageAsync), "Input opearation type: \n" + op.Type);
 
                     if (op.Type == Service.Operations.Contracts.OperationType.CashoutSwift)
                     {
+                        _log.WriteInfo(nameof(CashTransferOperationSubscriber), nameof(ProcessMessageAsync), "Input operation: \n" + op.ToJson());
+
                         var cashOp = new CashOperation
                         {
                             Id = item.Id,
@@ -107,7 +109,7 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
                         };
                         await _cashOperationsCollector.AddDataItemAsync(cashOp, false);
 
-                        _log.WriteInfo(nameof(CashTransferOperationSubscriber), nameof(ProcessMessageAsync), "Added cash opearation: \n" + cashOp.ToJson());
+                        _log.WriteInfo(nameof(CashTransferOperationSubscriber), nameof(ProcessMessageAsync), "Added cash operation: \n" + cashOp.ToJson());
                         return;
                     }
                 }
