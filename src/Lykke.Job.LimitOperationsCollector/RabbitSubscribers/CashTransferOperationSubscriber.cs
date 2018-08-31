@@ -80,6 +80,9 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
                 .SetLogger(_log)
                 .SetConsole(new LogToConsole())
                 .Start();
+
+
+
         }
 
         private async Task ProcessMessageAsync(CashTransferOperation item)
@@ -89,20 +92,22 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
                 var op = await _operationsClient.Get(Guid.Parse(item.Id));
                 if (op != null)
                 {
-                    _log.WriteInfo(nameof(CashTransferOperationSubscriber), nameof(ProcessMessageAsync), op.ToJson());
+                    _log.WriteInfo(nameof(CashTransferOperationSubscriber), nameof(ProcessMessageAsync), "Input opearation: \n" + op.ToJson());
 
                     if (op.Type == Service.Operations.Contracts.OperationType.CashoutSwift)
                     {
                         var cashOp = new CashOperation
                         {
                             Id = item.Id,
-                            ClientId = item.ToClientId,
+                            ClientId = op.ClientId.ToString(),
                             Asset = item.Asset,
                             Volume = item.Volume,
                             DateTime = item.DateTime,
                             OperationType = CurrencyOperationType.SwiftTransferOut
                         };
                         await _cashOperationsCollector.AddDataItemAsync(cashOp, false);
+
+                        _log.WriteInfo(nameof(CashTransferOperationSubscriber), nameof(ProcessMessageAsync), "Added cash opearation: \n" + cashOp.ToJson());
                         return;
                     }
                 }
