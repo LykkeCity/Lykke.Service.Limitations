@@ -1,5 +1,8 @@
-﻿using Lykke.Service.Limitations.Core.Domain;
+﻿using Common.Log;
+using Lykke.Common.Log;
+using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
+using Lykke.Service.Limitations.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -16,15 +19,21 @@ namespace Lykke.Service.Limitations.Controllers
         private readonly IClientTierRepository _clientTierRepository;
         private readonly IClientTierLogRepository _clientTierLogRepository;
 
+        private readonly ILog _log;
+
         public TiersController(
             ITierRepository tierRepository,
             IClientTierRepository clientTierRepository,
-            IClientTierLogRepository clientTierLogRepository
+            IClientTierLogRepository clientTierLogRepository,
+
+            ILogFactory logFactory
             )
         {
             _tierRepository = tierRepository;
             _clientTierRepository = clientTierRepository;
             _clientTierLogRepository = clientTierLogRepository;
+
+            _log = logFactory.CreateLog(this);
         }
 
         [Route("api/[controller]/SetTierToClient")]
@@ -67,11 +76,12 @@ namespace Lykke.Service.Limitations.Controllers
         [Route("api/[controller]/SaveTier")]
         [HttpPost]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        public async Task<IActionResult> SaveTier([FromBody] Tier tier)
+        public async Task<IActionResult> SaveTier([FromBody] TierRequestModel tierModel)
         {
-            var id = await _tierRepository.SaveTierAsync(tier);
+            var id = await _tierRepository.SaveTierAsync(tierModel.Tier);
+            _log.Info("SaveTier", tierModel);
             var defaultTierId = await _clientTierRepository.GetDefaultTierIdAsync();
-            if (tier.IsDefault || defaultTierId == null)
+            if (tierModel.Tier.IsDefault || defaultTierId == null)
             {
                 await _clientTierRepository.SetDefaultTierAsync(id);
             }

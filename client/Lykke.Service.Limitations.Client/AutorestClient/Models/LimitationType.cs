@@ -19,8 +19,20 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
     {
         [EnumMember(Value = "CardCashIn")]
         CardCashIn,
+        [EnumMember(Value = "CardCashOut")]
+        CardCashOut,
+        [EnumMember(Value = "CryptoCashIn")]
+        CryptoCashIn,
         [EnumMember(Value = "CryptoCashOut")]
         CryptoCashOut,
+        [EnumMember(Value = "SwiftCashIn")]
+        SwiftCashIn,
+        [EnumMember(Value = "SwiftCashOut")]
+        SwiftCashOut,
+        [EnumMember(Value = "OverallCashIn")]
+        OverallCashIn,
+        [EnumMember(Value = "OverallCashOut")]
+        OverallCashOut,
         [EnumMember(Value = "CardAndSwiftCashIn")]
         CardAndSwiftCashIn
     }
@@ -37,8 +49,20 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
             {
                 case LimitationType.CardCashIn:
                     return "CardCashIn";
+                case LimitationType.CardCashOut:
+                    return "CardCashOut";
+                case LimitationType.CryptoCashIn:
+                    return "CryptoCashIn";
                 case LimitationType.CryptoCashOut:
                     return "CryptoCashOut";
+                case LimitationType.SwiftCashIn:
+                    return "SwiftCashIn";
+                case LimitationType.SwiftCashOut:
+                    return "SwiftCashOut";
+                case LimitationType.OverallCashIn:
+                    return "OverallCashIn";
+                case LimitationType.OverallCashOut:
+                    return "OverallCashOut";
                 case LimitationType.CardAndSwiftCashIn:
                     return "CardAndSwiftCashIn";
             }
@@ -51,8 +75,20 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
             {
                 case "CardCashIn":
                     return LimitationType.CardCashIn;
+                case "CardCashOut":
+                    return LimitationType.CardCashOut;
+                case "CryptoCashIn":
+                    return LimitationType.CryptoCashIn;
                 case "CryptoCashOut":
                     return LimitationType.CryptoCashOut;
+                case "SwiftCashIn":
+                    return LimitationType.SwiftCashIn;
+                case "SwiftCashOut":
+                    return LimitationType.SwiftCashOut;
+                case "OverallCashIn":
+                    return LimitationType.OverallCashIn;
+                case "OverallCashOut":
+                    return LimitationType.OverallCashOut;
                 case "CardAndSwiftCashIn":
                     return LimitationType.CardAndSwiftCashIn;
             }

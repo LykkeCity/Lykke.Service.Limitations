@@ -154,9 +154,6 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
             };
             CustomInitialize();
         }
-        /// <summary>
-        /// Checks service is alive
-        /// </summary>
         /// <param name='customHeaders'>
         /// Headers that will be added to request.
         /// </param>
@@ -1676,7 +1673,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
             return _result;
         }
 
-        /// <param name='tier'>
+        /// <param name='tierModel'>
         /// </param>
         /// <param name='customHeaders'>
         /// Headers that will be added to request.
@@ -1690,11 +1687,11 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// <return>
         /// A response object containing the response body and response headers.
         /// </return>
-        public async Task<HttpOperationResponse> ApiTiersSaveTierPostWithHttpMessagesAsync(Tier tier = default(Tier), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<HttpOperationResponse> ApiTiersSaveTierPostWithHttpMessagesAsync(TierRequestModel tierModel = default(TierRequestModel), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (tier != null)
+            if (tierModel != null)
             {
-                tier.Validate();
+                tierModel.Validate();
             }
             // Tracing
             bool _shouldTrace = ServiceClientTracing.IsEnabled;
@@ -1703,7 +1700,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
             {
                 _invocationId = ServiceClientTracing.NextInvocationId.ToString();
                 Dictionary<string, object> tracingParameters = new Dictionary<string, object>();
-                tracingParameters.Add("tier", tier);
+                tracingParameters.Add("tierModel", tierModel);
                 tracingParameters.Add("cancellationToken", cancellationToken);
                 ServiceClientTracing.Enter(_invocationId, this, "ApiTiersSaveTierPost", tracingParameters);
             }
@@ -1732,9 +1729,9 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
 
             // Serialize Request
             string _requestContent = null;
-            if(tier != null)
+            if(tierModel != null)
             {
-                _requestContent = SafeJsonConvert.SerializeObject(tier, SerializationSettings);
+                _requestContent = SafeJsonConvert.SerializeObject(tierModel, SerializationSettings);
                 _httpRequest.Content = new StringContent(_requestContent, System.Text.Encoding.UTF8);
                 _httpRequest.Content.Headers.ContentType =System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json-patch+json; charset=utf-8");
             }

@@ -24,7 +24,9 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
         /// Initializes a new instance of the RemainingLimitation class.
         /// </summary>
         /// <param name="limitationType">Possible values include: 'CardCashIn',
-        /// 'CryptoCashOut', 'CardAndSwiftCashIn'</param>
+        /// 'CardCashOut', 'CryptoCashIn', 'CryptoCashOut', 'SwiftCashIn',
+        /// 'SwiftCashOut', 'OverallCashIn', 'OverallCashOut',
+        /// 'CardAndSwiftCashIn'</param>
         public RemainingLimitation(LimitationType limitationType, string asset, double remainingAmount, double limitAmount)
         {
             LimitationType = limitationType;
@@ -40,8 +42,9 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
         partial void CustomInit();
 
         /// <summary>
-        /// Gets or sets possible values include: 'CardCashIn',
-        /// 'CryptoCashOut', 'CardAndSwiftCashIn'
+        /// Gets or sets possible values include: 'CardCashIn', 'CardCashOut',
+        /// 'CryptoCashIn', 'CryptoCashOut', 'SwiftCashIn', 'SwiftCashOut',
+        /// 'OverallCashIn', 'OverallCashOut', 'CardAndSwiftCashIn'
         /// </summary>
         [JsonProperty(PropertyName = "LimitationType")]
         public LimitationType LimitationType { get; set; }

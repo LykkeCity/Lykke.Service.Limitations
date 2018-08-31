@@ -1,4 +1,5 @@
 ﻿using AzureStorage;
+using Lykke.Common.Log;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
 using System;
@@ -12,7 +13,9 @@ namespace Lykke.Service.Limitations.AzureRepositories
     {
         private readonly INoSQLTableStorage<TierEntity> _tableStorage;
 
-        public TierRepository(INoSQLTableStorage<TierEntity> tableStorage)
+        public TierRepository(
+            INoSQLTableStorage<TierEntity> tableStorage
+            )
         {
             _tableStorage = tableStorage;
         }

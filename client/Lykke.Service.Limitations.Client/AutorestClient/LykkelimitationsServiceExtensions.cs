@@ -17,9 +17,6 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
     /// </summary>
     public static partial class LykkelimitationsServiceExtensions
     {
-            /// <summary>
-            /// Checks service is alive
-            /// </summary>
             /// <param name='operations'>
             /// The operations group for this extension method.
             /// </param>
@@ -28,9 +25,6 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
                 return operations.IsAliveAsync().GetAwaiter().GetResult();
             }
 
-            /// <summary>
-            /// Checks service is alive
-            /// </summary>
             /// <param name='operations'>
             /// The operations group for this extension method.
             /// </param>
@@ -328,24 +322,24 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
             /// <param name='operations'>
             /// The operations group for this extension method.
             /// </param>
-            /// <param name='tier'>
+            /// <param name='tierModel'>
             /// </param>
-            public static void ApiTiersSaveTierPost(this ILykkelimitationsService operations, Tier tier = default(Tier))
+            public static void ApiTiersSaveTierPost(this ILykkelimitationsService operations, TierRequestModel tierModel = default(TierRequestModel))
             {
-                operations.ApiTiersSaveTierPostAsync(tier).GetAwaiter().GetResult();
+                operations.ApiTiersSaveTierPostAsync(tierModel).GetAwaiter().GetResult();
             }
 
             /// <param name='operations'>
             /// The operations group for this extension method.
             /// </param>
-            /// <param name='tier'>
+            /// <param name='tierModel'>
             /// </param>
             /// <param name='cancellationToken'>
             /// The cancellation token.
             /// </param>
-            public static async Task ApiTiersSaveTierPostAsync(this ILykkelimitationsService operations, Tier tier = default(Tier), CancellationToken cancellationToken = default(CancellationToken))
+            public static async Task ApiTiersSaveTierPostAsync(this ILykkelimitationsService operations, TierRequestModel tierModel = default(TierRequestModel), CancellationToken cancellationToken = default(CancellationToken))
             {
-                (await operations.ApiTiersSaveTierPostWithHttpMessagesAsync(tier, null, cancellationToken).ConfigureAwait(false)).Dispose();
+                (await operations.ApiTiersSaveTierPostWithHttpMessagesAsync(tierModel, null, cancellationToken).ConfigureAwait(false)).Dispose();
             }
 
             /// <param name='operations'>

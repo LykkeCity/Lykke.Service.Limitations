@@ -34,9 +34,6 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         JsonSerializerSettings DeserializationSettings { get; }
 
 
-        /// <summary>
-        /// Checks service is alive
-        /// </summary>
         /// <param name='customHeaders'>
         /// The headers that will be added to request.
         /// </param>
@@ -158,7 +155,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// </param>
         Task<HttpOperationResponse<IList<IClientTierLogRecord>>> ApiTiersGetClientTierLogGetWithHttpMessagesAsync(string clientId = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
-        /// <param name='tier'>
+        /// <param name='tierModel'>
         /// </param>
         /// <param name='customHeaders'>
         /// The headers that will be added to request.
@@ -166,7 +163,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// <param name='cancellationToken'>
         /// The cancellation token.
         /// </param>
-        Task<HttpOperationResponse> ApiTiersSaveTierPostWithHttpMessagesAsync(Tier tier = default(Tier), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<HttpOperationResponse> ApiTiersSaveTierPostWithHttpMessagesAsync(TierRequestModel tierModel = default(TierRequestModel), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <param name='customHeaders'>
         /// The headers that will be added to request.
