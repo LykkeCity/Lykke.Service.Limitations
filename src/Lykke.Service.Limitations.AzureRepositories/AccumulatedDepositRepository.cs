@@ -52,16 +52,22 @@ namespace Lykke.Service.Limitations.AzureRepositories
                     return String.Format($"AllTime-Cards");
                 case CurrencyOperationType.SwiftTransfer:
                     return String.Format($"AllTime-Swift");
+                case CurrencyOperationType.SwiftTransferOut:
+                    return String.Format($"AllTime-Swift-CashOut");
+                case CurrencyOperationType.CryptoCashOut:
+                    return String.Format($"AllTime-Crypto-CashOut");
             }
             throw new ArgumentException("Invalid input value", nameof(operationType));
         }
 
-        public async Task<double> GetAccumulatedDepositsAsync(string clientId, CurrencyOperationType operationType)
+        public async Task<double> GetAccumulatedAmountAsync(string clientId, CurrencyOperationType operationType)
         {
             switch (operationType)
             {
-                case CurrencyOperationType.SwiftTransfer:
                 case CurrencyOperationType.CardCashIn:
+                case CurrencyOperationType.SwiftTransfer:
+                case CurrencyOperationType.SwiftTransferOut:
+                case CurrencyOperationType.CryptoCashOut:
                     var depositRecord = await _tableStorage.GetDataAsync(clientId, GenerateRowKey(operationType));
                     return depositRecord == null ? 0 : depositRecord.Amount;
             }

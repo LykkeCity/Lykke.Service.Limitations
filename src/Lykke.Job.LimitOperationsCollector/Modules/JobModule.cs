@@ -14,6 +14,7 @@ using Lykke.Job.LimitOperationsCollector.Settings;
 using Lykke.Job.LimitOperationsCollector.RabbitSubscribers;
 using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
+using Lykke.Service.Operations.Client;
 
 namespace Lykke.Job.LimitOperationsCollector.Modules
 {
@@ -34,6 +35,8 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                 .SingleInstance();
             
             builder.RegisterRateCalculatorClient(_settings.CurrentValue.RateCalculatorServiceClient.ServiceUrl);
+
+            builder.RegisterOperationsClient(_settings.CurrentValue.OperationsServiceClient.ServiceUrl);
 
             ReagisterRepositories(builder);
 

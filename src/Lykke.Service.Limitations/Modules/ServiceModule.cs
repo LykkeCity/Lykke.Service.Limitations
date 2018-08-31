@@ -61,7 +61,7 @@ namespace Lykke.Service.Limitations.Modules
             builder.RegisterType<LimitSettingsRepository>().As<ILimitSettingsRepository>().SingleInstance();
 
 
-            builder.Register(ctx => AzureTableStorage<AccumulatedDepositPeriodEntity>.Create(_appSettings.ConnectionString(x => x.LimitationsSettings.DepositAccumulationConnectionString), "Setup", ctx.Resolve<ILogFactory>())).SingleInstance();
+            builder.Register(ctx => AzureTableStorage<AccumulatedDepositPeriodEntity>.Create(_appSettings.ConnectionString(x => x.LimitationsSettings.DepositAccumulationConnectionString), "AccumulatedDeposits", ctx.Resolve<ILogFactory>())).SingleInstance();
             builder.RegisterType<AccumulatedDepositRepository>().As<IAccumulatedDepositRepository>().SingleInstance();
 
             builder.Register(ctx => AzureTableStorage<TierEntity>.Create(_appSettings.ConnectionString(s => s.LimitationsSettings.DepositAccumulationConnectionString), "Tiers", ctx.Resolve<ILogFactory>())).SingleInstance();

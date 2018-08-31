@@ -11,6 +11,7 @@ using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Services;
 using Lykke.Service.Limitations.Core.Repositories;
 using CashTransferOperation = Lykke.MatchingEngine.Connector.Models.RabbitMq.CashTransferOperation;
+using Lykke.Service.Operations.Client;
 
 namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
 {
@@ -19,6 +20,7 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
         private readonly IPaymentTransactionsRepository _paymentTransactionsRepository;
         private readonly ICashOperationsCollector _cashOperationsCollector;
         private readonly ICashTransfersCollector _cashTransfersCollector;
+        private readonly IOperationsClient _operationsClient;
         private readonly ILog _log;
         private readonly string _connectionString;
         private readonly string _exchangeName;
@@ -29,6 +31,7 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
             IPaymentTransactionsRepository paymentTransactionsRepository,
             ICashOperationsCollector cashOperationsCollector,
             ICashTransfersCollector cashTransfersCollector,
+            IOperationsClient operationsClient,
             IStartupManager startupManager,
             ILogFactory log,
             string connectionString,
@@ -37,6 +40,7 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
             _paymentTransactionsRepository = paymentTransactionsRepository;
             _cashOperationsCollector = cashOperationsCollector;
             _cashTransfersCollector = cashTransfersCollector;
+            _operationsClient = operationsClient;
             _log = log.CreateLog(this);
             _connectionString = connectionString;
             _exchangeName = exchangeName;
@@ -82,6 +86,27 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
         {
             try
             {
+                var op = await _operationsClient.Get(Guid.Parse(item.Id));
+                if (op != null)
+                {
+                    _log.WriteInfo(nameof(CashTransferOperationSubscriber), nameof(ProcessMessageAsync), op.ToJson());
+
+                    if (op.Type == Service.Operations.Contracts.OperationType.CashoutSwift)
+                    {
+                        var cashOp = new CashOperation
+                        {
+                            Id = item.Id,
+                            ClientId = item.ToClientId,
+                            Asset = item.Asset,
+                            Volume = item.Volume,
+                            DateTime = item.DateTime,
+                            OperationType = CurrencyOperationType.SwiftTransferOut
+                        };
+                        await _cashOperationsCollector.AddDataItemAsync(cashOp, false);
+                        return;
+                    }
+                }
+
                 IPaymentTransaction paymentTransaction = null;
                 for (int i = 0; i < 3; i++)
                 {

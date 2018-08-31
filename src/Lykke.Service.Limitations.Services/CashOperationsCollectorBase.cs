@@ -40,7 +40,7 @@ namespace Lykke.Service.Limitations.Services
                 cashPrefix);
         }
 
-        public virtual async Task AddDataItemAsync(T item)
+        public virtual async Task AddDataItemAsync(T item, bool setOperationType = true)
         {
             string originAsset = item.Asset;
             double originVolume = item.Volume;
@@ -49,7 +49,10 @@ namespace Lykke.Service.Limitations.Services
 
             item.Asset = converted.Item1;
             item.Volume = converted.Item2;
-            item.OperationType = GetOperationType(item);
+            if (setOperationType)
+            {
+                item.OperationType = GetOperationType(item);
+            }
 
             bool isNewItem = await _data.AddDataItemAsync(item);
 

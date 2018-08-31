@@ -10,6 +10,8 @@ namespace Lykke.Job.LimitOperationsCollector.Settings
         
         public RateCalculatorServiceClient RateCalculatorServiceClient { get; set; }
 
+        public OperationsServiceClient OperationsServiceClient { get; set; }
+
         public SagasRabbitMqSettings SagasRabbitMq { get; set; }
     }
 
@@ -32,6 +34,12 @@ namespace Lykke.Job.LimitOperationsCollector.Settings
     }
 
     public class RateCalculatorServiceClient
+    {
+        [HttpCheck("api/isalive")]
+        public string ServiceUrl { get; set; }
+    }
+
+    public class OperationsServiceClient
     {
         [HttpCheck("api/isalive")]
         public string ServiceUrl { get; set; }

@@ -9,6 +9,6 @@ namespace Lykke.Service.Limitations.Core.Repositories
     public interface IAccumulatedDepositRepository
     {
         Task AggregateTotalAsync(string clientId, string assetId, double amount, CurrencyOperationType operationType);
-        Task<double> GetAccumulatedDepositsAsync(string clientId, CurrencyOperationType operationType);
+        Task<double> GetAccumulatedAmountAsync(string clientId, CurrencyOperationType operationType);
     }
 }
