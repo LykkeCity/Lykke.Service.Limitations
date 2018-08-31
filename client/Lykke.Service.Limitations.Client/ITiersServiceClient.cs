@@ -10,7 +10,7 @@ namespace Lykke.Service.Limitations.Client
     {
         Task SetTierToClient(ClientTier clientTier);
 
-        Task SaveTier(Tier tier);
+        Task SaveTier(TierRequestModel tier);
 
         Task<IEnumerable<Tier>> LoadTiers();
 

@@ -30,7 +30,7 @@ namespace Lykke.Service.Limitations.Client
             await _service.ApiTiersSetTierToClientPostAsync(clientTier);
         }
 
-        public async Task SaveTier(Tier tier)
+        public async Task SaveTier(TierRequestModel tier)
         {
             await _service.ApiTiersSaveTierPostAsync(tier);
         }
