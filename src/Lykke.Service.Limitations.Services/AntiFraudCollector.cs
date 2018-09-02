@@ -98,8 +98,8 @@ namespace Lykke.Service.Limitations.Services
                 tx.SortedSetRemoveAsync(clientKey, attemptSuffix),
                 tx.KeyDeleteAsync(attemptKey),
             };
-            await tx.ExecuteAsync();
-            await Task.WhenAll(tasks);
+            if (await tx.ExecuteAsync())
+                await Task.WhenAll(tasks);
         }
 
         public async Task<double> GetAttemptsValueAsync(
@@ -169,8 +169,8 @@ namespace Lykke.Service.Limitations.Services
             };
             var getKeysTask = tx.SortedSetRangeByScoreAsync(clientKey, actualPeriodStartScore, double.MaxValue);
             tasks.Add(getKeysTask);
-            await tx.ExecuteAsync();
-            await Task.WhenAll(tasks);
+            if (await tx.ExecuteAsync())
+                await Task.WhenAll(tasks);
 
             return getKeysTask.Result
                 .Select(i => (RedisKey)$"{clientKey}:{i.ToString()}")
