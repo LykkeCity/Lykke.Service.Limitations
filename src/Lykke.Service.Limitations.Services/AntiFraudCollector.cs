@@ -157,12 +157,10 @@ namespace Lykke.Service.Limitations.Services
 
         private async Task<RedisKey[]> GetClientAttemptKeysAsync(string clientId)
         {
-            string clientKey = string.Format(_clientSetKeyPattern, _instanceName, clientId);
-            if (!await _db.KeyExistsAsync(clientKey))
-                return new RedisKey[0];
-
             var actualPeriodStartScore = DateTime.UtcNow.Subtract(_cashOperationsTimeout).Ticks;
+            string clientKey = string.Format(_clientSetKeyPattern, _instanceName, clientId);
             var tx = _db.CreateTransaction();
+            tx.AddCondition(Condition.KeyExists(clientKey));
             var tasks = new List<Task>
             {
                 tx.SortedSetRemoveRangeByScoreAsync(clientKey, 0, actualPeriodStartScore)
@@ -171,6 +169,8 @@ namespace Lykke.Service.Limitations.Services
             tasks.Add(getKeysTask);
             if (await tx.ExecuteAsync())
                 await Task.WhenAll(tasks);
+            else
+                return new RedisKey[0];
 
             return getKeysTask.Result
                 .Select(i => (RedisKey)$"{clientKey}:{i.ToString()}")
