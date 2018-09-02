@@ -66,8 +66,6 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
 
         private void ReagisterServices(ContainerBuilder builder)
         {
-            builder.RegisterType<HostingService>().As<IHostedService>().SingleInstance();
-
             builder.RegisterType<HealthService>()
                 .As<IHealthService>()
                 .SingleInstance();

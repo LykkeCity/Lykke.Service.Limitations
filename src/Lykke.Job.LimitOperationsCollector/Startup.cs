@@ -1,10 +1,9 @@
-﻿using Lykke.Job.LimitOperationsCollector.Settings;
+﻿using System;
+using JetBrains.Annotations;
+using Lykke.Job.LimitOperationsCollector.Settings;
+using Lykke.Sdk;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using JetBrains.Annotations;
-using Lykke.Sdk;
-using Microsoft.ApplicationInsights.Extensibility;
 
 namespace Lykke.Job.LimitOperationsCollector
 {
@@ -38,10 +37,6 @@ namespace Lykke.Job.LimitOperationsCollector
             {
                 options.SwaggerOptions = _swaggerOptions;
             });
-
-#if DEBUG
-            TelemetryConfiguration.Active.DisableTelemetry = true;
-#endif
         }
     }
 }

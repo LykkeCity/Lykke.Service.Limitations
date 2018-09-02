@@ -46,7 +46,7 @@ namespace Lykke.Service.Limitations.Settings
         [AzureTableCheck]
         public string GlobalSettingsConnString { get; set; }
 
-        [HttpCheck("api/isalive", false)]
+        [HttpCheck("api/isalive")]
         public string LimitOperationsJobUrl { get; set; }
 
         public int AttemptRetainInMinutes { get; set; }

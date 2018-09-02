@@ -1,12 +1,12 @@
-﻿using AzureStorage;
-using Common.Log;
-using Lykke.Service.Limitations.Core.Domain;
-using Lykke.Service.Limitations.Core.Repositories;
-using System;
+﻿using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AzureStorage;
+using Common.Log;
 using Lykke.Common.Log;
+using Lykke.Service.Limitations.Core.Domain;
+using Lykke.Service.Limitations.Core.Repositories;
 
 namespace Lykke.Service.Limitations.AzureRepositories
 {
@@ -61,7 +61,7 @@ namespace Lykke.Service.Limitations.AzureRepositories
                 }
                 catch (Exception ex)
                 {
-                    _log.WriteError(nameof(SwiftTransferLimitationsRepository), nameof(SaveRangeAsync), ex);
+                    _log.Error(ex);
                 }
             }
         }
