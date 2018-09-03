@@ -717,32 +717,73 @@ namespace Lykke.Service.Limitations.Services
             }
         }
 
-        public async Task<AccumulatedDepositsModel> GetAccumulatedDepositsAsync(string clientId)
+        public async Task<AccumulatedAmountsModel> GetAccumulatedDepositsAsync(string clientId)
         {
-            AccumulatedDepositsModel result = new AccumulatedDepositsModel();
+            AccumulatedAmountsModel result = new AccumulatedAmountsModel();
 
-            var accumulatedSwiftDeposit = await _accumulatedDepositRepository.GetAccumulatedAmountAsync(clientId, CurrencyOperationType.SwiftTransfer);
-            var accumulatedCardDeposit = await _accumulatedDepositRepository.GetAccumulatedAmountAsync(clientId, CurrencyOperationType.CardCashIn);
-            result.AmountTotal = Math.Round(accumulatedSwiftDeposit + accumulatedCardDeposit, 15);
+            var accumulatedSwiftDepositTask = _accumulatedDepositRepository.GetAccumulatedAmountAsync(clientId, CurrencyOperationType.SwiftTransfer);
+            var accumulatedCardDepositTask = _accumulatedDepositRepository.GetAccumulatedAmountAsync(clientId, CurrencyOperationType.CardCashIn);
+            var accumulatedSwiftWithdrawalTask = _accumulatedDepositRepository.GetAccumulatedAmountAsync(clientId, CurrencyOperationType.SwiftTransferOut);
+            var accumulatedCryptoWithdrawalTask = _accumulatedDepositRepository.GetAccumulatedAmountAsync(clientId, CurrencyOperationType.CryptoCashOut);
 
-            var accumulatedSwiftWithdrawal = await _accumulatedDepositRepository.GetAccumulatedAmountAsync(clientId, CurrencyOperationType.SwiftTransferOut);
-            var accumulatedCryptoWithdrawal = await _accumulatedDepositRepository.GetAccumulatedAmountAsync(clientId, CurrencyOperationType.CryptoCashOut);
+            await Task.WhenAll(new Task[] {
+                accumulatedSwiftDepositTask,
+                accumulatedSwiftDepositTask,
+                accumulatedSwiftWithdrawalTask,
+                accumulatedCryptoWithdrawalTask
+            });
 
-            var dayOperations = (await LoadOperationsAsync(clientId, LimitationPeriod.Day))
-                .Where(o => o.OperationType == CurrencyOperationType.CardCashIn || o.OperationType == CurrencyOperationType.SwiftTransfer);
+            result.DepositTotalFiat = Math.Round(accumulatedSwiftDepositTask.Result + accumulatedCardDepositTask.Result, 15);
+            result.WithdrawalTotalFiat = accumulatedSwiftWithdrawalTask.Result;
+            result.WithdrawalTotalNonFiat = accumulatedCryptoWithdrawalTask.Result;
+
+            var dayOperations = (await LoadOperationsAsync(clientId, LimitationPeriod.Day));
             foreach (var op in dayOperations)
             {
-                result.Amount1Day += op.Volume;
+                switch(op.OperationType)
+                {
+                    case CurrencyOperationType.CardCashIn:
+                        result.Deposit1DayFiat += op.Volume;
+                        break;
+                    case CurrencyOperationType.SwiftTransfer:
+                        result.Deposit1DayFiat += op.Volume;
+                        break;
+                    case CurrencyOperationType.SwiftTransferOut:
+                        result.Withdrawal1DayFiat += op.Volume;
+                        break;
+                    case CurrencyOperationType.CryptoCashOut:
+                        result.Withdrawal1DayNonFiat += op.Volume;
+                        break;
+                }
             }
-            result.Amount1Day = Math.Round(result.Amount1Day, 15);
+            result.Deposit1DayFiat = Math.Round(result.Deposit1DayFiat, 15);
+            result.Deposit1DayNonFiat = Math.Round(result.Deposit1DayNonFiat, 15);
+            result.Withdrawal1DayFiat = Math.Round(result.Withdrawal1DayFiat, 15);
+            result.Withdrawal1DayNonFiat = Math.Round(result.Withdrawal1DayNonFiat, 15);
 
-            var monthOperations = (await LoadOperationsAsync(clientId, LimitationPeriod.Month))
-                .Where(o => o.OperationType == CurrencyOperationType.CardCashIn || o.OperationType == CurrencyOperationType.SwiftTransfer);
+            var monthOperations = (await LoadOperationsAsync(clientId, LimitationPeriod.Month));
             foreach (var op in monthOperations)
             {
-                result.Amount30Days += op.Volume;
+                switch (op.OperationType)
+                {
+                    case CurrencyOperationType.CardCashIn:
+                        result.Deposit30DaysFiat += op.Volume;
+                        break;
+                    case CurrencyOperationType.SwiftTransfer:
+                        result.Deposit30DaysFiat += op.Volume;
+                        break;
+                    case CurrencyOperationType.SwiftTransferOut:
+                        result.Withdrawal30DaysFiat += op.Volume;
+                        break;
+                    case CurrencyOperationType.CryptoCashOut:
+                        result.Withdrawal30DaysNonFiat += op.Volume;
+                        break;
+                }
             }
-            result.Amount30Days = Math.Round(result.Amount30Days, 15);
+            result.Deposit30DaysFiat = Math.Round(result.Deposit30DaysFiat, 15);
+            result.Deposit30DaysNonFiat = Math.Round(result.Deposit30DaysNonFiat, 15);
+            result.Withdrawal30DaysFiat = Math.Round(result.Withdrawal30DaysFiat, 15);
+            result.Withdrawal30DaysNonFiat = Math.Round(result.Withdrawal30DaysNonFiat, 15);
 
             return result;
         }

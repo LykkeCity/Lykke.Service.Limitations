@@ -15,7 +15,7 @@ namespace Lykke.Service.Limitations.Core.Services
 
         Task RemoveClientOperationAsync(string clientId, string operationId);
 
-        Task<AccumulatedDepositsModel> GetAccumulatedDepositsAsync(string clientId);
+        Task<AccumulatedAmountsModel> GetAccumulatedDepositsAsync(string clientId);
 
         
     }

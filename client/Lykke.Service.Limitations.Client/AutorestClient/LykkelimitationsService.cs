@@ -703,7 +703,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// <return>
         /// A response object containing the response body and response headers.
         /// </return>
-        public async Task<HttpOperationResponse<AccumulatedDepositsModel>> ApiLimitationsGetAccumulatedDepositsPostWithHttpMessagesAsync(string clientId = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<HttpOperationResponse<AccumulatedAmountsModel>> ApiLimitationsGetAccumulatedDepositsPostWithHttpMessagesAsync(string clientId = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             // Tracing
             bool _shouldTrace = ServiceClientTracing.IsEnabled;
@@ -787,7 +787,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
                 throw ex;
             }
             // Create Result
-            var _result = new HttpOperationResponse<AccumulatedDepositsModel>();
+            var _result = new HttpOperationResponse<AccumulatedAmountsModel>();
             _result.Request = _httpRequest;
             _result.Response = _httpResponse;
             // Deserialize Response
@@ -796,7 +796,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
                 _responseContent = await _httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
                 try
                 {
-                    _result.Body = SafeJsonConvert.DeserializeObject<AccumulatedDepositsModel>(_responseContent, DeserializationSettings);
+                    _result.Body = SafeJsonConvert.DeserializeObject<AccumulatedAmountsModel>(_responseContent, DeserializationSettings);
                 }
                 catch (JsonException ex)
                 {
@@ -814,7 +814,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
                 _responseContent = await _httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
                 try
                 {
-                    _result.Body = SafeJsonConvert.DeserializeObject<AccumulatedDepositsModel>(_responseContent, DeserializationSettings);
+                    _result.Body = SafeJsonConvert.DeserializeObject<AccumulatedAmountsModel>(_responseContent, DeserializationSettings);
                 }
                 catch (JsonException ex)
                 {

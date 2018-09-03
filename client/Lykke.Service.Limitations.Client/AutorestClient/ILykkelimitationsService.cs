@@ -85,7 +85,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// <param name='cancellationToken'>
         /// The cancellation token.
         /// </param>
-        Task<HttpOperationResponse<AccumulatedDepositsModel>> ApiLimitationsGetAccumulatedDepositsPostWithHttpMessagesAsync(string clientId = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<HttpOperationResponse<AccumulatedAmountsModel>> ApiLimitationsGetAccumulatedDepositsPostWithHttpMessagesAsync(string clientId = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <param name='customHeaders'>
         /// The headers that will be added to request.

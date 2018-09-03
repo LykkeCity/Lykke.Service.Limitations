@@ -22,11 +22,20 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the AccumulatedDepositsModel class.
         /// </summary>
-        public AccumulatedDepositsModel(double amountTotal, double amount30Days, double amount1Day)
+        public AccumulatedDepositsModel(double depositTotalFiat, double deposit30DaysFiat, double deposit1DayFiat, double depositTotalNonFiat, double deposit30DaysNonFiat, double deposit1DayNonFiat, double withdrawalTotalFiat, double withdrawal30DaysFiat, double withdrawal1DayFiat, double withdrawalTotalNonFiat, double withdrawal30DaysNonFiat, double withdrawal1DayNonFiat)
         {
-            AmountTotal = amountTotal;
-            Amount30Days = amount30Days;
-            Amount1Day = amount1Day;
+            DepositTotalFiat = depositTotalFiat;
+            Deposit30DaysFiat = deposit30DaysFiat;
+            Deposit1DayFiat = deposit1DayFiat;
+            DepositTotalNonFiat = depositTotalNonFiat;
+            Deposit30DaysNonFiat = deposit30DaysNonFiat;
+            Deposit1DayNonFiat = deposit1DayNonFiat;
+            WithdrawalTotalFiat = withdrawalTotalFiat;
+            Withdrawal30DaysFiat = withdrawal30DaysFiat;
+            Withdrawal1DayFiat = withdrawal1DayFiat;
+            WithdrawalTotalNonFiat = withdrawalTotalNonFiat;
+            Withdrawal30DaysNonFiat = withdrawal30DaysNonFiat;
+            Withdrawal1DayNonFiat = withdrawal1DayNonFiat;
             CustomInit();
         }
 
@@ -37,18 +46,63 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "AmountTotal")]
-        public double AmountTotal { get; set; }
+        [JsonProperty(PropertyName = "DepositTotalFiat")]
+        public double DepositTotalFiat { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "Amount30Days")]
-        public double Amount30Days { get; set; }
+        [JsonProperty(PropertyName = "Deposit30DaysFiat")]
+        public double Deposit30DaysFiat { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "Amount1Day")]
-        public double Amount1Day { get; set; }
+        [JsonProperty(PropertyName = "Deposit1DayFiat")]
+        public double Deposit1DayFiat { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "DepositTotalNonFiat")]
+        public double DepositTotalNonFiat { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "Deposit30DaysNonFiat")]
+        public double Deposit30DaysNonFiat { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "Deposit1DayNonFiat")]
+        public double Deposit1DayNonFiat { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "WithdrawalTotalFiat")]
+        public double WithdrawalTotalFiat { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "Withdrawal30DaysFiat")]
+        public double Withdrawal30DaysFiat { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "Withdrawal1DayFiat")]
+        public double Withdrawal1DayFiat { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "WithdrawalTotalNonFiat")]
+        public double WithdrawalTotalNonFiat { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "Withdrawal30DaysNonFiat")]
+        public double Withdrawal30DaysNonFiat { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "Withdrawal1DayNonFiat")]
+        public double Withdrawal1DayNonFiat { get; set; }
 
         /// <summary>
         /// Validate the object.

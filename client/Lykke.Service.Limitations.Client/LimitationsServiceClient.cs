@@ -67,14 +67,24 @@ namespace Lykke.Service.Limitations.Client
             await _service.ApiLimitationsRemoveClientOperationDeleteAsync(clientId, operationId);
         }
 
-        public async Task<AccumulatedDepositsResponse> GetAccumulatedDepositsAsync(string clientId)
+        public async Task<AccumulatedAmountsResponse> GetAccumulatedDepositsAsync(string clientId)
         {
             var accumulatedDepositsModel = await _service.ApiLimitationsGetAccumulatedDepositsPostAsync(clientId);
-            return new AccumulatedDepositsResponse
+            return new AccumulatedAmountsResponse
             {
-                Amount1Day = accumulatedDepositsModel.Amount1Day,
-                Amount30Days = accumulatedDepositsModel.Amount30Days,
-                AmountTotal = accumulatedDepositsModel.AmountTotal
+                Deposit1DayFiat = accumulatedDepositsModel.Deposit1DayFiat,
+                Deposit1DayNonFiat = accumulatedDepositsModel.Deposit1DayNonFiat,
+                Deposit30DaysFiat = accumulatedDepositsModel.Deposit30DaysFiat,
+                Deposit30DaysNonFiat = accumulatedDepositsModel.Deposit30DaysNonFiat,
+                DepositTotalFiat = accumulatedDepositsModel.DepositTotalFiat,
+                DepositTotalNonFiat = accumulatedDepositsModel.DepositTotalNonFiat,
+
+                Withdrawal1DayFiat = accumulatedDepositsModel.Withdrawal1DayFiat,
+                Withdrawal1DayNonFiat = accumulatedDepositsModel.Withdrawal1DayNonFiat,
+                Withdrawal30DaysFiat = accumulatedDepositsModel.Withdrawal30DaysFiat,
+                Withdrawal30DaysNonFiat = accumulatedDepositsModel.Withdrawal30DaysNonFiat,
+                WithdrawalTotalFiat = accumulatedDepositsModel.WithdrawalTotalFiat,
+                WithdrawalTotalNonFiat = accumulatedDepositsModel.WithdrawalTotalNonFiat
             };
         }
     }

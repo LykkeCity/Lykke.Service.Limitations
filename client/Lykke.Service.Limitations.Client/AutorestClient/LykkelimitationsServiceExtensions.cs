@@ -129,7 +129,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
             /// </param>
             /// <param name='clientId'>
             /// </param>
-            public static AccumulatedDepositsModel ApiLimitationsGetAccumulatedDepositsPost(this ILykkelimitationsService operations, string clientId = default(string))
+            public static AccumulatedAmountsModel ApiLimitationsGetAccumulatedDepositsPost(this ILykkelimitationsService operations, string clientId = default(string))
             {
                 return operations.ApiLimitationsGetAccumulatedDepositsPostAsync(clientId).GetAwaiter().GetResult();
             }
@@ -142,7 +142,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
             /// <param name='cancellationToken'>
             /// The cancellation token.
             /// </param>
-            public static async Task<AccumulatedDepositsModel> ApiLimitationsGetAccumulatedDepositsPostAsync(this ILykkelimitationsService operations, string clientId = default(string), CancellationToken cancellationToken = default(CancellationToken))
+            public static async Task<AccumulatedAmountsModel> ApiLimitationsGetAccumulatedDepositsPostAsync(this ILykkelimitationsService operations, string clientId = default(string), CancellationToken cancellationToken = default(CancellationToken))
             {
                 using (var _result = await operations.ApiLimitationsGetAccumulatedDepositsPostWithHttpMessagesAsync(clientId, null, cancellationToken).ConfigureAwait(false))
                 {
