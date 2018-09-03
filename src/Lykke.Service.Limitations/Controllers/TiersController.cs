@@ -1,4 +1,5 @@
-﻿using Common.Log;
+﻿using Common;
+using Common.Log;
 using Lykke.Common.Log;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
@@ -78,13 +79,29 @@ namespace Lykke.Service.Limitations.Controllers
         [ProducesResponseType((int)HttpStatusCode.OK)]
         public async Task<IActionResult> SaveTier([FromBody] TierRequestModel tierModel)
         {
-            var id = await _tierRepository.SaveTierAsync(tierModel.Tier);
-            _log.Info("SaveTier", tierModel);
+            var prevTier = await _tierRepository.LoadTierAsync(tierModel.Tier.Id);
+
+            string tierId = null;
+            tierId = await _tierRepository.SaveTierAsync(tierModel.Tier);
+            _log.Info("Tier changed",
+                new
+                {
+                    PrevTier = prevTier,
+                    NewTier = tierModel.Tier,
+                    Changer = tierModel.Changer
+                });
+
             var defaultTierId = await _clientTierRepository.GetDefaultTierIdAsync();
-            if (tierModel.Tier.IsDefault || defaultTierId == null)
+            if (tierModel.Tier.IsDefault && (defaultTierId == null || tierModel.Tier.Id != defaultTierId)) 
             {
-                await _clientTierRepository.SetDefaultTierAsync(id);
+                await _clientTierRepository.SetDefaultTierAsync(tierId);
+                _log.Info("New default tier", 
+                    new {
+                        DefaultTierId = tierId,
+                        Changer = tierModel.Changer
+                    });
             }
+
             return Ok();
         }
 

@@ -21,6 +21,8 @@ namespace Lykke.Service.Limitations.AzureRepositories
 
         public async Task AggregateTotalAsync(string clientId, string assetId, double amount, CurrencyOperationType operationType)
         {
+            amount = Math.Abs(amount);
+
             IAccumulatedDepositPeriod existingRecord = await _tableStorage.GetDataAsync(clientId, GenerateRowKey(operationType));
             if (existingRecord == null)
             {
@@ -49,9 +51,9 @@ namespace Lykke.Service.Limitations.AzureRepositories
             switch (operationType)
             {
                 case CurrencyOperationType.CardCashIn:
-                    return String.Format($"AllTime-Cards");
+                    return String.Format($"AllTime-Cards-CashIn");
                 case CurrencyOperationType.SwiftTransfer:
-                    return String.Format($"AllTime-Swift");
+                    return String.Format($"AllTime-Swift-CashIn");
                 case CurrencyOperationType.SwiftTransferOut:
                     return String.Format($"AllTime-Swift-CashOut");
                 case CurrencyOperationType.CryptoCashOut:

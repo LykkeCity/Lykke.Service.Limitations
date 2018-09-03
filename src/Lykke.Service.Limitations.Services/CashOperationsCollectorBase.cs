@@ -64,21 +64,28 @@ namespace Lykke.Service.Limitations.Services
                     originVolume,
                     item.OperationType.Value);
 
-
-                bool isAssetConvertible = !_currencyConverter.IsNotConvertible(item.Asset);
-
-                if (isAssetConvertible)
+                switch(item.OperationType)
                 {
-                    if (item.OperationType == CurrencyOperationType.CardCashIn || item.OperationType == CurrencyOperationType.SwiftTransfer)
-                    {
+                    case CurrencyOperationType.CardCashIn:
+                    case CurrencyOperationType.SwiftTransfer:
+                    case CurrencyOperationType.SwiftTransferOut:
+                    case CurrencyOperationType.CryptoCashOut:
+                        if (_currencyConverter.IsNotConvertible(item.Asset))
+                        {
+                            // force convertation fot crypto, tokens, etc
+                            converted = await _currencyConverter.ConvertAsync(item.Asset, _currencyConverter.DefaultAsset, item.Volume, true);
+                            item.Asset = converted.Item1;
+                            item.Volume = converted.Item2;
+                        }
                         await _accumulatedDepositAggregator.AggregateTotalAsync(
                             item.ClientId,
                             item.Asset,
                             item.Volume,
                             item.OperationType.Value
                             );
-                    }
+                        break;
                 }
+
             }
         }
 

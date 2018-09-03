@@ -725,6 +725,9 @@ namespace Lykke.Service.Limitations.Services
             var accumulatedCardDeposit = await _accumulatedDepositRepository.GetAccumulatedAmountAsync(clientId, CurrencyOperationType.CardCashIn);
             result.AmountTotal = Math.Round(accumulatedSwiftDeposit + accumulatedCardDeposit, 15);
 
+            var accumulatedSwiftWithdrawal = await _accumulatedDepositRepository.GetAccumulatedAmountAsync(clientId, CurrencyOperationType.SwiftTransferOut);
+            var accumulatedCryptoWithdrawal = await _accumulatedDepositRepository.GetAccumulatedAmountAsync(clientId, CurrencyOperationType.CryptoCashOut);
+
             var dayOperations = (await LoadOperationsAsync(clientId, LimitationPeriod.Day))
                 .Where(o => o.OperationType == CurrencyOperationType.CardCashIn || o.OperationType == CurrencyOperationType.SwiftTransfer);
             foreach (var op in dayOperations)
