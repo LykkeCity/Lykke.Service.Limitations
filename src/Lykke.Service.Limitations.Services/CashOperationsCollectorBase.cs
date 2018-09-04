@@ -50,11 +50,16 @@ namespace Lykke.Service.Limitations.Services
             item.Asset = converted.Item1;
             item.Volume = converted.Item2;
             item.RateToUsd = 1;
-            if (item.Asset != _currencyConverter.DefaultAsset) // no conversion happened
+
+            // no conversion happened
+            // source asset and volume are saved to DB
+            // rate to USD should be calculated and saved too
+            if (item.Asset == originAsset && originAsset != _currencyConverter.DefaultAsset) 
             {
                 var rateUsdConverted = await _currencyConverter.ConvertAsync(originAsset, _currencyConverter.DefaultAsset, 1, true);
                 item.RateToUsd = rateUsdConverted.convertedAmount;
             }
+
             if (setOperationType)
             {
                 item.OperationType = GetOperationType(item);
