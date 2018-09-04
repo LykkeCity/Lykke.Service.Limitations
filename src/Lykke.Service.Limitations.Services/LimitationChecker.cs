@@ -719,71 +719,103 @@ namespace Lykke.Service.Limitations.Services
 
         public async Task<AccumulatedAmountsModel> GetAccumulatedDepositsAsync(string clientId)
         {
+            var cachedRates = new Dictionary<string, double>();
+
             AccumulatedAmountsModel result = new AccumulatedAmountsModel();
 
             var accumulatedSwiftDepositTask = _accumulatedDepositRepository.GetAccumulatedAmountAsync(clientId, CurrencyOperationType.SwiftTransfer);
             var accumulatedCardDepositTask = _accumulatedDepositRepository.GetAccumulatedAmountAsync(clientId, CurrencyOperationType.CardCashIn);
             var accumulatedSwiftWithdrawalTask = _accumulatedDepositRepository.GetAccumulatedAmountAsync(clientId, CurrencyOperationType.SwiftTransferOut);
-            var accumulatedCryptoWithdrawalTask = _accumulatedDepositRepository.GetAccumulatedAmountAsync(clientId, CurrencyOperationType.CryptoCashOut);
+            //var accumulatedCryptoWithdrawalTask = _accumulatedDepositRepository.GetAccumulatedAmountAsync(clientId, CurrencyOperationType.CryptoCashOut);
 
             await Task.WhenAll(new Task[] {
                 accumulatedSwiftDepositTask,
                 accumulatedSwiftDepositTask,
                 accumulatedSwiftWithdrawalTask,
-                accumulatedCryptoWithdrawalTask
+                //accumulatedCryptoWithdrawalTask
             });
 
             result.DepositTotalFiat = Math.Round(accumulatedSwiftDepositTask.Result + accumulatedCardDepositTask.Result, 15);
             result.WithdrawalTotalFiat = accumulatedSwiftWithdrawalTask.Result;
-            result.WithdrawalTotalNonFiat = accumulatedCryptoWithdrawalTask.Result;
+            //result.WithdrawalTotalNonFiat = accumulatedCryptoWithdrawalTask.Result;
 
             var dayOperations = (await LoadOperationsAsync(clientId, LimitationPeriod.Day));
             foreach (var op in dayOperations)
             {
-                switch(op.OperationType)
+                if (op.RateToUsd == 0)
+                {
+                    if (op.Asset != _currencyConverter.DefaultAsset)
+                    {
+                        string asset;
+                        double rate = 1;
+                        if (!cachedRates.TryGetValue(op.Asset, out rate))
+                        {
+                            (asset, rate) = await _currencyConverter.ConvertAsync(op.Asset, _currencyConverter.DefaultAsset, 1, forceConvesion: true);
+                            cachedRates[op.Asset] = rate;
+                        }
+                        op.RateToUsd = rate;
+                    }
+                    else
+                    {
+                        op.RateToUsd = 1;
+                    }
+                }
+
+                switch (op.OperationType)
                 {
                     case CurrencyOperationType.CardCashIn:
-                        result.Deposit1DayFiat += op.Volume;
+                        result.Deposit1DayFiat += Math.Abs(op.Volume * op.RateToUsd);
                         break;
                     case CurrencyOperationType.SwiftTransfer:
-                        result.Deposit1DayFiat += op.Volume;
+                        result.Deposit1DayFiat += Math.Abs(op.Volume * op.RateToUsd);
                         break;
                     case CurrencyOperationType.SwiftTransferOut:
-                        result.Withdrawal1DayFiat += op.Volume;
+                        result.Withdrawal1DayFiat += Math.Abs(op.Volume * op.RateToUsd);
                         break;
                     case CurrencyOperationType.CryptoCashOut:
-                        result.Withdrawal1DayNonFiat += op.Volume;
+                        result.Withdrawal1DayNonFiat += Math.Abs(op.Volume * op.RateToUsd);
                         break;
                 }
             }
-            result.Deposit1DayFiat = Math.Round(result.Deposit1DayFiat, 15);
-            result.Deposit1DayNonFiat = Math.Round(result.Deposit1DayNonFiat, 15);
-            result.Withdrawal1DayFiat = Math.Round(result.Withdrawal1DayFiat, 15);
-            result.Withdrawal1DayNonFiat = Math.Round(result.Withdrawal1DayNonFiat, 15);
 
             var monthOperations = (await LoadOperationsAsync(clientId, LimitationPeriod.Month));
             foreach (var op in monthOperations)
             {
+                if (op.RateToUsd == 0)
+                {
+                    if (op.Asset != _currencyConverter.DefaultAsset)
+                    {
+                        string asset;
+                        double rate = 1;
+                        if (!cachedRates.TryGetValue(op.Asset, out rate))
+                        {
+                            (asset, rate) = await _currencyConverter.ConvertAsync(op.Asset, _currencyConverter.DefaultAsset, 1, forceConvesion: true);
+                            cachedRates[op.Asset] = rate;
+                        }
+                        op.RateToUsd = rate;
+                    }
+                    else
+                    {
+                        op.RateToUsd = 1;
+                    }
+                }
+
                 switch (op.OperationType)
                 {
                     case CurrencyOperationType.CardCashIn:
-                        result.Deposit30DaysFiat += op.Volume;
+                        result.Deposit30DaysFiat += Math.Abs(op.Volume * op.RateToUsd);
                         break;
                     case CurrencyOperationType.SwiftTransfer:
-                        result.Deposit30DaysFiat += op.Volume;
+                        result.Deposit30DaysFiat += Math.Abs(op.Volume * op.RateToUsd);
                         break;
                     case CurrencyOperationType.SwiftTransferOut:
-                        result.Withdrawal30DaysFiat += op.Volume;
+                        result.Withdrawal30DaysFiat += Math.Abs(op.Volume * op.RateToUsd);
                         break;
                     case CurrencyOperationType.CryptoCashOut:
-                        result.Withdrawal30DaysNonFiat += op.Volume;
+                        result.Withdrawal30DaysNonFiat += Math.Abs(op.Volume * op.RateToUsd);
                         break;
                 }
             }
-            result.Deposit30DaysFiat = Math.Round(result.Deposit30DaysFiat, 15);
-            result.Deposit30DaysNonFiat = Math.Round(result.Deposit30DaysNonFiat, 15);
-            result.Withdrawal30DaysFiat = Math.Round(result.Withdrawal30DaysFiat, 15);
-            result.Withdrawal30DaysNonFiat = Math.Round(result.Withdrawal30DaysNonFiat, 15);
 
             return result;
         }

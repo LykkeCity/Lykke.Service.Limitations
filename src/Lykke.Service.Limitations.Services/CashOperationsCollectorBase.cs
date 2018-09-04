@@ -49,6 +49,12 @@ namespace Lykke.Service.Limitations.Services
 
             item.Asset = converted.Item1;
             item.Volume = converted.Item2;
+            item.RateToUsd = 1;
+            if (item.Asset != _currencyConverter.DefaultAsset) // no conversion happened
+            {
+                var rateUsdConverted = await _currencyConverter.ConvertAsync(originAsset, _currencyConverter.DefaultAsset, 1, true);
+                item.RateToUsd = rateUsdConverted.convertedAmount;
+            }
             if (setOperationType)
             {
                 item.OperationType = GetOperationType(item);
@@ -69,7 +75,7 @@ namespace Lykke.Service.Limitations.Services
                     case CurrencyOperationType.CardCashIn:
                     case CurrencyOperationType.SwiftTransfer:
                     case CurrencyOperationType.SwiftTransferOut:
-                    case CurrencyOperationType.CryptoCashOut:
+                    //case CurrencyOperationType.CryptoCashOut:
                         if (_currencyConverter.IsNotConvertible(item.Asset))
                         {
                             // force convertation fot crypto, tokens, etc

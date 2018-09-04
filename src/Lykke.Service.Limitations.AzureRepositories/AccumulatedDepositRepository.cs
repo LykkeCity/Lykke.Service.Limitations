@@ -1,6 +1,7 @@
 ﻿using AzureStorage;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
+using Lykke.Service.Limitations.Core.Services;
 using Microsoft.WindowsAzure.Storage.Table;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,9 @@ namespace Lykke.Service.Limitations.AzureRepositories
     {
         private readonly INoSQLTableStorage<AccumulatedDepositPeriodEntity> _tableStorage;
 
-        public AccumulatedDepositRepository(INoSQLTableStorage<AccumulatedDepositPeriodEntity> tableStorage)
+        public AccumulatedDepositRepository(
+            INoSQLTableStorage<AccumulatedDepositPeriodEntity> tableStorage
+            )
         {
             _tableStorage = tableStorage;
         }
@@ -21,8 +24,6 @@ namespace Lykke.Service.Limitations.AzureRepositories
 
         public async Task AggregateTotalAsync(string clientId, string assetId, double amount, CurrencyOperationType operationType)
         {
-            amount = Math.Abs(amount);
-
             IAccumulatedDepositPeriod existingRecord = await _tableStorage.GetDataAsync(clientId, GenerateRowKey(operationType));
             if (existingRecord == null)
             {
@@ -50,14 +51,10 @@ namespace Lykke.Service.Limitations.AzureRepositories
         {
             switch (operationType)
             {
-                case CurrencyOperationType.CardCashIn:
-                    return String.Format($"AllTime-Cards-CashIn");
-                case CurrencyOperationType.SwiftTransfer:
-                    return String.Format($"AllTime-Swift-CashIn");
-                case CurrencyOperationType.SwiftTransferOut:
-                    return String.Format($"AllTime-Swift-CashOut");
-                case CurrencyOperationType.CryptoCashOut:
-                    return String.Format($"AllTime-Crypto-CashOut");
+                case CurrencyOperationType.CardCashIn: return String.Format($"AllTime-Cards-CashIn");
+                case CurrencyOperationType.SwiftTransfer: return String.Format($"AllTime-Swift-CashIn");
+                case CurrencyOperationType.SwiftTransferOut: return String.Format($"AllTime-Swift-CashOut");
+                case CurrencyOperationType.CryptoCashOut: return String.Format($"AllTime-Crypto-CashOut");
             }
             throw new ArgumentException("Invalid input value", nameof(operationType));
         }

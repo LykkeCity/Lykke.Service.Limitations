@@ -14,6 +14,8 @@ namespace Lykke.Service.Limitations.Core.Domain
 
         public double Volume { get; set; }
 
+        public double RateToUsd { get; set; }
+
         public string Asset { get; set; }
 
         public string ClientId => ToClientId;

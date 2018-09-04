@@ -69,22 +69,22 @@ namespace Lykke.Service.Limitations.Client
 
         public async Task<AccumulatedAmountsResponse> GetAccumulatedDepositsAsync(string clientId)
         {
-            var accumulatedDepositsModel = await _service.ApiLimitationsGetAccumulatedDepositsPostAsync(clientId);
+            var accumulatedAmountsModel = await _service.ApiLimitationsGetAccumulatedDepositsPostAsync(clientId);
             return new AccumulatedAmountsResponse
             {
-                Deposit1DayFiat = accumulatedDepositsModel.Deposit1DayFiat,
-                Deposit1DayNonFiat = accumulatedDepositsModel.Deposit1DayNonFiat,
-                Deposit30DaysFiat = accumulatedDepositsModel.Deposit30DaysFiat,
-                Deposit30DaysNonFiat = accumulatedDepositsModel.Deposit30DaysNonFiat,
-                DepositTotalFiat = accumulatedDepositsModel.DepositTotalFiat,
-                DepositTotalNonFiat = accumulatedDepositsModel.DepositTotalNonFiat,
+                Deposit1DayFiat = accumulatedAmountsModel.Deposit1DayFiat,
+                Deposit1DayNonFiat = accumulatedAmountsModel.Deposit1DayNonFiat,
+                Deposit30DaysFiat = accumulatedAmountsModel.Deposit30DaysFiat,
+                Deposit30DaysNonFiat = accumulatedAmountsModel.Deposit30DaysNonFiat,
+                DepositTotalFiat = accumulatedAmountsModel.DepositTotalFiat,
+                DepositTotalNonFiat = accumulatedAmountsModel.DepositTotalNonFiat,
 
-                Withdrawal1DayFiat = accumulatedDepositsModel.Withdrawal1DayFiat,
-                Withdrawal1DayNonFiat = accumulatedDepositsModel.Withdrawal1DayNonFiat,
-                Withdrawal30DaysFiat = accumulatedDepositsModel.Withdrawal30DaysFiat,
-                Withdrawal30DaysNonFiat = accumulatedDepositsModel.Withdrawal30DaysNonFiat,
-                WithdrawalTotalFiat = accumulatedDepositsModel.WithdrawalTotalFiat,
-                WithdrawalTotalNonFiat = accumulatedDepositsModel.WithdrawalTotalNonFiat
+                Withdrawal1DayFiat = accumulatedAmountsModel.Withdrawal1DayFiat,
+                Withdrawal1DayNonFiat = accumulatedAmountsModel.Withdrawal1DayNonFiat,
+                Withdrawal30DaysFiat = accumulatedAmountsModel.Withdrawal30DaysFiat,
+                Withdrawal30DaysNonFiat = accumulatedAmountsModel.Withdrawal30DaysNonFiat,
+                WithdrawalTotalFiat = accumulatedAmountsModel.WithdrawalTotalFiat,
+                WithdrawalTotalNonFiat = accumulatedAmountsModel.WithdrawalTotalNonFiat
             };
         }
     }

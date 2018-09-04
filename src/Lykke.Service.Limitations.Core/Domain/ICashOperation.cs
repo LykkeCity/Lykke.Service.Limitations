@@ -8,6 +8,7 @@ namespace Lykke.Service.Limitations.Core.Domain
         string ClientId { get; }
         DateTime DateTime { get; }
         double Volume { get; set; }
+        double RateToUsd { get; set; }
         string Asset { get; set; }
         CurrencyOperationType? OperationType { get; set; }
     }
