@@ -71,8 +71,8 @@ namespace Lykke.Service.Limitations.Services
             {
                 await _antiFraudCollector.RemoveOperationAsync(
                     item.ClientId,
-                    item.Asset,
-                    item.Volume,
+                    originAsset,
+                    originVolume,
                     item.OperationType.Value);
 
                 // aggregate Lifetime totals in USD
