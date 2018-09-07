@@ -111,7 +111,7 @@ namespace Lykke.Service.Limitations.Modules
             // limits from setting for fiat currency for an individual client will be ignored
             // only tier limits should be used for such purposes
             Func<CashOperationLimitation, bool> isIndividualFiatLimit = limit => !string.IsNullOrWhiteSpace(limit.ClientId) && settings.ConvertibleAssets.Contains(limit.Asset);
-            var filteredLimits = settings.Limits.Where(limit => !isIndividualFiatLimit(limit)).ToList();
+            var filteredLimits = settings.Limits.Where(limit => limit.Asset != "USD" && !isIndividualFiatLimit(limit)).ToList();
             builder.RegisterType<LimitationChecker>()
                 .As<ILimitationCheck>()
                 .SingleInstance()

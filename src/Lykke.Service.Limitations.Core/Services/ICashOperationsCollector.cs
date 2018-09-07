@@ -9,7 +9,7 @@ namespace Lykke.Service.Limitations.Core.Services
         Task<(double, bool)> GetCurrentAmountAsync(
             string clientId,
             string asset,
-            LimitationPeriod period,
+            CashOperationLimitation limit,
             CurrencyOperationType operationType,
             bool checkAllCrypto = false);
 

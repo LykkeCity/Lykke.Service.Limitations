@@ -6,6 +6,7 @@ using StackExchange.Redis;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Common.Log;
+using System;
 
 namespace Lykke.Service.Limitations.Services
 {
@@ -51,10 +52,9 @@ namespace Lykke.Service.Limitations.Services
             item.Volume = converted.Item2;
             item.RateToUsd = 1;
 
-            // no conversion happened
-            // source asset and volume are saved to DB
+            if (item.Asset != _currencyConverter.DefaultAsset)
+            // no conversion to USD happend
             // rate to USD should be calculated and saved too
-            if (item.Asset == originAsset && originAsset != _currencyConverter.DefaultAsset) 
             {
                 var rateUsdConverted = await _currencyConverter.ConvertAsync(originAsset, _currencyConverter.DefaultAsset, 1, true);
                 item.RateToUsd = rateUsdConverted.convertedAmount;
@@ -71,27 +71,32 @@ namespace Lykke.Service.Limitations.Services
             {
                 await _antiFraudCollector.RemoveOperationAsync(
                     item.ClientId,
-                    originAsset,
-                    originVolume,
+                    item.Asset,
+                    item.Volume,
                     item.OperationType.Value);
 
+                // aggregate Lifetime totals in USD
                 switch(item.OperationType)
                 {
                     case CurrencyOperationType.CardCashIn:
                     case CurrencyOperationType.SwiftTransfer:
                     case CurrencyOperationType.SwiftTransferOut:
                     //case CurrencyOperationType.CryptoCashOut:
-                        if (_currencyConverter.IsNotConvertible(item.Asset))
+
+                        if (item.Asset != _currencyConverter.DefaultAsset) 
+                            // no conversion to USD happend
+                            // convert to USD for Lifetime totals calculation
                         {
                             // force convertation fot crypto, tokens, etc
                             converted = await _currencyConverter.ConvertAsync(item.Asset, _currencyConverter.DefaultAsset, item.Volume, true);
                             item.Asset = converted.Item1;
                             item.Volume = converted.Item2;
                         }
+
                         await _accumulatedDepositAggregator.AggregateTotalAsync(
                             item.ClientId,
                             item.Asset,
-                            item.Volume,
+                            Math.Abs(item.Volume),
                             item.OperationType.Value
                             );
                         break;
@@ -116,5 +121,28 @@ namespace Lykke.Service.Limitations.Services
         }
 
         protected abstract CurrencyOperationType GetOperationType(T item);
+
+        protected async Task SetRateToUsd(Dictionary<string, double> cachedRates, ICashOperation op)
+        {
+            if (op.RateToUsd == 0)
+            {
+                if (op.Asset != _currencyConverter.DefaultAsset)
+                {
+                    string asset;
+                    double rate = 1;
+                    if (!cachedRates.TryGetValue(op.Asset, out rate))
+                    {
+                        (asset, rate) = await _currencyConverter.ConvertAsync(op.Asset, _currencyConverter.DefaultAsset, 1, forceConvesion: true);
+                        cachedRates[op.Asset] = rate;
+                    }
+                    op.RateToUsd = rate;
+                }
+                else
+                {
+                    op.RateToUsd = 1;
+                }
+            }
+        }
+
     }
 }

@@ -8,5 +8,7 @@
         CryptoCashOut,
         SwiftTransfer,
         SwiftTransferOut,
+        TotalCashIn,
+        TotalCashOut
     }
 }

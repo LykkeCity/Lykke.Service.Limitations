@@ -35,9 +35,10 @@ namespace Lykke.Service.Limitations.Services
         public async Task<(double, bool)> GetCurrentAmountAsync(
             string clientId,
             string asset,
-            LimitationPeriod period,
+            CashOperationLimitation limit,
             CurrencyOperationType operationType)
         {
+            Dictionary<string, double> cachedRates = new Dictionary<string, double>();
             (var items, bool notCached) = await _data.GetClientDataAsync(clientId, operationType);
             double result = 0;
             DateTime now = DateTime.UtcNow;
@@ -45,11 +46,24 @@ namespace Lykke.Service.Limitations.Services
             {
                 if (item.Asset != asset)
                     continue;
-                if (period == LimitationPeriod.Day
+                if (limit.Period == LimitationPeriod.Day
                     && now.Subtract(item.DateTime).TotalHours >= 24)
                     continue;
 
-                result += item.Volume;
+                //  limit asset is USD - convert item amount to USD
+                if (limit.Asset == _currencyConverter.DefaultAsset)
+                {
+                    await SetRateToUsd(cachedRates, item);
+                    result += item.Volume * item.RateToUsd;
+                }
+                else
+                {
+                    //  limit asset is not USD - limitation for specific asset
+                    if (item.Asset == asset)
+                    {
+                        result += item.Volume;
+                    }
+                }
             }
             return (result, notCached);
         }

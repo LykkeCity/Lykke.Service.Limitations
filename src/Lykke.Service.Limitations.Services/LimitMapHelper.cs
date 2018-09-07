@@ -23,6 +23,14 @@ namespace Lykke.Service.Limitations.Services
                 case LimitationType.SwiftCashOut:
                     result.Add(CurrencyOperationType.SwiftTransferOut);
                     break;
+                case LimitationType.OverallCashIn:
+                    result.Add(CurrencyOperationType.CardCashIn);
+                    result.Add(CurrencyOperationType.SwiftTransfer);
+                    break;
+                case LimitationType.OverallCashOut:
+                    result.Add(CurrencyOperationType.CryptoCashOut);
+                    result.Add(CurrencyOperationType.SwiftTransferOut);
+                    break;
                 default:
                     throw new NotSupportedException($"Limitation type {limitType} is not supported!");
             }
@@ -48,6 +56,14 @@ namespace Lykke.Service.Limitations.Services
                 case CurrencyOperationType.CryptoCashIn:
                     break;
                 case CurrencyOperationType.SwiftTransferOut:
+                    result.Add(LimitationType.SwiftCashOut);
+                    break;
+                case CurrencyOperationType.TotalCashIn:
+                    result.Add(LimitationType.CardCashIn);
+                    result.Add(LimitationType.SwiftCashIn);
+                    break;
+                case CurrencyOperationType.TotalCashOut:
+                    result.Add(LimitationType.CryptoCashOut);
                     result.Add(LimitationType.SwiftCashOut);
                     break;
                 default:

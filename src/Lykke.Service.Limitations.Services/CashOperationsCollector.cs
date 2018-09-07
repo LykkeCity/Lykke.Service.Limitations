@@ -35,7 +35,7 @@ namespace Lykke.Service.Limitations.Services
         public async Task<(double, bool)> GetCurrentAmountAsync(
             string clientId,
             string asset,
-            LimitationPeriod period,
+            CashOperationLimitation limit,
             CurrencyOperationType operationType,
             bool checkAllCrypto = false)
         {
@@ -55,41 +55,35 @@ namespace Lykke.Service.Limitations.Services
                 default:
                     throw new NotSupportedException($"Operation type {operationType} can't be mapped to CashFlowDirection!");
             }
+
+            Dictionary<string, double> cachedRates = new Dictionary<string, double>();
             (var items, bool notCached) = await _data.GetClientDataAsync(clientId, operationType);
+
             DateTime now = DateTime.UtcNow;
             double result = 0;
             foreach (var item in items)
             {
-                if (period == LimitationPeriod.Day
+                if (limit.Period == LimitationPeriod.Day
                     && now.Subtract(item.DateTime).TotalHours >= 24)
                     continue;
+
                 if (Math.Sign(item.Volume) != Math.Sign(sign))
                     continue;
 
-                double amount;
-
-                if (checkAllCrypto)
+                //  limit asset is USD - convert item amount to USD
+                if (limit.Asset == _currencyConverter.DefaultAsset)
                 {
-                    if (!_currencyConverter.IsNotConvertible(item.Asset))
-                        continue;
-
-                    var converted = await _currencyConverter.ConvertAsync(
-                        item.Asset,
-                        _currencyConverter.DefaultAsset,
-                        item.Volume,
-                        true);
-
-                    amount = converted.Item2;
+                    await SetRateToUsd(cachedRates, item);
+                    result += item.Volume * item.RateToUsd;
                 }
-                else
+                else 
                 {
-                    if (item.Asset != asset)
-                        continue;
-
-                    amount = item.Volume;
+                    //  limit asset is not USD - limitation for specific asset
+                    if (item.Asset == asset)
+                    {
+                        result += item.Volume;
+                    }
                 }
-
-                result += amount;
             }
             return (Math.Abs(result), notCached);
         }
