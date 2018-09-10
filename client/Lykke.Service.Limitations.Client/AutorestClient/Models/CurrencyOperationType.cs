@@ -28,7 +28,11 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
         [EnumMember(Value = "SwiftTransfer")]
         SwiftTransfer,
         [EnumMember(Value = "SwiftTransferOut")]
-        SwiftTransferOut
+        SwiftTransferOut,
+        [EnumMember(Value = "TotalCashIn")]
+        TotalCashIn,
+        [EnumMember(Value = "TotalCashOut")]
+        TotalCashOut
     }
     internal static class CurrencyOperationTypeEnumExtension
     {
@@ -53,6 +57,10 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
                     return "SwiftTransfer";
                 case CurrencyOperationType.SwiftTransferOut:
                     return "SwiftTransferOut";
+                case CurrencyOperationType.TotalCashIn:
+                    return "TotalCashIn";
+                case CurrencyOperationType.TotalCashOut:
+                    return "TotalCashOut";
             }
             return null;
         }
@@ -73,6 +81,10 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
                     return CurrencyOperationType.SwiftTransfer;
                 case "SwiftTransferOut":
                     return CurrencyOperationType.SwiftTransferOut;
+                case "TotalCashIn":
+                    return CurrencyOperationType.TotalCashIn;
+                case "TotalCashOut":
+                    return CurrencyOperationType.TotalCashOut;
             }
             return null;
         }

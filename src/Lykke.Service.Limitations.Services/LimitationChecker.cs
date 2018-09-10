@@ -783,12 +783,15 @@ namespace Lykke.Service.Limitations.Services
                 {
                     case CurrencyOperationType.CardCashIn:
                         result.Deposit1DayFiat += Math.Abs(op.Volume * op.RateToUsd);
+                        result.Deposit1DayCards += Math.Abs(op.Volume * op.RateToUsd);
                         break;
                     case CurrencyOperationType.SwiftTransfer:
                         result.Deposit1DayFiat += Math.Abs(op.Volume * op.RateToUsd);
+                        result.Deposit1DaySwift += Math.Abs(op.Volume * op.RateToUsd);
                         break;
                     case CurrencyOperationType.SwiftTransferOut:
                         result.Withdrawal1DayFiat += Math.Abs(op.Volume * op.RateToUsd);
+                        result.Withdrawal1DaySwift += Math.Abs(op.Volume * op.RateToUsd);
                         break;
                     case CurrencyOperationType.CryptoCashOut:
                         result.Withdrawal1DayNonFiat += Math.Abs(op.Volume * op.RateToUsd);
@@ -805,12 +808,15 @@ namespace Lykke.Service.Limitations.Services
                 {
                     case CurrencyOperationType.CardCashIn:
                         result.Deposit30DaysFiat += Math.Abs(op.Volume * op.RateToUsd);
+                        result.Deposit30DaysCards += Math.Abs(op.Volume * op.RateToUsd);
                         break;
                     case CurrencyOperationType.SwiftTransfer:
                         result.Deposit30DaysFiat += Math.Abs(op.Volume * op.RateToUsd);
+                        result.Deposit30DaysSwift += Math.Abs(op.Volume * op.RateToUsd);
                         break;
                     case CurrencyOperationType.SwiftTransferOut:
                         result.Withdrawal30DaysFiat += Math.Abs(op.Volume * op.RateToUsd);
+                        result.Withdrawal30DaysSwift += Math.Abs(op.Volume * op.RateToUsd);
                         break;
                     case CurrencyOperationType.CryptoCashOut:
                         result.Withdrawal30DaysNonFiat += Math.Abs(op.Volume * op.RateToUsd);

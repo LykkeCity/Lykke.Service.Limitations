@@ -25,12 +25,13 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
         /// </summary>
         /// <param name="operationType">Possible values include: 'CardCashIn',
         /// 'CardCashOut', 'CryptoCashIn', 'CryptoCashOut', 'SwiftTransfer',
-        /// 'SwiftTransferOut'</param>
-        public CashOperation(string id, string clientId, double volume, string asset, System.DateTime dateTime, CurrencyOperationType operationType)
+        /// 'SwiftTransferOut', 'TotalCashIn', 'TotalCashOut'</param>
+        public CashOperation(string id, string clientId, double volume, double rateToUsd, string asset, System.DateTime dateTime, CurrencyOperationType operationType)
         {
             Id = id;
             ClientId = clientId;
             Volume = volume;
+            RateToUsd = rateToUsd;
             Asset = asset;
             DateTime = dateTime;
             OperationType = operationType;
@@ -59,6 +60,11 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
+        [JsonProperty(PropertyName = "RateToUsd")]
+        public double RateToUsd { get; set; }
+
+        /// <summary>
+        /// </summary>
         [JsonProperty(PropertyName = "Asset")]
         public string Asset { get; set; }
 
@@ -70,7 +76,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
         /// <summary>
         /// Gets or sets possible values include: 'CardCashIn', 'CardCashOut',
         /// 'CryptoCashIn', 'CryptoCashOut', 'SwiftTransfer',
-        /// 'SwiftTransferOut'
+        /// 'SwiftTransferOut', 'TotalCashIn', 'TotalCashOut'
         /// </summary>
         [JsonProperty(PropertyName = "OperationType")]
         public CurrencyOperationType OperationType { get; set; }

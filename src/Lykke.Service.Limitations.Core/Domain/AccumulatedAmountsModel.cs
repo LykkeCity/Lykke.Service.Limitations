@@ -6,6 +6,18 @@ namespace Lykke.Service.Limitations.Core.Domain
 {
     public class AccumulatedAmountsModel
     {
+        public double DepositTotalSwift { get; set; }
+
+        public double Deposit30DaysSwift { get; set; }
+
+        public double Deposit1DaySwift { get; set; }
+
+        public double DepositTotalCards { get; set; }
+
+        public double Deposit30DaysCards { get; set; }
+
+        public double Deposit1DayCards { get; set; }
+
         public double DepositTotalFiat { get; set; }
 
         public double Deposit30DaysFiat { get; set; }
@@ -17,6 +29,18 @@ namespace Lykke.Service.Limitations.Core.Domain
         public double Deposit30DaysNonFiat { get; set; }
 
         public double Deposit1DayNonFiat { get; set; }
+
+        public double WithdrawalTotalSwift { get; set; }
+
+        public double Withdrawal30DaysSwift { get; set; }
+
+        public double Withdrawal1DaySwift { get; set; }
+
+        public double WithdrawalTotalCards { get; set; }
+
+        public double Withdrawal30DaysCards { get; set; }
+
+        public double Withdrawal1DayCards { get; set; }
 
         public double WithdrawalTotalFiat { get; set; }
 
