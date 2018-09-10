@@ -72,12 +72,26 @@ namespace Lykke.Service.Limitations.Client
             var accumulatedAmountsModel = await _service.ApiLimitationsGetAccumulatedDepositsPostAsync(clientId);
             return new AccumulatedAmountsResponse
             {
+                Deposit1DaySwift = accumulatedAmountsModel.Deposit1DaySwift,
+                Deposit30DaysSwift = accumulatedAmountsModel.Deposit30DaysSwift,
+                DepositTotalSwift = accumulatedAmountsModel.DepositTotalSwift,
+                Deposit1DayCards = accumulatedAmountsModel.Deposit1DayCards,
+                Deposit30DaysCards = accumulatedAmountsModel.Deposit30DaysCards,
+                DepositTotalCards = accumulatedAmountsModel.DepositTotalCards,
+
                 Deposit1DayFiat = accumulatedAmountsModel.Deposit1DayFiat,
                 Deposit1DayNonFiat = accumulatedAmountsModel.Deposit1DayNonFiat,
                 Deposit30DaysFiat = accumulatedAmountsModel.Deposit30DaysFiat,
                 Deposit30DaysNonFiat = accumulatedAmountsModel.Deposit30DaysNonFiat,
                 DepositTotalFiat = accumulatedAmountsModel.DepositTotalFiat,
                 DepositTotalNonFiat = accumulatedAmountsModel.DepositTotalNonFiat,
+
+                Withdrawal1DaySwift = accumulatedAmountsModel.Withdrawal1DaySwift,
+                Withdrawal30DaysSwift = accumulatedAmountsModel.Withdrawal30DaysSwift,
+                WithdrawalTotalSwift = accumulatedAmountsModel.WithdrawalTotalSwift,
+                Withdrawal1DayCards = accumulatedAmountsModel.Withdrawal1DayCards,
+                Withdrawal30DaysCards = accumulatedAmountsModel.Withdrawal30DaysCards,
+                WithdrawalTotalCards = accumulatedAmountsModel.WithdrawalTotalCards,
 
                 Withdrawal1DayFiat = accumulatedAmountsModel.Withdrawal1DayFiat,
                 Withdrawal1DayNonFiat = accumulatedAmountsModel.Withdrawal1DayNonFiat,
