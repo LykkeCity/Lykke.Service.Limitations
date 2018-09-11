@@ -765,12 +765,14 @@ namespace Lykke.Service.Limitations.Services
 
             await Task.WhenAll(new Task[] {
                 accumulatedSwiftDepositTask,
-                accumulatedSwiftDepositTask,
+                accumulatedCardDepositTask,
                 accumulatedSwiftWithdrawalTask,
                 //accumulatedCryptoWithdrawalTask
             });
 
             result.DepositTotalFiat = Math.Round(accumulatedSwiftDepositTask.Result + accumulatedCardDepositTask.Result, 15);
+            result.DepositTotalSwift = Math.Round(accumulatedSwiftDepositTask.Result, 15);
+            result.DepositTotalCards = Math.Round(accumulatedCardDepositTask.Result, 15);
             result.WithdrawalTotalFiat = accumulatedSwiftWithdrawalTask.Result;
             //result.WithdrawalTotalNonFiat = accumulatedCryptoWithdrawalTask.Result;
 
@@ -792,6 +794,9 @@ namespace Lykke.Service.Limitations.Services
                     case CurrencyOperationType.SwiftTransferOut:
                         result.Withdrawal1DayFiat += Math.Abs(op.Volume * op.RateToUsd);
                         result.Withdrawal1DaySwift += Math.Abs(op.Volume * op.RateToUsd);
+                        break;
+                    case CurrencyOperationType.CryptoCashIn:
+                        result.Deposit1DayNonFiat += Math.Abs(op.Volume * op.RateToUsd);
                         break;
                     case CurrencyOperationType.CryptoCashOut:
                         result.Withdrawal1DayNonFiat += Math.Abs(op.Volume * op.RateToUsd);
@@ -817,6 +822,9 @@ namespace Lykke.Service.Limitations.Services
                     case CurrencyOperationType.SwiftTransferOut:
                         result.Withdrawal30DaysFiat += Math.Abs(op.Volume * op.RateToUsd);
                         result.Withdrawal30DaysSwift += Math.Abs(op.Volume * op.RateToUsd);
+                        break;
+                    case CurrencyOperationType.CryptoCashIn:
+                        result.Deposit30DaysNonFiat += Math.Abs(op.Volume * op.RateToUsd);
                         break;
                     case CurrencyOperationType.CryptoCashOut:
                         result.Withdrawal30DaysNonFiat += Math.Abs(op.Volume * op.RateToUsd);
