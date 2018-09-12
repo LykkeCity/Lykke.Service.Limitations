@@ -771,7 +771,8 @@ namespace Lykke.Service.Limitations.Services
             result.DepositTotalFiat = Math.Round(accumulatedSwiftDepositTask.Result + accumulatedCardDepositTask.Result, 15);
             result.DepositTotalSwift = Math.Round(accumulatedSwiftDepositTask.Result, 15);
             result.DepositTotalCards = Math.Round(accumulatedCardDepositTask.Result, 15);
-            result.WithdrawalTotalFiat = accumulatedSwiftWithdrawalTask.Result;
+            result.WithdrawalTotalFiat = Math.Round(accumulatedSwiftWithdrawalTask.Result, 15);
+            result.WithdrawalTotalSwift = Math.Round(accumulatedSwiftWithdrawalTask.Result, 15);
             //result.WithdrawalTotalNonFiat = accumulatedCryptoWithdrawalTask.Result;
 
             var dayOperations = (await LoadOperationsAsync(clientId, LimitationPeriod.Day));

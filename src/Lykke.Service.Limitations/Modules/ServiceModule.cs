@@ -3,7 +3,6 @@ using AzureStorage.Blob;
 using AzureStorage.Tables;
 using Lykke.Common.Cache;
 using Lykke.Common.Log;
-using Lykke.Common.Log;
 using Lykke.HttpClientGenerator;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Limitations.AzureRepositories;
