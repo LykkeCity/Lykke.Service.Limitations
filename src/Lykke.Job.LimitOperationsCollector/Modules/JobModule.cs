@@ -67,7 +67,7 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                 .SingleInstance();
 
             builder.Register(ctx => AzureTableStorage<AccumulatedAmountsPeriodEntity>.Create(
-                _settings.ConnectionString(s => s.LimitOperationsCollectorJob.DepositAccumulationConnectionString),
+                _settings.ConnectionString(s => s.LimitOperationsCollectorJob.TiersConnectionString),
                 "AccumulatedAmounts",
                 ctx.Resolve<ILogFactory>())).SingleInstance();
 

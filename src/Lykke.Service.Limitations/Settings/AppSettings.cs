@@ -48,7 +48,7 @@ namespace Lykke.Service.Limitations.Settings
         public string GlobalSettingsConnString { get; set; }
 
         [AzureTableCheck]
-        public string DepositAccumulationConnectionString { get; set; }
+        public string TiersConnectionString { get; set; }
 
         [HttpCheck("api/isalive", false)]
         public string LimitOperationsJobUrl { get; set; }

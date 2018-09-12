@@ -60,16 +60,16 @@ namespace Lykke.Service.Limitations.Modules
             builder.RegisterType<LimitSettingsRepository>().As<ILimitSettingsRepository>().SingleInstance();
 
 
-            builder.Register(ctx => AzureTableStorage<AccumulatedAmountsPeriodEntity>.Create(_appSettings.ConnectionString(x => x.LimitationsSettings.DepositAccumulationConnectionString), "AccumulatedAmounts", ctx.Resolve<ILogFactory>())).SingleInstance();
+            builder.Register(ctx => AzureTableStorage<AccumulatedAmountsPeriodEntity>.Create(_appSettings.ConnectionString(x => x.LimitationsSettings.TiersConnectionString), "AccumulatedAmounts", ctx.Resolve<ILogFactory>())).SingleInstance();
             builder.RegisterType<AccumulatedAmountsRepository>().As<IAccumulatedDepositRepository>().SingleInstance();
 
-            builder.Register(ctx => AzureTableStorage<TierEntity>.Create(_appSettings.ConnectionString(s => s.LimitationsSettings.DepositAccumulationConnectionString), "Tiers", ctx.Resolve<ILogFactory>())).SingleInstance();
+            builder.Register(ctx => AzureTableStorage<TierEntity>.Create(_appSettings.ConnectionString(s => s.LimitationsSettings.TiersConnectionString), "Tiers", ctx.Resolve<ILogFactory>())).SingleInstance();
             builder.RegisterType<TierRepository>().As<ITierRepository>().SingleInstance();
 
-            builder.Register(ctx => AzureTableStorage<ClientTierEntity>.Create(_appSettings.ConnectionString(s => s.LimitationsSettings.DepositAccumulationConnectionString), "ClientTiers", ctx.Resolve<ILogFactory>())).SingleInstance();
+            builder.Register(ctx => AzureTableStorage<ClientTierEntity>.Create(_appSettings.ConnectionString(s => s.LimitationsSettings.TiersConnectionString), "ClientTiers", ctx.Resolve<ILogFactory>())).SingleInstance();
             builder.RegisterType<ClientTierRepository>().As<IClientTierRepository>().SingleInstance();
 
-            builder.Register(ctx => AzureTableStorage<ClientTierLogEntity>.Create(_appSettings.ConnectionString(s => s.LimitationsSettings.DepositAccumulationConnectionString), "ClientTierLogs", ctx.Resolve<ILogFactory>())).SingleInstance();
+            builder.Register(ctx => AzureTableStorage<ClientTierLogEntity>.Create(_appSettings.ConnectionString(s => s.LimitationsSettings.TiersConnectionString), "ClientTierLogs", ctx.Resolve<ILogFactory>())).SingleInstance();
             builder.RegisterType<ClientTierLogRepository>().As<IClientTierLogRepository>().SingleInstance();
 
 
