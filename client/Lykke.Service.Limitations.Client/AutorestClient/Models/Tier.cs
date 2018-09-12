@@ -209,6 +209,18 @@ namespace Lykke.Service.Limitations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
+            if (Id == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "Id");
+            }
+            if (ShortName == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "ShortName");
+            }
+            if (LongName == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "LongName");
+            }
         }
     }
 }

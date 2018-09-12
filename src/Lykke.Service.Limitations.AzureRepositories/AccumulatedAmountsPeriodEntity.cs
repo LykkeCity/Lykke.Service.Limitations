@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Lykke.Service.Limitations.AzureRepositories
 {
-    public class AccumulatedDepositPeriodEntity : TableEntity, IAccumulatedDepositPeriod
+    public class AccumulatedAmountsPeriodEntity : TableEntity, IAccumulatedAmountsPeriod
     {
         public string ClientId { get; set; }
         public string AssetId { get; set; }

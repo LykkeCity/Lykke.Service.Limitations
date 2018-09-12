@@ -122,27 +122,5 @@ namespace Lykke.Service.Limitations.Services
 
         protected abstract CurrencyOperationType GetOperationType(T item);
 
-        protected async Task SetRateToUsd(Dictionary<string, double> cachedRates, ICashOperation op)
-        {
-            if (op.RateToUsd == 0)
-            {
-                if (op.Asset != _currencyConverter.DefaultAsset)
-                {
-                    string asset;
-                    double rate = 1;
-                    if (!cachedRates.TryGetValue(op.Asset, out rate))
-                    {
-                        (asset, rate) = await _currencyConverter.ConvertAsync(op.Asset, _currencyConverter.DefaultAsset, 1, forceConvesion: true);
-                        cachedRates[op.Asset] = rate;
-                    }
-                    op.RateToUsd = rate;
-                }
-                else
-                {
-                    op.RateToUsd = 1;
-                }
-            }
-        }
-
     }
 }

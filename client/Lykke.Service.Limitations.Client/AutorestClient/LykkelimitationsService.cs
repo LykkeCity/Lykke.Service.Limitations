@@ -703,7 +703,7 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
         /// <return>
         /// A response object containing the response body and response headers.
         /// </return>
-        public async Task<HttpOperationResponse<AccumulatedAmountsModel>> ApiLimitationsGetAccumulatedDepositsPostWithHttpMessagesAsync(string clientId = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<HttpOperationResponse<AccumulatedAmountsModel>> ApiLimitationsGetAccumulatedAmountsPostWithHttpMessagesAsync(string clientId = default(string), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             // Tracing
             bool _shouldTrace = ServiceClientTracing.IsEnabled;
@@ -714,11 +714,11 @@ namespace Lykke.Service.Limitations.Client.AutorestClient
                 Dictionary<string, object> tracingParameters = new Dictionary<string, object>();
                 tracingParameters.Add("clientId", clientId);
                 tracingParameters.Add("cancellationToken", cancellationToken);
-                ServiceClientTracing.Enter(_invocationId, this, "ApiLimitationsGetAccumulatedDepositsPost", tracingParameters);
+                ServiceClientTracing.Enter(_invocationId, this, "ApiLimitationsGetAccumulatedAmountsPost", tracingParameters);
             }
             // Construct URL
             var _baseUrl = BaseUri.AbsoluteUri;
-            var _url = new System.Uri(new System.Uri(_baseUrl + (_baseUrl.EndsWith("/") ? "" : "/")), "api/Limitations/GetAccumulatedDeposits").ToString();
+            var _url = new System.Uri(new System.Uri(_baseUrl + (_baseUrl.EndsWith("/") ? "" : "/")), "api/Limitations/GetAccumulatedAmounts").ToString();
             List<string> _queryParameters = new List<string>();
             if (clientId != null)
             {

@@ -66,12 +66,12 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                 .As<IPaymentTransactionsRepository>()                
                 .SingleInstance();
 
-            builder.Register(ctx => AzureTableStorage<AccumulatedDepositPeriodEntity>.Create(
+            builder.Register(ctx => AzureTableStorage<AccumulatedAmountsPeriodEntity>.Create(
                 _settings.ConnectionString(s => s.LimitOperationsCollectorJob.DepositAccumulationConnectionString),
-                "AccumulatedDeposits",
+                "AccumulatedAmounts",
                 ctx.Resolve<ILogFactory>())).SingleInstance();
 
-            builder.RegisterType<AccumulatedDepositRepository>()
+            builder.RegisterType<AccumulatedAmountsRepository>()
                 .As<IAccumulatedDepositRepository>()
                 .SingleInstance();
 

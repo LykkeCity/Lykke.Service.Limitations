@@ -10,12 +10,12 @@ using System.Threading.Tasks;
 
 namespace Lykke.Service.Limitations.AzureRepositories
 {
-    public class AccumulatedDepositRepository : IAccumulatedDepositRepository
+    public class AccumulatedAmountsRepository : IAccumulatedDepositRepository
     {
-        private readonly INoSQLTableStorage<AccumulatedDepositPeriodEntity> _tableStorage;
+        private readonly INoSQLTableStorage<AccumulatedAmountsPeriodEntity> _tableStorage;
 
-        public AccumulatedDepositRepository(
-            INoSQLTableStorage<AccumulatedDepositPeriodEntity> tableStorage
+        public AccumulatedAmountsRepository(
+            INoSQLTableStorage<AccumulatedAmountsPeriodEntity> tableStorage
             )
         {
             _tableStorage = tableStorage;
@@ -24,10 +24,10 @@ namespace Lykke.Service.Limitations.AzureRepositories
 
         public async Task AggregateTotalAsync(string clientId, string assetId, double amount, CurrencyOperationType operationType)
         {
-            IAccumulatedDepositPeriod existingRecord = await _tableStorage.GetDataAsync(clientId, GenerateRowKey(operationType));
+            IAccumulatedAmountsPeriod existingRecord = await _tableStorage.GetDataAsync(clientId, GenerateRowKey(operationType));
             if (existingRecord == null)
             {
-                AccumulatedDepositPeriodEntity entity = new AccumulatedDepositPeriodEntity();
+                AccumulatedAmountsPeriodEntity entity = new AccumulatedAmountsPeriodEntity();
                 entity.PartitionKey = clientId;
                 entity.RowKey = GenerateRowKey(operationType);
 

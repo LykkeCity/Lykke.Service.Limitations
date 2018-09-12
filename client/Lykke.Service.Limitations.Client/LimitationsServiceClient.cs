@@ -67,9 +67,9 @@ namespace Lykke.Service.Limitations.Client
             await _service.ApiLimitationsRemoveClientOperationDeleteAsync(clientId, operationId);
         }
 
-        public async Task<AccumulatedAmountsResponse> GetAccumulatedDepositsAsync(string clientId)
+        public async Task<AccumulatedAmountsResponse> GetAccumulatedAmountsAsync(string clientId)
         {
-            var accumulatedAmountsModel = await _service.ApiLimitationsGetAccumulatedDepositsPostAsync(clientId);
+            var accumulatedAmountsModel = await _service.ApiLimitationsGetAccumulatedAmountsPostAsync(clientId);
             return new AccumulatedAmountsResponse
             {
                 Deposit1DaySwift = accumulatedAmountsModel.Deposit1DaySwift,

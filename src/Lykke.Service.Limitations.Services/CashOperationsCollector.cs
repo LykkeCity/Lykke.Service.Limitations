@@ -73,8 +73,8 @@ namespace Lykke.Service.Limitations.Services
                 //  limit asset is USD - convert item amount to USD
                 if (limit.Asset == _currencyConverter.DefaultAsset)
                 {
-                    await SetRateToUsd(cachedRates, item);
-                    result += item.Volume * item.RateToUsd;
+                    double rateToUsd = await _currencyConverter.GetRateToUsd(cachedRates, item.Asset, item.RateToUsd);
+                    result += item.Volume * rateToUsd;
                 }
                 else 
                 {
