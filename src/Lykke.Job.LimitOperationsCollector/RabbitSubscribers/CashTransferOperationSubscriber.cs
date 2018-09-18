@@ -69,7 +69,7 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
             {
                 ConnectionString = _connectionString,
                 ExchangeName = settings.ExchangeName,
-                QueueName = settings.ExchangeName + ".limitations.igoraglocaldebug",
+                QueueName = settings.ExchangeName + ".limitations",
                 IsDurable = true,
                 ReconnectionDelay = TimeSpan.FromSeconds(3),
             };
