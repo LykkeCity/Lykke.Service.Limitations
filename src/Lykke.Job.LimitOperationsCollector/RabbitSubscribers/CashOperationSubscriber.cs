@@ -78,11 +78,6 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
         {
             try
             {
-                var op = await _operationsClient.Get(Guid.Parse(item.Id));
-                if (op != null)
-                {
-                }
-
                 await _cashOperationsCollector.AddDataItemAsync(
                 new Service.Limitations.Core.Domain.CashOperation
                 {

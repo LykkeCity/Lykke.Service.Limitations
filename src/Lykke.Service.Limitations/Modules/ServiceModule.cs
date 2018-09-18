@@ -107,14 +107,10 @@ namespace Lykke.Service.Limitations.Modules
                 .SingleInstance()
                 .WithParameter("redisInstanceName", settings.RedisInstanceName);
 
-            // limits from setting for fiat currency for an individual client will be ignored
-            // only tier limits should be used for such purposes
-            Func<CashOperationLimitation, bool> isIndividualFiatLimit = limit => !string.IsNullOrWhiteSpace(limit.ClientId) && settings.ConvertibleAssets.Contains(limit.Asset);
-            var filteredLimits = settings.Limits.Where(limit => limit.Asset != "USD" && !isIndividualFiatLimit(limit)).ToList();
             builder.RegisterType<LimitationChecker>()
                 .As<ILimitationCheck>()
                 .SingleInstance()
-                .WithParameter("limits", filteredLimits)
+                .WithParameter("limits", settings.Limits)
                 .WithParameter("convertibleCurrencies", settings.ConvertibleAssets)
                 .WithParameter("attemptRetainInMinutes", settings.AttemptRetainInMinutes)
                 ;
