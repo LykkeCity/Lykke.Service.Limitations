@@ -110,7 +110,6 @@ namespace Lykke.Service.Limitations.Modules
             builder.RegisterType<LimitationChecker>()
                 .As<ILimitationCheck>()
                 .SingleInstance()
-                .WithParameter("limits", settings.Limits)
                 .WithParameter("convertibleCurrencies", settings.ConvertibleAssets)
                 .WithParameter("attemptRetainInMinutes", settings.AttemptRetainInMinutes)
                 ;

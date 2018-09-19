@@ -55,8 +55,6 @@ namespace Lykke.Service.Limitations.Settings
 
         public int AttemptRetainInMinutes { get; set; }
 
-        public List<CashOperationLimitation> Limits { get; set; }
-
         public List<string> ConvertibleAssets { get; set; }
     }
 
