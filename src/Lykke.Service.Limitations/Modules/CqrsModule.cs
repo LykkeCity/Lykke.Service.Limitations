@@ -52,19 +52,13 @@ namespace Lykke.Service.Limitations.Modules
 
                     Register.DefaultEndpointResolver(new RabbitMqConventionEndpointResolver("RabbitMq", SerializationFormat.MessagePack, environment: "lykke", exclusiveQueuePostfix: "k8s")),
 
-                    Register.BoundedContext("limitations")                        
-                        .ListeningEvents(typeof(AssetCreatedEvent), typeof(AssetUpdatedEvent)).From("assets").On("events")                        
-                        .WithProjection(typeof(AssetsProjection), "assets"),
-
-                    Register.BoundedContext("kyc-notifications-status-proceed")
-                        .ListeningEvents(typeof(ChangeStatusEvent))
-                        .From("kyc-profile-status-changes")
-                        .On("kyc-profile-status-changes-commands-tier")
-                        .WithEndpointResolver(new RabbitMqConventionEndpointResolver("RabbitMq", SerializationFormat.ProtoBuf, environment: "lykke.kyc-service"))
-                        .WithProjection(typeof(NotificationProjection), "kyc-profile-status-changes")
-                        
-                        );
-
+                    Register.BoundedContext("limitations")
+                        .ListeningEvents(typeof(AssetCreatedEvent), typeof(AssetUpdatedEvent)).From("assets").On("events")
+                            .WithProjection(typeof(AssetsProjection), "assets")
+                        .ListeningEvents(typeof(ChangeStatusEvent)).From("kyc").On("events")
+                            .WithEndpointResolver(new RabbitMqConventionEndpointResolver("RabbitMq", SerializationFormat.ProtoBuf, environment: "lykke", exclusiveQueuePostfix: "k8s"))
+                            .WithProjection(typeof(NotificationProjection), "kyc"));
+                    
             }).As<ICqrsEngine>().AutoActivate().SingleInstance();
         }
     }
