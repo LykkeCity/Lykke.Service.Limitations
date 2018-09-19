@@ -130,25 +130,23 @@ namespace Lykke.Service.Limitations.Services
             }
 
             var limitationTypes = LimitMapHelper.MapOperationType(currencyOperationType);
-            List<CashOperationLimitation> typeLimits = new List<CashOperationLimitation>();
+            List<CashOperationLimitation> tierLimits = new List<CashOperationLimitation>();
 
-            ITier clientTier = await GetEffectiveClientTierAsync(clientId);
-            if (clientTier == null)
+            ITier limitationTier = await GetEffectiveClientTierAsync(clientId);
+            if (limitationTier != null)
             {
-                _log.Error(context: new { Type = "No Tier Exists", clientId, originalAmount, originalAsset });
+                // check all time deposit limits
+                LimitationCheckResult alltimeLimitCheckResult = await CheckAllTimeLimits(clientId, originalAsset, originalAmount, currencyOperationType, limitationTier);
+                if (alltimeLimitCheckResult != null)
+                {
+                    return alltimeLimitCheckResult;
+                }
+
+                // replace limits with new ones from tier
+                tierLimits = CreateLimitsFromTier(limitationTier, tierLimits, clientId, assetId, _currencyConverter.DefaultAsset, currencyOperationType);
             }
 
-            // check all time deposit limits
-            LimitationCheckResult alltimeLimitCheckResult = await CheckAllTimeLimits(clientId, originalAsset, originalAmount, currencyOperationType, clientTier);
-            if (alltimeLimitCheckResult != null)
-            {
-                return alltimeLimitCheckResult;
-            }
-
-            // replace limits with new ones from tier
-            typeLimits = CreateLimitsFromTier(clientTier, typeLimits, clientId, assetId, _currencyConverter.DefaultAsset, currencyOperationType);
-
-            if (!typeLimits.Any())
+            if (!tierLimits.Any())
             {
                 try
                 {
@@ -165,7 +163,8 @@ namespace Lykke.Service.Limitations.Services
                 {
                     _log.Error(ex, context: new { Type = "Attempt", clientId, originalAmount, originalAsset });
                 }
-                return new LimitationCheckResult { IsValid = true };
+
+                return new LimitationCheckResult { IsValid = false, FailMessage = _operationLimitError };
             }
 
             //To handle parallel request
@@ -173,7 +172,7 @@ namespace Lykke.Service.Limitations.Services
             try
             {
                 string error = await DoPeriodCheckAsync(
-                    typeLimits,
+                    tierLimits,
                     clientId,
                     assetId,
                     amount,
