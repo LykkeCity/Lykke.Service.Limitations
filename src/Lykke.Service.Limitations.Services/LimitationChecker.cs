@@ -145,6 +145,10 @@ namespace Lykke.Service.Limitations.Services
                 // replace limits with new ones from tier
                 tierLimits = CreateLimitsFromTier(limitationTier, tierLimits, clientId, assetId, _currencyConverter.DefaultAsset, currencyOperationType);
             }
+            else
+            {
+                return new LimitationCheckResult { IsValid = false, FailMessage = _operationLimitError };
+            }
 
             if (!tierLimits.Any())
             {
@@ -163,8 +167,6 @@ namespace Lykke.Service.Limitations.Services
                 {
                     _log.Error(ex, context: new { Type = "Attempt", clientId, originalAmount, originalAsset });
                 }
-
-                return new LimitationCheckResult { IsValid = false, FailMessage = _operationLimitError };
             }
 
             //To handle parallel request
