@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Lykke.Service.Limitations.Core.Services
