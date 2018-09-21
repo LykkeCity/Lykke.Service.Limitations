@@ -120,11 +120,6 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                 .As<IAccumulatedDepositAggregator>()
                 .SingleInstance();
 
-
-            builder.RegisterType<AccumulatedDepositAggregator>()
-                .As<IAccumulatedDepositAggregator>()
-                .SingleInstance();
-
         }
 
         private void RegisterRabbitMqSubscribers(ContainerBuilder builder)

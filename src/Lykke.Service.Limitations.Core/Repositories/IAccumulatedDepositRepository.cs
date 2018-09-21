@@ -10,6 +10,5 @@ namespace Lykke.Service.Limitations.Core.Repositories
     {
         Task AggregateTotalAsync(string clientId, string assetId, double amount, CurrencyOperationType operationType);
         Task<double> GetAccumulatedAmountAsync(string clientId, CurrencyOperationType operationType);
-        Task<IEnumerable<IAccumulatedDepositPeriod>> GetAccumulatedDepositsAsync(string clientId);
     }
 }
