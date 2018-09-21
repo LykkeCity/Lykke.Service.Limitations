@@ -29,7 +29,12 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
-            builder.Register(context => ConnectionMultiplexer.Connect(_settings.CurrentValue.LimitOperationsCollectorJob.RedisConfiguration))
+            builder.Register(context =>
+                {
+                    var connectionMultiplexer = ConnectionMultiplexer.Connect(_settings.CurrentValue.LimitOperationsCollectorJob.RedisConfiguration);
+                    connectionMultiplexer.PreserveAsyncOrder = false; //this might cause issues with 2.* version of StackExchange.Redis library
+                    return connectionMultiplexer;
+                })
                 .As<IConnectionMultiplexer>()
                 .SingleInstance();
             
@@ -66,8 +71,6 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
 
         private void ReagisterServices(ContainerBuilder builder)
         {
-            builder.RegisterType<HostingService>().As<IHostedService>().SingleInstance();
-
             builder.RegisterType<HealthService>()
                 .As<IHealthService>()
                 .SingleInstance();

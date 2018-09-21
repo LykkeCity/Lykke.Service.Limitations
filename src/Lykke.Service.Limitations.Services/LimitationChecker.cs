@@ -1,16 +1,16 @@
-﻿using Common;
-using Common.Log;
-using Lykke.Service.Limitations.Core.Domain;
-using Lykke.Service.Limitations.Core.JobClient;
-using Lykke.Service.Limitations.Core.Repositories;
-using Lykke.Service.Limitations.Core.Services;
-using System;
+﻿using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Common;
+using Common.Log;
 using Lykke.Common.Cache;
 using Lykke.Common.Log;
+using Lykke.Service.Limitations.Core.Domain;
+using Lykke.Service.Limitations.Core.JobClient;
+using Lykke.Service.Limitations.Core.Repositories;
+using Lykke.Service.Limitations.Core.Services;
 
 namespace Lykke.Service.Limitations.Services
 {
@@ -68,7 +68,7 @@ namespace Lykke.Service.Limitations.Services
                 {
                     if (!limit.IsValid())
                     {
-                        _log.WriteWarning(nameof(LimitationChecker), "C-tor", "Invalid limit in settings: " + limit.ToJson());
+                        _log.Warning("Invalid limit in settings: " + limit.ToJson());
                         continue;
                     }
                     _limits.Add(limit);

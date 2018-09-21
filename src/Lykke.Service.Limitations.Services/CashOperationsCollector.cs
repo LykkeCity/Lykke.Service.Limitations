@@ -1,12 +1,10 @@
-﻿using Common.Log;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
 using Lykke.Service.Limitations.Core.Services;
 using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Lykke.Common.Log;
 
 namespace Lykke.Service.Limitations.Services
 {
@@ -17,16 +15,14 @@ namespace Lykke.Service.Limitations.Services
             IConnectionMultiplexer connectionMultiplexer,
             IAntiFraudCollector antifraudCollector,
             ICurrencyConverter currencyConverter,
-            string redisInstanceName,
-            ILogFactory logFactory)
+            string redisInstanceName)
             : base(
                 stateRepository,
                 antifraudCollector,
                 connectionMultiplexer,
                 redisInstanceName,
                 nameof(CashOperation),
-                currencyConverter,
-                logFactory)
+                currencyConverter)
         {
         }
 
@@ -71,13 +67,13 @@ namespace Lykke.Service.Limitations.Services
                     if (!_currencyConverter.IsNotConvertible(item.Asset))
                         continue;
 
-                    var converted = await _currencyConverter.ConvertAsync(
+                    var (_, convertedAmount) = await _currencyConverter.ConvertAsync(
                         item.Asset,
                         _currencyConverter.DefaultAsset,
                         item.Volume,
                         true);
 
-                    amount = converted.Item2;
+                    amount = convertedAmount;
                 }
                 else
                 {
@@ -94,7 +90,7 @@ namespace Lykke.Service.Limitations.Services
 
         public async Task<List<CashOperation>> GetClientDataAsync(string clientId, LimitationPeriod period)
         {
-            (var result, _) = await _data.GetClientDataAsync(clientId);
+            var (result, _) = await _data.GetClientDataAsync(clientId);
             if (period == LimitationPeriod.Day)
             {
                 var now = DateTime.UtcNow;
