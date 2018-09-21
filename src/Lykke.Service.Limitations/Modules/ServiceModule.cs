@@ -32,7 +32,12 @@ namespace Lykke.Service.Limitations.Modules
         {
             var settings = _appSettings.CurrentValue;
 
-            builder.Register(context => ConnectionMultiplexer.Connect(settings.LimitationsSettings.RedisConfiguration))
+            builder.Register(context =>
+                {
+                    var connectionMultiplexer = ConnectionMultiplexer.Connect(settings.LimitationsSettings.RedisConfiguration);
+                    connectionMultiplexer.PreserveAsyncOrder = false; //this might cause issues with 2.* version of StackExchange.Redis library
+                    return connectionMultiplexer;
+                })
                 .As<IConnectionMultiplexer>()
                 .SingleInstance();
             
