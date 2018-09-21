@@ -19,9 +19,6 @@ namespace Lykke.Service.Limitations.Settings
         public RabbitMqSagasSettings SagasRabbitMq { get; set; }
     }
 
-        public RabbitMqSagasSettings SagasRabbitMq { get; set; }
-    }
-
     public class AssetServiceClient
     {
         public string ServiceUrl { get; set; }        
