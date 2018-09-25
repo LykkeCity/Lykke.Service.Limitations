@@ -89,25 +89,6 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
         {
             try
             {
-                var op = await _operationsClient.Get(Guid.Parse(item.Id));
-                if (op != null)
-                {
-                    if (op.Type == Service.Operations.Contracts.OperationType.CashoutSwift)
-                    {
-                        var cashOp = new CashOperation
-                        {
-                            Id = item.Id,
-                            ClientId = op.ClientId.ToString(),
-                            Asset = item.Asset,
-                            Volume = -item.Volume,
-                            DateTime = item.DateTime,
-                            OperationType = CurrencyOperationType.SwiftTransferOut
-                        };
-                        await _cashOperationsCollector.AddDataItemAsync(cashOp, false);
-                        return;
-                    }
-                }
-
                 IPaymentTransaction paymentTransaction = null;
                 for (int i = 0; i < 3; i++)
                 {
