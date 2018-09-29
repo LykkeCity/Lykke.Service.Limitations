@@ -10,7 +10,7 @@ namespace Lykke.Job.LimitOperationsCollector
     {
         public static string EnvInfo => Environment.GetEnvironmentVariable("ENV_INFO");
 
-        public static async Task Main(string[] args)
+        public static async Task Main()
         {
             Console.WriteLine($"{AppEnvironment.Version} version {AppEnvironment.Version}");
 #if DEBUG

@@ -1,16 +1,16 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Common;
 using Common.Log;
 using Lykke.Common.Log;
+using Lykke.MatchingEngine.Connector.Models.Events;
+using Lykke.MatchingEngine.Connector.Models.Events.Common;
 using Lykke.RabbitMqBroker;
 using Lykke.RabbitMqBroker.Subscriber;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Services;
 using Lykke.Service.Limitations.Core.Repositories;
-using CashTransferOperation = Lykke.MatchingEngine.Connector.Models.RabbitMq.CashTransferOperation;
 
 namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
 {
@@ -22,8 +22,7 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
         private readonly ILog _log;
         private readonly string _connectionString;
         private readonly string _exchangeName;
-        private RabbitMqSubscriber<CashTransferOperation> _subscriber;
-        private RabbitMqSubscriber<CashTransferOperation> _oldSubscriber;
+        private RabbitMqSubscriber<CashTransferEvent> _subscriber;
 
         public CashTransferOperationSubscriber(
             IPaymentTransactionsRepository paymentTransactionsRepository,
@@ -47,79 +46,68 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
         public void Start()
         {
             var settings = RabbitMqSubscriptionSettings
-                .CreateForSubscriber(_connectionString, _exchangeName, "limitoperationscollector")
-                .MakeDurable();
+                .ForSubscriber(_connectionString, _exchangeName, "limitoperationscollector-transfers")
+                .MakeDurable()
+                .UseRoutingKey(((int)MessageType.CashTransfer).ToString());
 
-            _subscriber = new RabbitMqSubscriber<CashTransferOperation>(settings,
+            _subscriber = new RabbitMqSubscriber<CashTransferEvent>(
+                    settings,
                     new ResilientErrorHandlingStrategy(_log, settings,
                         retryTimeout: TimeSpan.FromSeconds(10),
                         next: new DeadQueueErrorHandlingStrategy(_log, settings)))
-                .SetMessageDeserializer(new JsonMessageDeserializer<CashTransferOperation>())
+                .SetMessageDeserializer(new ProtobufMessageDeserializer<CashTransferEvent>())
                 .Subscribe(ProcessMessageAsync)
                 .CreateDefaultBinding()
                 .SetLogger(_log)
-                .SetConsole(new LogToConsole())
-                .Start();
-
-            var subscriberSettings = new RabbitMqSubscriptionSettings
-            {
-                ConnectionString = _connectionString,
-                ExchangeName = settings.ExchangeName,
-                QueueName = settings.ExchangeName + ".limitations",
-                IsDurable = true,
-                ReconnectionDelay = TimeSpan.FromSeconds(3),
-            };
-            var errorStrategy = new DefaultErrorHandlingStrategy(_log, subscriberSettings);
-            _oldSubscriber = new RabbitMqSubscriber<CashTransferOperation>(subscriberSettings, errorStrategy)
-                .SetMessageDeserializer(new JsonMessageDeserializer<CashTransferOperation>())
-                .Subscribe(ProcessMessageAsync)
-                .SetLogger(_log)
-                .SetConsole(new LogToConsole())
                 .Start();
         }
 
-        private async Task ProcessMessageAsync(CashTransferOperation item)
+        private async Task ProcessMessageAsync(CashTransferEvent item)
         {
+            var id = item.Header.MessageId ?? item.Header.RequestId;
             try
             {
                 IPaymentTransaction paymentTransaction = null;
                 for (int i = 0; i < 3; i++)
                 {
-                    paymentTransaction = await _paymentTransactionsRepository.GetByIdForClientAsync(item.Id, item.ToClientId);
+                    paymentTransaction = await _paymentTransactionsRepository.GetByIdForClientAsync(id, item.CashTransfer.ToWalletId);
                     if (paymentTransaction != null)
                         break;
-                    else
-                        await Task.Delay(2000 * (i + 1));
+                    await Task.Delay(2000 * (i + 1));
                 }
 
-                if (item.Fees != null)
-                {
-                    double feeSum = item.Fees.Sum(i => i.Transfer?.Volume ?? 0);
-                    item.Volume -= feeSum;
-                }
+                double volume = double.Parse(item.CashTransfer.Volume);
+                if (item.CashTransfer.Fees != null)
+                    foreach (var fee in item.CashTransfer.Fees)
+                    {
+                        if (string.IsNullOrWhiteSpace(fee.Transfer?.Volume))
+                            continue;
+
+                        volume -= double.Parse(fee.Transfer.Volume);
+                    }
 
                 if (paymentTransaction == null || paymentTransaction.PaymentSystem != CashInPaymentSystem.Swift)
                 {
                     var cashOp = new CashOperation
                     {
-                        Id = item.Id,
-                        ClientId = item.ToClientId,
-                        Asset = item.Asset,
-                        Volume = item.Volume,
-                        DateTime = item.DateTime,
+                        Id = id,
+                        ClientId = item.CashTransfer.ToWalletId,
+                        Asset = item.CashTransfer.AssetId,
+                        Volume = volume,
+                        DateTime = item.Header.Timestamp,
                     };
                     await _cashOperationsCollector.AddDataItemAsync(cashOp);
                 }
                 else
                 {
-                    var transfer = new Service.Limitations.Core.Domain.CashTransferOperation
+                    var transfer = new CashTransferOperation
                     {
-                        Id = item.Id,
-                        FromClientId = item.FromClientId,
-                        ToClientId = item.ToClientId,
-                        Asset = item.Asset,
-                        Volume = item.Volume,
-                        DateTime = item.DateTime,
+                        Id = id,
+                        FromClientId = item.CashTransfer.FromWalletId,
+                        ToClientId = item.CashTransfer.ToWalletId,
+                        Asset = item.CashTransfer.AssetId,
+                        Volume = volume,
+                        DateTime = item.Header.Timestamp,
                     };
                     await _cashTransfersCollector.AddDataItemAsync(transfer);
                 }
@@ -133,13 +121,11 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
         public void Dispose()
         {
             _subscriber?.Dispose();
-            _oldSubscriber?.Dispose();
         }
 
         public void Stop()
         {
             _subscriber?.Stop();
-            _oldSubscriber?.Stop();
         }
     }
 }

@@ -7,28 +7,10 @@ namespace Lykke.Job.LimitOperationsCollector.Settings
     public class AppSettings : BaseAppSettings
     {
         public LimitOperationsCollectorSettings LimitOperationsCollectorJob { get; set; }
-        
+
         public RateCalculatorServiceClient RateCalculatorServiceClient { get; set; }
 
         public SagasRabbitMqSettings SagasRabbitMq { get; set; }
-    }
-
-    public class SlackNotificationsSettings
-    {
-        public AzureQueuePublicationSettings AzureQueue { get; set; }
-    }
-
-    public class AzureQueuePublicationSettings
-    {
-        public string ConnectionString { get; set; }
-
-        public string QueueName { get; set; }
-    }
-
-    public class MonitoringServiceClientSettings
-    {
-        [HttpCheck("api/isalive")]
-        public string MonitoringServiceUrl { get; set; }
     }
 
     public class RateCalculatorServiceClient
@@ -54,7 +36,7 @@ namespace Lykke.Job.LimitOperationsCollector.Settings
         [AzureTableCheck]
         public string PaymentTransactionsConnectionString { get; set; }
 
-        public RabbitMqSettings Rabbit { get; set; }      
+        public RabbitMqSettings Rabbit { get; set; }
     }
 
     public class SagasRabbitMqSettings
