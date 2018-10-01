@@ -1,6 +1,5 @@
 ﻿using Autofac;
 using Common;
-using Common.Log;
 using AzureStorage.Blob;
 using AzureStorage.Tables;
 using Lykke.Common.Log;
@@ -12,7 +11,6 @@ using Lykke.Service.Limitations.Core.Repositories;
 using Lykke.Service.Limitations.Services;
 using Lykke.Job.LimitOperationsCollector.Settings;
 using Lykke.Job.LimitOperationsCollector.RabbitSubscribers;
-using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
 
 namespace Lykke.Job.LimitOperationsCollector.Modules
@@ -20,7 +18,7 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
     public class JobModule : Module
     {
         private readonly IReloadingManager<AppSettings> _settings;
-        
+
         public JobModule(
             IReloadingManager<AppSettings> settings)
         {
@@ -29,15 +27,10 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
-            builder.Register(context =>
-                {
-                    var connectionMultiplexer = ConnectionMultiplexer.Connect(_settings.CurrentValue.LimitOperationsCollectorJob.RedisConfiguration);
-                    connectionMultiplexer.PreserveAsyncOrder = false; //this might cause issues with 2.* version of StackExchange.Redis library
-                    return connectionMultiplexer;
-                })
+            builder.RegisterInstance(ConnectionMultiplexer.Connect(_settings.CurrentValue.LimitOperationsCollectorJob.RedisConfiguration))
                 .As<IConnectionMultiplexer>()
                 .SingleInstance();
-            
+
             builder.RegisterRateCalculatorClient(_settings.CurrentValue.RateCalculatorServiceClient.ServiceUrl);
 
             ReagisterRepositories(builder);

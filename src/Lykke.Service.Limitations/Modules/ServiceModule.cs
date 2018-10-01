@@ -25,22 +25,17 @@ namespace Lykke.Service.Limitations.Modules
         
         public ServiceModule(IReloadingManager<AppSettings> appSettings)
         {
-            _appSettings = appSettings;            
+            _appSettings = appSettings;
         }
 
         protected override void Load(ContainerBuilder builder)
         {
             var settings = _appSettings.CurrentValue;
 
-            builder.Register(context =>
-                {
-                    var connectionMultiplexer = ConnectionMultiplexer.Connect(settings.LimitationsSettings.RedisConfiguration);
-                    connectionMultiplexer.PreserveAsyncOrder = false; //this might cause issues with 2.* version of StackExchange.Redis library
-                    return connectionMultiplexer;
-                })
+            builder.RegisterInstance(ConnectionMultiplexer.Connect(settings.LimitationsSettings.RedisConfiguration))
                 .As<IConnectionMultiplexer>()
                 .SingleInstance();
-            
+
             builder.RegisterRateCalculatorClient(settings.RateCalculatorServiceClient.ServiceUrl);
             builder.RegisterAssetsClient(AssetServiceSettings.Create(new Uri(settings.AssetsServiceClient.ServiceUrl), TimeSpan.MaxValue));
             builder.RegisterClient<ILimitOperationsApi>(settings.LimitationsSettings.LimitOperationsJobUrl);
