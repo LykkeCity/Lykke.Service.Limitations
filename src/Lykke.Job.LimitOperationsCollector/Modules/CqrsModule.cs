@@ -57,7 +57,9 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                         .WithProjection(typeof(FiatTransfersProjection), "me-cy")
                         .WithProjection(typeof(FiatTransfersProjection), "me-vu"));
 
-            }).As<ICqrsEngine>().AutoActivate().SingleInstance();
+            })
+            .As<ICqrsEngine>()
+            .SingleInstance();
         }
     }
 }

@@ -1,4 +1,4 @@
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using Lykke.Service.Limitations.Settings;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
@@ -39,10 +39,6 @@ namespace Lykke.Service.Limitations
             {
                 options.SwaggerOptions = _swaggerOptions;                
             });
-
-#if DEBUG
-            TelemetryConfiguration.Active.DisableTelemetry = true;
-#endif
         }
     }   
 }

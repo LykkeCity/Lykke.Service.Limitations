@@ -1,10 +1,10 @@
-﻿using System;
-using Autofac;
+﻿using Autofac;
 using AzureStorage.Blob;
 using AzureStorage.Tables;
 using Lykke.Common.Cache;
 using Lykke.Common.Log;
 using Lykke.HttpClientGenerator;
+using Lykke.Sdk;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Limitations.AzureRepositories;
 using Lykke.Service.Limitations.Core.Domain;
@@ -25,24 +25,19 @@ namespace Lykke.Service.Limitations.Modules
         
         public ServiceModule(IReloadingManager<AppSettings> appSettings)
         {
-            _appSettings = appSettings;            
+            _appSettings = appSettings;
         }
 
         protected override void Load(ContainerBuilder builder)
         {
             var settings = _appSettings.CurrentValue;
 
-            builder.Register(context =>
-                {
-                    var connectionMultiplexer = ConnectionMultiplexer.Connect(settings.LimitationsSettings.RedisConfiguration);
-                    connectionMultiplexer.PreserveAsyncOrder = false; //this might cause issues with 2.* version of StackExchange.Redis library
-                    return connectionMultiplexer;
-                })
+            builder.RegisterInstance(ConnectionMultiplexer.Connect(settings.LimitationsSettings.RedisConfiguration))
                 .As<IConnectionMultiplexer>()
                 .SingleInstance();
-            
+
             builder.RegisterRateCalculatorClient(settings.RateCalculatorServiceClient.ServiceUrl);
-            builder.RegisterAssetsClient(AssetServiceSettings.Create(new Uri(settings.AssetsServiceClient.ServiceUrl), TimeSpan.MaxValue));
+            builder.RegisterAssetsClient(settings.AssetsServiceClient.ServiceUrl);
             builder.RegisterClient<ILimitOperationsApi>(settings.LimitationsSettings.LimitOperationsJobUrl);
 
             RegisterRepositories(builder);
@@ -74,6 +69,7 @@ namespace Lykke.Service.Limitations.Modules
 
             builder.RegisterType<ShutdownManager>()
                 .As<IShutdownManager>()
+                .AutoActivate()
                 .SingleInstance();
 
             builder.RegisterType<CurrencyConverter>()
