@@ -1,18 +1,26 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Autofac;
+using Lykke.Cqrs;
+using Lykke.Sdk;
 using Lykke.Service.Limitations.Core.Services;
 
 namespace Lykke.Service.Limitations.Services
 {
-    // not working in sdk 5.2.2
     public class StartupManager : IStartupManager
     {
         private readonly List<IStartable> _startables = new List<IStartable>();
+        private readonly List<IStartable> _items = new List<IStartable>();
+        private readonly ICqrsEngine _cqrsEngine;
 
-        public void Register(IStartable startable)
+        public StartupManager(
+            IEnumerable<IStartable> startables,
+            IEnumerable<IStartStop> items,
+            ICqrsEngine cqrsEngine)
         {
-            _startables.Add(startable);
+            _startables.AddRange(startables);
+            _items.AddRange(items);
+            _cqrsEngine = cqrsEngine;
         }
 
         public Task StartAsync()
@@ -21,6 +29,13 @@ namespace Lykke.Service.Limitations.Services
             {
                 item.Start();
             }
+
+            foreach (var item in _items)
+            {
+                item.Start();
+            }
+
+            _cqrsEngine.Start();
 
             return Task.CompletedTask;
         }

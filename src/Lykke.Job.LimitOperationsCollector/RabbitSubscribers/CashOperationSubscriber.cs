@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Autofac;
-using Common;
 using Common.Log;
 using Lykke.Common.Log;
 using Lykke.MatchingEngine.Connector.Models.Events;
@@ -12,7 +10,7 @@ using Lykke.Service.Limitations.Core.Services;
 
 namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
 {
-    public class CashOperationSubscriber : IStartable, IStopable
+    public class CashOperationSubscriber : IStartStop
     {
         private readonly ILog _log;
         private readonly string _connectionString;
@@ -24,7 +22,6 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
 
         public CashOperationSubscriber(
             ICashOperationsCollector cashOperationsCollector,
-            IStartupManager startupManager,
             ILogFactory log,
             string connectionString,
             string exchangeName)
@@ -33,8 +30,6 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
             _log = log.CreateLog(this);
             _connectionString = connectionString;
             _exchangeName = exchangeName;
-
-            startupManager.Register(this);
         }
 
         public void Start()

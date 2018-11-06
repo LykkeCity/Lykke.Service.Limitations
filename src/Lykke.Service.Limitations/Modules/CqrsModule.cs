@@ -46,13 +46,20 @@ namespace Lykke.Service.Limitations.Modules
                     new DefaultEndpointProvider(),
                     true,
 
-                    Register.DefaultEndpointResolver(new RabbitMqConventionEndpointResolver("RabbitMq", SerializationFormat.MessagePack, environment: "lykke", exclusiveQueuePostfix: "k8s")),
+                    Register.DefaultEndpointResolver(
+                        new RabbitMqConventionEndpointResolver(
+                            "RabbitMq",
+                            SerializationFormat.MessagePack,
+                            environment: "lykke",
+                            exclusiveQueuePostfix: "k8s")),
 
-                    Register.BoundedContext("limitations")                        
+                    Register.BoundedContext("limitations")
                         .ListeningEvents(typeof(AssetCreatedEvent), typeof(AssetUpdatedEvent)).From("assets").On("events")                        
                         .WithProjection(typeof(AssetsProjection), "assets"));
 
-            }).As<ICqrsEngine>().AutoActivate().SingleInstance();
+            })
+            .As<ICqrsEngine>()
+            .SingleInstance();
         }
     }
 }

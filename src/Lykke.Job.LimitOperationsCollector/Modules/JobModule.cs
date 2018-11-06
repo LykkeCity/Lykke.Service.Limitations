@@ -1,5 +1,4 @@
 ﻿using Autofac;
-using Common;
 using AzureStorage.Blob;
 using AzureStorage.Tables;
 using Lykke.Common.Log;
@@ -11,6 +10,7 @@ using Lykke.Service.Limitations.Core.Repositories;
 using Lykke.Service.Limitations.Services;
 using Lykke.Job.LimitOperationsCollector.Settings;
 using Lykke.Job.LimitOperationsCollector.RabbitSubscribers;
+using Lykke.Sdk;
 using StackExchange.Redis;
 
 namespace Lykke.Job.LimitOperationsCollector.Modules
@@ -74,6 +74,7 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
 
             builder.RegisterType<ShutdownManager>()
                 .As<IShutdownManager>()
+                .AutoActivate()
                 .SingleInstance();
 
             builder.RegisterType<CurrencyConverter>()
@@ -100,18 +101,14 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
         private void RegisterRabbitMqSubscribers(ContainerBuilder builder)
         {
             builder.RegisterType<CashOperationSubscriber>()
-                .As<IStopable>()
-                .As<IStartable>()
+                .As<IStartStop>()
                 .SingleInstance()
-                .AutoActivate()
                 .WithParameter("connectionString", _settings.CurrentValue.LimitOperationsCollectorJob.Rabbit.ConnectionString)
                 .WithParameter("exchangeName", _settings.CurrentValue.LimitOperationsCollectorJob.Rabbit.CashOperationsExchangeName);
 
             builder.RegisterType<CashTransferOperationSubscriber>()
-                .As<IStopable>()
-                .As<IStartable>()
+                .As<IStartStop>()
                 .SingleInstance()
-                .AutoActivate()
                 .WithParameter("connectionString", _settings.CurrentValue.LimitOperationsCollectorJob.Rabbit.ConnectionString)
                 .WithParameter("exchangeName", _settings.CurrentValue.LimitOperationsCollectorJob.Rabbit.CashTransfersExchangeName);
         }
