@@ -45,6 +45,8 @@ namespace Lykke.Service.Limitations.Settings
         public string LimitationSettingsConnectionString { get; set; }
         [AzureTableCheck]
         public string GlobalSettingsConnString { get; set; }
+        [AzureTableCheck]
+        public string CallLimitsConnString { get; set; }
 
         [HttpCheck("api/isalive")]
         public string LimitOperationsJobUrl { get; set; }
