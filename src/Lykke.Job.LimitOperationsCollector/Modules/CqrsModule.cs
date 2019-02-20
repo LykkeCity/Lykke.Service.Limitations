@@ -38,7 +38,7 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
             builder.RegisterType<FiatTransfersProjection>();
             builder.Register(ctx =>
             {
-                return new CqrsEngine(ctx.Resolve<ILogFactory>(),
+                var engine = new CqrsEngine(ctx.Resolve<ILogFactory>(),
                     ctx.Resolve<IDependencyResolver>(),
                     ctx.Resolve<IMessagingEngine>(),
                     new DefaultEndpointProvider(),
@@ -57,8 +57,12 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                         .WithProjection(typeof(FiatTransfersProjection), "me-cy")
                         .WithProjection(typeof(FiatTransfersProjection), "me-vu"));
 
+                engine.StartPublishers();
+
+                return engine;
             })
             .As<ICqrsEngine>()
+            .AutoActivate()
             .SingleInstance();
         }
     }
