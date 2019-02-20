@@ -1,4 +1,5 @@
-﻿using Autofac;
+﻿using System;
+using Autofac;
 using AzureStorage.Blob;
 using AzureStorage.Tables;
 using Lykke.Common.Cache;
@@ -47,8 +48,18 @@ namespace Lykke.Service.Limitations.Modules
 
         private void RegisterRepositories(ContainerBuilder builder)
         {
-            builder.Register(ctx => AzureBlobStorage.Create(_appSettings.ConnectionString(s => s.LimitationsSettings.BlobStorageConnectionString))).SingleInstance();
-            builder.Register(ctx => AzureTableStorage<SwiftTransferLimitationEntity>.Create(_appSettings.ConnectionString(s => s.LimitationsSettings.LimitationSettingsConnectionString), "SwiftTransferLimitations", ctx.Resolve<ILogFactory>())).SingleInstance();
+            builder
+                .Register(ctx =>
+                    AzureBlobStorage.Create(_appSettings.ConnectionString(s => s.LimitationsSettings.BlobStorageConnectionString), TimeSpan.FromSeconds(30)))
+                .SingleInstance();
+            builder
+                .Register(ctx =>
+                    AzureTableStorage<SwiftTransferLimitationEntity>.Create(
+                        _appSettings.ConnectionString(s => s.LimitationsSettings.LimitationSettingsConnectionString),
+                        "SwiftTransferLimitations",
+                        ctx.Resolve<ILogFactory>(),
+                        TimeSpan.FromSeconds(30)))
+                .SingleInstance();
             builder.Register(ctx => AzureTableStorage<ApiCallHistoryRecord>.Create(_appSettings.ConnectionString(x => x.LimitationsSettings.Log.ConnectionString), "ApiSuccessfulCalls", ctx.Resolve<ILogFactory>())).SingleInstance();
             builder.Register(ctx => AzureTableStorage<AppGlobalSettingsEntity>.Create(_appSettings.ConnectionString(x => x.LimitationsSettings.GlobalSettingsConnString), "Setup", ctx.Resolve<ILogFactory>())).SingleInstance();
 

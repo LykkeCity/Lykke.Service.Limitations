@@ -39,7 +39,7 @@ namespace Lykke.Service.Limitations.Modules
 
             builder.Register(ctx =>
             {
-                return new CqrsEngine(
+                var engine = new CqrsEngine(
                     ctx.Resolve<ILogFactory>(),
                     ctx.Resolve<IDependencyResolver>(),
                     ctx.Resolve<IMessagingEngine>(),
@@ -54,11 +54,15 @@ namespace Lykke.Service.Limitations.Modules
                             exclusiveQueuePostfix: "k8s")),
 
                     Register.BoundedContext("limitations")
-                        .ListeningEvents(typeof(AssetCreatedEvent), typeof(AssetUpdatedEvent)).From("assets").On("events")                        
+                        .ListeningEvents(typeof(AssetCreatedEvent), typeof(AssetUpdatedEvent)).From("assets").On("events")
                         .WithProjection(typeof(AssetsProjection), "assets"));
 
+                engine.StartPublishers();
+
+                return engine;
             })
             .As<ICqrsEngine>()
+            .AutoActivate()
             .SingleInstance();
         }
     }
