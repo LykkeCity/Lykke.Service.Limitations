@@ -35,7 +35,7 @@ namespace Lykke.Service.Limitations.Services
                 item.Start();
             }
 
-            _cqrsEngine.Start();
+            _cqrsEngine.StartSubscribers();
 
             return Task.CompletedTask;
         }
