@@ -72,14 +72,6 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
                 }
 
                 double volume = double.Parse(item.CashTransfer.Volume);
-                if (item.CashTransfer.Fees != null)
-                    foreach (var fee in item.CashTransfer.Fees)
-                    {
-                        if (string.IsNullOrWhiteSpace(fee.Transfer?.Volume))
-                            continue;
-
-                        volume -= double.Parse(fee.Transfer.Volume);
-                    }
 
                 if (paymentTransaction == null || paymentTransaction.PaymentSystem != CashInPaymentSystem.Swift)
                 {
