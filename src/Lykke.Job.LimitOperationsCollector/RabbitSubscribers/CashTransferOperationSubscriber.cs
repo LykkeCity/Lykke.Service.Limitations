@@ -9,6 +9,7 @@ using Lykke.RabbitMqBroker.Subscriber;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Services;
 using Lykke.Service.Limitations.Core.Repositories;
+using MongoDB.Bson;
 
 namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
 {
@@ -71,15 +72,20 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
                     await Task.Delay(2000 * (i + 1));
                 }
 
+                _log.Info($"{nameof(CashTransferEvent)} content", item.ToJson());
                 double volume = double.Parse(item.CashTransfer.Volume);
+                _log.Info($"Volume = {volume}");
                 if (item.CashTransfer.Fees != null)
+                {
                     foreach (var fee in item.CashTransfer.Fees)
                     {
                         if (string.IsNullOrWhiteSpace(fee.Transfer?.Volume))
                             continue;
-
+                        _log.Info($"Fee applicable = {fee.Transfer.Volume}");
                         volume -= double.Parse(fee.Transfer.Volume);
                     }
+                }
+                _log.Info($"Volume after fees applied = {volume}");
 
                 if (paymentTransaction == null || paymentTransaction.PaymentSystem != CashInPaymentSystem.Swift)
                 {
