@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using AutoMapper;
 using AzureStorage.Blob;
 using AzureStorage.Tables;
 using JetBrains.Annotations;
@@ -12,6 +13,7 @@ using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.JobClient;
 using Lykke.Service.Limitations.Core.Repositories;
 using Lykke.Service.Limitations.Core.Services;
+using Lykke.Service.Limitations.Profiles;
 using Lykke.Service.Limitations.Services;
 using Lykke.Service.Limitations.Settings;
 using Lykke.Service.RateCalculator.Client;
@@ -45,6 +47,8 @@ namespace Lykke.Service.Limitations.Modules
             RegisterRepositories(builder);
 
             RegisterServices(builder);
+
+            RegisterAutomapper(builder);
         }
 
         private void RegisterRepositories(ContainerBuilder builder)
@@ -114,6 +118,21 @@ namespace Lykke.Service.Limitations.Modules
 
                 return assetsCache;
             }).SingleInstance();
+        }
+
+        private void RegisterAutomapper(ContainerBuilder builder)
+        {
+            builder.Register(c =>
+            {
+                var mapperConfiguration = new MapperConfiguration(cfg =>
+                {
+                    cfg.AddProfile(new ServiceProfile());
+                });
+
+                mapperConfiguration.AssertConfigurationIsValid();
+
+                return mapperConfiguration.CreateMapper();
+            }).As<IMapper>().SingleInstance();
         }
     }
 }

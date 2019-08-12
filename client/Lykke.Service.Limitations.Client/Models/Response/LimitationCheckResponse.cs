@@ -1,4 +1,4 @@
-﻿namespace Lykke.Service.Limitations.Client.Models
+﻿namespace Lykke.Service.Limitations.Client.Models.Response
 {
     /// <summary>
     /// Limitation check response.

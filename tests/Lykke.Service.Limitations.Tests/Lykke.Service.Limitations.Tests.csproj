@@ -6,10 +6,16 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
     <PackageReference Include="Moq" Version="4.12.0" />
-    <PackageReference Include="xunit" Version="2.4.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1" />
+    <PackageReference Include="Refit" Version="4.7.9" />
+    <PackageReference Include="NUnit" Version="3.11.0" />
+    <PackageReference Include="NUnit.Console" Version="3.9.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\client\Lykke.Service.Limitations.Client\Lykke.Service.Limitations.Client.csproj" />
+    <ProjectReference Include="..\..\src\Lykke.Service.Limitations\Lykke.Service.Limitations.csproj" />
   </ItemGroup>
 </Project>
