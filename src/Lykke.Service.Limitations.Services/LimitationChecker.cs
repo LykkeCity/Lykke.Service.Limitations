@@ -43,7 +43,7 @@ namespace Lykke.Service.Limitations.Services
             ISwiftTransferLimitationsRepository swiftTransferLimitationsRepository,
             ILimitSettingsRepository limitSettingsRepository,
             ICallTimeLimitsRepository callTimeLimitsRepository,
-            OnDemandDataCache<Asset> assets, 
+            OnDemandDataCache<Asset> assets,
             ILogFactory logFactory)
         {
             _cashOperationsCollector = cashOperationsCollector;
@@ -119,9 +119,9 @@ namespace Lykke.Service.Limitations.Services
 
                     if (!cashoutEnabled)
                         return new LimitationCheckResult { IsValid = false, FailMessage = "You have exceeded cash out operations limit. Please try again later." };
-                }                
+                }
             }
-            
+
             if (currencyOperationType == CurrencyOperationType.SwiftTransferOut)
             {
                 var error = await CheckSwiftWithdrawLimitations(assetId, (decimal)amount);
@@ -132,7 +132,7 @@ namespace Lykke.Service.Limitations.Services
                 }
             }
 
-            if (currencyOperationType != CurrencyOperationType.CryptoCashIn && 
+            if (currencyOperationType != CurrencyOperationType.CryptoCashIn &&
                 currencyOperationType != CurrencyOperationType.CryptoCashOut)
             {
                 (assetId, amount) = await _currencyConverter.ConvertAsync(
@@ -142,7 +142,7 @@ namespace Lykke.Service.Limitations.Services
             }
 
             var limitationTypes = LimitMapHelper.MapOperationType(currencyOperationType);
-            var typeLimits = _limits.Where(l => limitationTypes.Contains(l.LimitationType));
+            var typeLimits = _limits.Where(l => limitationTypes.Contains(l.LimitationType)).ToList();
             if (!typeLimits.Any())
             {
                 try
@@ -167,7 +167,7 @@ namespace Lykke.Service.Limitations.Services
             await _lock.WaitAsync();
             try
             {
-                var assetLimits = typeLimits.Where(l => l.Asset == assetId);
+                var assetLimits = typeLimits.Where(l => l.Asset == assetId).ToList();
                 string error = await DoPeriodCheckAsync(
                     assetLimits,
                     LimitationPeriod.Month,
@@ -192,7 +192,7 @@ namespace Lykke.Service.Limitations.Services
 
                 if (currencyOperationType == CurrencyOperationType.CryptoCashOut)
                 {
-                    assetLimits = typeLimits.Where(l => l.Asset == _currencyConverter.DefaultAsset);
+                    assetLimits = typeLimits.Where(l => l.Asset == _currencyConverter.DefaultAsset).ToList();
 
                     var (assetTo, convertedAmount) = await _currencyConverter.ConvertAsync(
                         assetId,
@@ -381,7 +381,7 @@ namespace Lykke.Service.Limitations.Services
             CurrencyOperationType currencyOperationType,
             bool checkAllCrypto)
         {
-            var periodLimits = limits.Where(l => l.Period == period);
+            var periodLimits = limits.Where(l => l.Period == period).ToList();
             if (!periodLimits.Any())
                 return null;
 

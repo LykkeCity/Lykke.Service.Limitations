@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using Autofac;
+using JetBrains.Annotations;
 using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.Cqrs.Configuration;
+using Lykke.Cqrs.Middleware.Logging;
 using Lykke.Messaging;
 using Lykke.Messaging.Contract;
 using Lykke.Messaging.RabbitMq;
@@ -14,6 +16,7 @@ using Lykke.SettingsReader;
 
 namespace Lykke.Service.Limitations.Modules
 {
+    [UsedImplicitly]
     public class CqrsModule : Module
     {
         private readonly IReloadingManager<AppSettings> _appSettings;
@@ -39,12 +42,14 @@ namespace Lykke.Service.Limitations.Modules
 
             builder.Register(ctx =>
             {
-                return new CqrsEngine(
+                var engine = new CqrsEngine(
                     ctx.Resolve<ILogFactory>(),
                     ctx.Resolve<IDependencyResolver>(),
                     ctx.Resolve<IMessagingEngine>(),
                     new DefaultEndpointProvider(),
                     true,
+
+                    Register.EventInterceptors(new DefaultEventLoggingInterceptor(ctx.Resolve<ILogFactory>())),
 
                     Register.DefaultEndpointResolver(
                         new RabbitMqConventionEndpointResolver(
@@ -54,11 +59,16 @@ namespace Lykke.Service.Limitations.Modules
                             exclusiveQueuePostfix: "k8s")),
 
                     Register.BoundedContext("limitations")
-                        .ListeningEvents(typeof(AssetCreatedEvent), typeof(AssetUpdatedEvent)).From("assets").On("events")                        
+                        .ListeningEvents(typeof(AssetCreatedEvent), typeof(AssetUpdatedEvent))
+                        .From("assets").On("events")
                         .WithProjection(typeof(AssetsProjection), "assets"));
+
+                engine.StartPublishers();
+                return engine;
 
             })
             .As<ICqrsEngine>()
+            .AutoActivate()
             .SingleInstance();
         }
     }

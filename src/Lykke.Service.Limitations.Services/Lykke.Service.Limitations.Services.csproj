@@ -1,17 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
     <AssemblyName>Lykke.Service.Limitations.Services</AssemblyName>
     <RootNamespace>Lykke.Service.Limitations.Services</RootNamespace>
     <Version>1.0.0</Version>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Lykke.Cqrs" Version="7.0.0" />
-    <PackageReference Include="Lykke.Sdk" Version="5.4.0" />
-    <PackageReference Include="Lykke.Service.RateCalculator.Client" Version="1.2.1" />
-    <PackageReference Include="MessagePack" Version="1.7.3.4" />
-    <PackageReference Include="protobuf-net" Version="2.3.14" />
-    <PackageReference Include="StackExchange.Redis" Version="1.2.6" />
+    <PackageReference Include="Lykke.Cqrs" Version="9.0.0" />
+    <PackageReference Include="Lykke.Sdk" Version="5.14.0" />
+    <PackageReference Include="Lykke.Service.RateCalculator.Client" Version="1.4.0" />
+    <PackageReference Include="MessagePack" Version="1.7.3.7" />
+    <PackageReference Include="protobuf-net" Version="2.4.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Lykke.Service.Limitations.Core\Lykke.Service.Limitations.Core.csproj" />

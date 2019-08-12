@@ -41,9 +41,9 @@ namespace Lykke.Service.Limitations.AzureRepositories
             return row?.ToModel();
         }
 
-        public async Task DeleteIfExistAsync(string asset)
+        public Task DeleteIfExistAsync(string asset)
         {
-            await _tableStorage.DeleteIfExistAsync(GetPartitionKey(), GetRowKey(asset));
+            return _tableStorage.DeleteIfExistAsync(GetPartitionKey(), GetRowKey(asset));
         }
 
         public async Task SaveRangeAsync(IEnumerable<SwiftTransferLimitation> limitations)

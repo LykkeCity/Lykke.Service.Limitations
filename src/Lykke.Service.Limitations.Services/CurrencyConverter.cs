@@ -1,7 +1,6 @@
 ﻿using Common.Log;
 using Lykke.Service.Limitations.Core.Services;
 using Lykke.Service.RateCalculator.Client;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Common.Log;
@@ -41,7 +40,7 @@ namespace Lykke.Service.Limitations.Services
             double convertedAmount = await _rateCalculatorClient.GetAmountInBaseAsync(assetFrom, amount, assetTo);
 
             if (amount != 0 && convertedAmount == 0)
-                _log.Warning(                    
+                _log.Warning(
                     nameof(ConvertAsync),
                     $"Conversion from {amount} {assetFrom} to {assetTo} resulted in 0.");
 

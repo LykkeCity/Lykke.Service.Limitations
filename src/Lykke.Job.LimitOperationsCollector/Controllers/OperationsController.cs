@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.SwaggerGen;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.JobClient;
 using Lykke.Service.Limitations.Core.Services;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Lykke.Job.LimitOperationsCollector.Controllers
 {
@@ -28,7 +28,7 @@ namespace Lykke.Job.LimitOperationsCollector.Controllers
         /// <inheritdoc />
         [HttpPost("operationattempt")]
         [SwaggerOperation("OperationAttempt")]
-        public async Task AddOperationAttemptAsync(
+        public Task AddOperationAttemptAsync(
             string clientId,
             string assetId,
             double amount,
@@ -47,7 +47,7 @@ namespace Lykke.Job.LimitOperationsCollector.Controllers
             if (ttlInMinutes < 0)
                 throw new ArgumentException(nameof(ttlInMinutes));
 
-            await _antiFraudCollector.AddDataAsync(
+            return _antiFraudCollector.AddDataAsync(
                 clientId,
                 assetId,
                 amount,

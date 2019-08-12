@@ -3,6 +3,7 @@ using Autofac;
 using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.Cqrs.Configuration;
+using Lykke.Cqrs.Middleware.Logging;
 using Lykke.Messaging;
 using Lykke.Messaging.RabbitMq;
 using Lykke.Job.LimitOperationsCollector.Settings;
@@ -38,11 +39,13 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
             builder.RegisterType<FiatTransfersProjection>();
             builder.Register(ctx =>
             {
-                return new CqrsEngine(ctx.Resolve<ILogFactory>(),
+                var engine = new CqrsEngine(ctx.Resolve<ILogFactory>(),
                     ctx.Resolve<IDependencyResolver>(),
                     ctx.Resolve<IMessagingEngine>(),
                     new DefaultEndpointProvider(),
                     true,
+
+                    Register.EventInterceptors(new DefaultEventLoggingInterceptor(ctx.Resolve<ILogFactory>())),
 
                     Register.DefaultEndpointResolver(
                         new RabbitMqConventionEndpointResolver(
@@ -57,8 +60,12 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                         .WithProjection(typeof(FiatTransfersProjection), "me-cy")
                         .WithProjection(typeof(FiatTransfersProjection), "me-vu"));
 
+                engine.StartPublishers();
+                return engine;
+
             })
             .As<ICqrsEngine>()
+            .AutoActivate()
             .SingleInstance();
         }
     }

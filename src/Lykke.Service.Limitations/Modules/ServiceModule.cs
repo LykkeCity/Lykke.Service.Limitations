@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using AzureStorage.Blob;
 using AzureStorage.Tables;
+using JetBrains.Annotations;
 using Lykke.Common.Cache;
 using Lykke.Common.Log;
 using Lykke.HttpClientGenerator;
@@ -19,10 +20,11 @@ using StackExchange.Redis;
 
 namespace Lykke.Service.Limitations.Modules
 {
+    [UsedImplicitly]
     public class ServiceModule : Module
     {
         private readonly IReloadingManager<AppSettings> _appSettings;
-        
+
         public ServiceModule(IReloadingManager<AppSettings> appSettings)
         {
             _appSettings = appSettings;
@@ -67,11 +69,6 @@ namespace Lykke.Service.Limitations.Modules
                 .As<IStartupManager>()
                 .SingleInstance();
 
-            builder.RegisterType<ShutdownManager>()
-                .As<IShutdownManager>()
-                .AutoActivate()
-                .SingleInstance();
-
             builder.RegisterType<CurrencyConverter>()
                 .As<ICurrencyConverter>()
                 .SingleInstance()
@@ -96,8 +93,8 @@ namespace Lykke.Service.Limitations.Modules
                 .As<ILimitationCheck>()
                 .SingleInstance()
                 .WithParameter("limits", settings.Limits)
-                .WithParameter("attemptRetainInMinutes", settings.AttemptRetainInMinutes);            
-            
+                .WithParameter("attemptRetainInMinutes", settings.AttemptRetainInMinutes);
+
             builder.Register(ctx =>
             {
                 var assetService = ctx.Resolve<IAssetsService>();
@@ -114,7 +111,7 @@ namespace Lykke.Service.Limitations.Modules
                         CashoutMinimalAmount = asset.CashoutMinimalAmount
                     });
                 }
-                
+
                 return assetsCache;
             }).SingleInstance();
         }
