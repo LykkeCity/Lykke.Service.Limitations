@@ -10,6 +10,8 @@ using Lykke.Job.LimitOperationsCollector.Settings;
 using Lykke.Job.LimitOperationsCollector.Cqrs;
 using Lykke.Messaging.Contract;
 using Lykke.Messaging.Serialization;
+using Lykke.Service.Limitations.Client;
+using Lykke.Service.Limitations.Client.Events;
 using Lykke.Service.Limitations.Services.Contracts.FxPaygate;
 using Lykke.SettingsReader;
 
@@ -36,7 +38,14 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                 new RabbitMqTransportFactory(ctx.Resolve<ILogFactory>()))).As<IMessagingEngine>();
 
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>().SingleInstance();
-            builder.RegisterType<FiatTransfersProjection>();
+            builder.RegisterType<FiatTransfersProjection>().PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
+
+            var msgPackResolver = new RabbitMqConventionEndpointResolver(
+                "RabbitMq",
+                SerializationFormat.MessagePack,
+                environment: "lykke",
+                exclusiveQueuePostfix: "k8s");
+
             builder.Register(ctx =>
             {
                 var engine = new CqrsEngine(ctx.Resolve<ILogFactory>(),
@@ -54,11 +63,20 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                             environment: "lykke",
                             exclusiveQueuePostfix: "k8s")),
 
+                    Register.BoundedContext(LimitationsBoundedContext.Name)
+                        .PublishingEvents(
+                            typeof(ClientDepositEvent),
+                            typeof(ClientWithdrawEvent)
+                        ).With("events")
+                        .WithEndpointResolver(msgPackResolver),
+
                     Register.BoundedContext("limit-operations-collector")
                         .ListeningEvents(typeof(TransferCreatedEvent)).From("me-cy").On("events")
                         .ListeningEvents(typeof(TransferCreatedEvent)).From("me-vu").On("events")
+                        .ListeningEvents(typeof(TransferCreatedEvent)).From("me").On("events")
                         .WithProjection(typeof(FiatTransfersProjection), "me-cy")
-                        .WithProjection(typeof(FiatTransfersProjection), "me-vu"));
+                        .WithProjection(typeof(FiatTransfersProjection), "me-vu")
+                        .WithProjection(typeof(FiatTransfersProjection), "me"));
 
                 engine.StartPublishers();
                 return engine;
