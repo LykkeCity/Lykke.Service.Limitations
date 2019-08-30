@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Autofac;
 using Common.Log;
 using Lykke.Common.Log;
 using Lykke.MatchingEngine.Connector.Models.Events;
@@ -10,24 +11,26 @@ using Lykke.Service.Limitations.Core.Services;
 
 namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
 {
-    public class CashOperationSubscriber : IStartStop
+    public class CashOperationSubscriber : IStartable, IDisposable
     {
         private readonly ILog _log;
         private readonly string _connectionString;
         private readonly string _exchangeName;
         private readonly ICashOperationsCollector _cashOperationsCollector;
+        private readonly ILogFactory _logFactory;
 
         private RabbitMqSubscriber<CashInEvent> _cashinSubscriber;
         private RabbitMqSubscriber<CashOutEvent> _cashoutSubscriber;
 
         public CashOperationSubscriber(
             ICashOperationsCollector cashOperationsCollector,
-            ILogFactory log,
+            ILogFactory logFactory,
             string connectionString,
             string exchangeName)
         {
             _cashOperationsCollector = cashOperationsCollector;
-            _log = log.CreateLog(this);
+            _logFactory = logFactory;
+            _log = logFactory.CreateLog(this);
             _connectionString = connectionString;
             _exchangeName = exchangeName;
         }
@@ -38,30 +41,30 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
                 .ForSubscriber(_connectionString, _exchangeName, "limitoperationscollector-cashin")
                 .MakeDurable()
                 .UseRoutingKey(((int)MessageType.CashIn).ToString());
-            _cashinSubscriber = new RabbitMqSubscriber<CashInEvent>(
+
+            _cashinSubscriber = new RabbitMqSubscriber<CashInEvent>(_logFactory,
                     cashinSettings,
-                    new ResilientErrorHandlingStrategy(_log, cashinSettings,
+                    new ResilientErrorHandlingStrategy(_logFactory, cashinSettings,
                         retryTimeout: TimeSpan.FromSeconds(10),
-                        next: new DeadQueueErrorHandlingStrategy(_log, cashinSettings)))
+                        next: new DeadQueueErrorHandlingStrategy(_logFactory, cashinSettings)))
                 .SetMessageDeserializer(new ProtobufMessageDeserializer<CashInEvent>())
                 .Subscribe(ProcessMessageAsync)
                 .CreateDefaultBinding()
-                .SetLogger(_log)
                 .Start();
 
             var cashoutSettings = RabbitMqSubscriptionSettings
                 .ForSubscriber(_connectionString, _exchangeName, "limitoperationscollector-cashout")
                 .MakeDurable()
                 .UseRoutingKey(((int)MessageType.CashOut).ToString());
-            _cashoutSubscriber = new RabbitMqSubscriber<CashOutEvent>(
+
+            _cashoutSubscriber = new RabbitMqSubscriber<CashOutEvent>(_logFactory,
                     cashoutSettings,
-                    new ResilientErrorHandlingStrategy(_log, cashoutSettings,
+                    new ResilientErrorHandlingStrategy(_logFactory, cashoutSettings,
                         retryTimeout: TimeSpan.FromSeconds(10),
-                        next: new DeadQueueErrorHandlingStrategy(_log, cashoutSettings)))
+                        next: new DeadQueueErrorHandlingStrategy(_logFactory, cashoutSettings)))
                 .SetMessageDeserializer(new ProtobufMessageDeserializer<CashOutEvent>())
                 .Subscribe(ProcessMessageAsync)
                 .CreateDefaultBinding()
-                .SetLogger(_log)
                 .Start();
         }
 
@@ -81,7 +84,7 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
             }
             catch (Exception ex)
             {
-                _log.WriteError(nameof(ProcessMessageAsync), item, ex);
+                _log.Error(ex, context: item);
                 throw;
             }
         }
@@ -97,23 +100,17 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
                         ClientId = item.CashOut.WalletId,
                         Asset = item.CashOut.AssetId,
                         Volume = double.Parse(item.CashOut.Volume),
-                        DateTime = item.Header.Timestamp,
+                        DateTime = item.Header.Timestamp
                     });
             }
             catch (Exception ex)
             {
-                _log.WriteError(nameof(ProcessMessageAsync), item, ex);
+                _log.Error(ex, context: item);
                 throw;
             }
         }
 
         public void Dispose()
-        {
-            _cashinSubscriber?.Dispose();
-            _cashoutSubscriber?.Dispose();
-        }
-
-        public void Stop()
         {
             _cashinSubscriber?.Stop();
             _cashoutSubscriber?.Stop();

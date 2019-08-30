@@ -14,7 +14,7 @@ namespace Lykke.Service.Limitations.Projections
             _assetsCache = assetsCache;
         }
 
-        private async Task Handle(AssetCreatedEvent evt)
+        private Task Handle(AssetCreatedEvent evt)
         {
             _assetsCache.Set(evt.Id, new Asset
             {
@@ -23,9 +23,11 @@ namespace Lykke.Service.Limitations.Projections
                 LowVolumeAmount = evt.LowVolumeAmount,
                 CashoutMinimalAmount = evt.CashoutMinimalAmount
             });
+
+            return Task.CompletedTask;
         }
 
-        public async Task Handle(AssetUpdatedEvent evt)
+        public Task Handle(AssetUpdatedEvent evt)
         {
             _assetsCache.Set(evt.Id, new Asset
             {
@@ -34,6 +36,8 @@ namespace Lykke.Service.Limitations.Projections
                 LowVolumeAmount = evt.LowVolumeAmount,
                 CashoutMinimalAmount = evt.CashoutMinimalAmount
             });
+
+            return Task.CompletedTask;
         }
     }
 }

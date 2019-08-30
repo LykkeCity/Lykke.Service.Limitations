@@ -4,17 +4,21 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Common;
+using Lykke.Cqrs;
+using Lykke.Service.Limitations.Client;
+using Lykke.Service.Limitations.Client.Events;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
 using StackExchange.Redis;
+using CurrencyOperationType = Lykke.Service.Limitations.Core.Domain.CurrencyOperationType;
 
 namespace Lykke.Service.Limitations.Services
 {
     public class ClientsDataHelper<T>
         where T : ICashOperation
     {
-        private const string _clientSetKeyPattern = "{0}:{1}:client:{2}";
-        private const string _opKeySuffixPattern = "opType:{0}:id:{1}";
+        private const string ClientSetKeyPattern = "{0}:{1}:client:{2}";
+        private const string OpKeySuffixPattern = "opType:{0}:id:{1}";
 
         private readonly IClientStateRepository<List<T>> _stateRepository;
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
@@ -22,19 +26,22 @@ namespace Lykke.Service.Limitations.Services
         private readonly Func<T, CurrencyOperationType> _opTypeResolver;
         private readonly string _instanceName;
         private readonly string _cacheType;
+        private readonly ICqrsEngine _cqrsEngine;
 
         internal ClientsDataHelper(
             IClientStateRepository<List<T>> stateRepository,
             IConnectionMultiplexer connectionMultiplexer,
             Func<T, CurrencyOperationType> opTypeResolver,
             string redisInstanceName,
-            string cashType)
+            string cashType,
+            ICqrsEngine cqrsEngine)
         {
             _stateRepository = stateRepository;
             _db = connectionMultiplexer.GetDatabase();
             _opTypeResolver = opTypeResolver;
             _instanceName = redisInstanceName;
             _cacheType = cashType;
+            _cqrsEngine = cqrsEngine;
         }
 
         internal async Task<(List<T>, bool)> GetClientDataAsync(string clientId, CurrencyOperationType? operationType = null)
@@ -45,25 +52,22 @@ namespace Lykke.Service.Limitations.Services
 
         internal async Task<bool> AddDataItemAsync(T item)
         {
-            var now = DateTime.UtcNow;
-            var ttl = item.DateTime.AddMonths(1).Subtract(now);
-            if (ttl.Ticks <= 0)
-                return true;
-
             if (!item.OperationType.HasValue)
                 item.OperationType = _opTypeResolver(item);
 
             await _lock.WaitAsync();
+
             try
             {
                 var (clientData, _) = await FetchClientDataAsync(item.ClientId, item.OperationType);
+
                 if (clientData.Any(i => i.Id == item.Id))
                     return false;
 
                 clientData.Add(item);
 
-                string clientKey = string.Format(_clientSetKeyPattern, _instanceName, _cacheType, item.ClientId);
-                string operationSuffix = string.Format(_opKeySuffixPattern, item.OperationType.Value, item.Id);
+                string clientKey = string.Format(ClientSetKeyPattern, _instanceName, _cacheType, item.ClientId);
+                string operationSuffix = string.Format(OpKeySuffixPattern, item.OperationType.Value, item.Id);
                 var operationKey = $"{clientKey}:{operationSuffix}";
 
                 var tx = _db.CreateTransaction();
@@ -72,27 +76,60 @@ namespace Lykke.Service.Limitations.Services
                     tx.SortedSetAddAsync(clientKey, operationSuffix, DateTime.UtcNow.Ticks),
                     _stateRepository.SaveClientStateAsync($"{item.ClientId}-{item.OperationType.Value}", clientData),
                 };
-                var setKeyTask = tx.StringSetAsync(operationKey, item.ToJson(), ttl);
+
+                var setKeyTask = tx.StringSetAsync(operationKey, item.ToJson());
                 tasks.Add(setKeyTask);
+
                 if (!await tx.ExecuteAsync())
                     throw new InvalidOperationException($"Error during operations update for client {item.ClientId} with operation type {item.OperationType}");
+
                 await Task.WhenAll(tasks);
+
                 if (!setKeyTask.Result)
                     throw new InvalidOperationException($"Error during operations update for client {item.ClientId} with operation type {item.OperationType}");
+
+                switch (item.OperationType)
+                {
+                    case CurrencyOperationType.CardCashIn:
+                    case CurrencyOperationType.CryptoCashIn:
+                    case CurrencyOperationType.SwiftTransfer:
+                        _cqrsEngine.PublishEvent(new ClientDepositEvent
+                        {
+                            ClientId = item.ClientId,
+                            Asset = item.Asset,
+                            Amount = item.Volume,
+                            Total = clientData.Sum(x => x.Volume)
+                        }, LimitationsBoundedContext.Name);
+                        break;
+                    case CurrencyOperationType.CardCashOut:
+                    case CurrencyOperationType.CryptoCashOut:
+                    case CurrencyOperationType.SwiftTransferOut:
+                        _cqrsEngine.PublishEvent(new ClientWithdrawEvent
+                        {
+                            ClientId = item.ClientId,
+                            Asset = item.Asset,
+                            Amount = item.Volume,
+                            Total = clientData.Sum(x => x.Volume)
+                        }, LimitationsBoundedContext.Name);
+                        break;
+                }
             }
             finally
             {
                 _lock.Release();
             }
+
             return true;
         }
 
         internal async Task<bool> RemoveClientOperationAsync(string clientId, string operationId)
         {
             await _lock.WaitAsync();
+
             try
             {
                 var (clientData, _) = await FetchClientDataAsync(clientId);
+
                 if (clientData.Count == 0)
                     return false;
 
@@ -104,8 +141,8 @@ namespace Lykke.Service.Limitations.Services
                     if (!operation.OperationType.HasValue)
                         operation.OperationType = _opTypeResolver(operation);
 
-                    string clientKey = string.Format(_clientSetKeyPattern, _instanceName, _cacheType, clientId);
-                    string operationSuffix = string.Format(_opKeySuffixPattern, operation.OperationType.Value, operation.Id);
+                    string clientKey = string.Format(ClientSetKeyPattern, _instanceName, _cacheType, clientId);
+                    string operationSuffix = string.Format(OpKeySuffixPattern, operation.OperationType.Value, operation.Id);
                     var operationKey = $"{clientKey}:{operationSuffix}";
                     var tx = _db.CreateTransaction();
                     var tasks = new List<Task>
@@ -113,6 +150,7 @@ namespace Lykke.Service.Limitations.Services
                         tx.SortedSetRemoveAsync(clientKey, operationSuffix),
                         tx.KeyDeleteAsync(operationKey),
                     };
+
                     if (await tx.ExecuteAsync())
                         await Task.WhenAll(tasks);
 
@@ -135,28 +173,33 @@ namespace Lykke.Service.Limitations.Services
         {
             var keys = await GetClientOperationsKeysAsync(clientId);
             string opTypeStr = operationType.ToString();
+
             if (keys.Length > 0 && keys.Any(k => k.ToString().Contains(opTypeStr)))
                 return;
 
             var clientState = await _stateRepository.LoadClientStateAsync($"{clientId}-{operationType}")
                 ?? await _stateRepository.LoadClientStateAsync(clientId);
+
             if (clientState == null)
                 return;
 
             var now = DateTime.UtcNow;
+
             foreach (var item in clientState)
             {
                 var ttl = item.DateTime.AddMonths(1).Subtract(now);
+
                 if (ttl.Ticks <= 0)
                     continue;
 
                 if (!item.OperationType.HasValue)
                     item.OperationType = _opTypeResolver(item);
+
                 if (item.OperationType.Value != operationType)
                     continue;
 
-                string clientKey = string.Format(_clientSetKeyPattern, _instanceName, _cacheType, item.ClientId);
-                string operationSuffix = string.Format(_opKeySuffixPattern, item.OperationType.Value, item.Id);
+                string clientKey = string.Format(ClientSetKeyPattern, _instanceName, _cacheType, item.ClientId);
+                string operationSuffix = string.Format(OpKeySuffixPattern, item.OperationType.Value, item.Id);
                 var operationKey = $"{clientKey}:{operationSuffix}";
 
                 var tx = _db.CreateTransaction();
@@ -164,11 +207,15 @@ namespace Lykke.Service.Limitations.Services
                 {
                     tx.SortedSetAddAsync(clientKey, operationSuffix, DateTime.UtcNow.Ticks),
                 };
+
                 var setKeyTask = tx.StringSetAsync(operationKey, item.ToJson(), ttl);
                 tasks.Add(setKeyTask);
+
                 if (!await tx.ExecuteAsync())
                     throw new InvalidOperationException($"Error during operations update for client {clientId} with operation type {operationType}");
+
                 await Task.WhenAll(tasks);
+
                 if (!setKeyTask.Result)
                     throw new InvalidOperationException($"Error during operations update for client {clientId} with operation type {operationType}");
             }
@@ -194,6 +241,7 @@ namespace Lykke.Service.Limitations.Services
             foreach (var opType in opTypes)
             {
                 string opTypeStr = opType.ToString();
+
                 if (keysDict.ContainsKey(opTypeStr))
                 {
                     var operationJsons = await _db.StringGetAsync(keysDict[opTypeStr]);
@@ -204,19 +252,24 @@ namespace Lykke.Service.Limitations.Services
                     clientData.AddRange(operations);
                     continue;
                 }
+
                 var clientState = await _stateRepository.LoadClientStateAsync($"{clientId}-{opType}");
+
                 if (clientState == null)
                 {
                     if (oldAllData == null)
                         oldAllData = await _stateRepository.LoadClientStateAsync(clientId);
+
                     if (oldAllData == null || oldAllData.Count == 0)
                         continue;
 
                     var notExpired = oldAllData.Where(i => i.DateTime > monthAgo);
+
                     foreach (var item in notExpired)
                     {
                         if (!item.OperationType.HasValue)
                             item.OperationType = _opTypeResolver(item);
+
                         if (item.OperationType.Value != opType)
                             continue;
 
@@ -227,6 +280,7 @@ namespace Lykke.Service.Limitations.Services
                 else
                 {
                     var notExpired = clientState.Where(i => i.DateTime > monthAgo);
+
                     if (notExpired.Any())
                     {
                         clientData.AddRange(clientState.Where(i => i.DateTime > monthAgo));
@@ -234,21 +288,24 @@ namespace Lykke.Service.Limitations.Services
                     }
                 }
             }
+
             return (clientData, notCached);
         }
 
         private async Task<RedisKey[]> GetClientOperationsKeysAsync(string clientId)
         {
             var actualPeriodStartScore = DateTime.UtcNow.AddMonths(-1).Ticks;
-            string clientKey = string.Format(_clientSetKeyPattern, _instanceName, _cacheType, clientId);
+            string clientKey = string.Format(ClientSetKeyPattern, _instanceName, _cacheType, clientId);
             var tx = _db.CreateTransaction();
             tx.AddCondition(Condition.KeyExists(clientKey));
             var tasks = new List<Task>
             {
                 tx.SortedSetRemoveRangeByScoreAsync(clientKey, 0, actualPeriodStartScore)
             };
+
             var getKeysTask = tx.SortedSetRangeByScoreAsync(clientKey, actualPeriodStartScore, double.MaxValue);
             tasks.Add(getKeysTask);
+
             if (await tx.ExecuteAsync())
                 await Task.WhenAll(tasks);
             else

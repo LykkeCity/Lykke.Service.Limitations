@@ -1,7 +1,9 @@
 ﻿using System;
 using Autofac;
+using AutoMapper;
 using AzureStorage.Blob;
 using AzureStorage.Tables;
+using JetBrains.Annotations;
 using Lykke.Common.Cache;
 using Lykke.Common.Log;
 using Lykke.HttpClientGenerator;
@@ -12,6 +14,7 @@ using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.JobClient;
 using Lykke.Service.Limitations.Core.Repositories;
 using Lykke.Service.Limitations.Core.Services;
+using Lykke.Service.Limitations.Profiles;
 using Lykke.Service.Limitations.Services;
 using Lykke.Service.Limitations.Settings;
 using Lykke.Service.RateCalculator.Client;
@@ -20,10 +23,11 @@ using StackExchange.Redis;
 
 namespace Lykke.Service.Limitations.Modules
 {
+    [UsedImplicitly]
     public class ServiceModule : Module
     {
         private readonly IReloadingManager<AppSettings> _appSettings;
-        
+
         public ServiceModule(IReloadingManager<AppSettings> appSettings)
         {
             _appSettings = appSettings;
@@ -44,6 +48,8 @@ namespace Lykke.Service.Limitations.Modules
             RegisterRepositories(builder);
 
             RegisterServices(builder);
+
+            RegisterAutomapper(builder);
         }
 
         private void RegisterRepositories(ContainerBuilder builder)
@@ -78,37 +84,33 @@ namespace Lykke.Service.Limitations.Modules
                 .As<IStartupManager>()
                 .SingleInstance();
 
-            builder.RegisterType<ShutdownManager>()
-                .As<IShutdownManager>()
-                .AutoActivate()
-                .SingleInstance();
-
             builder.RegisterType<CurrencyConverter>()
                 .As<ICurrencyConverter>()
                 .SingleInstance()
-                .WithParameter("convertibleCurrencies", settings.ConvertibleAssets);
+                .WithParameter(TypedParameter.From(settings.ConvertibleAssets))
+                .WithParameter(TypedParameter.From(settings.BaseAsset));
 
             builder.RegisterType<AntiFraudCollector>()
                 .As<IAntiFraudCollector>()
                 .SingleInstance()
-                .WithParameter("redisInstanceName", settings.RedisInstanceName);
+                .WithParameter(TypedParameter.From(settings.RedisInstanceName));
 
             builder.RegisterType<CashOperationsCollector>()
                 .As<ICashOperationsCollector>()
                 .SingleInstance()
-                .WithParameter("redisInstanceName", settings.RedisInstanceName);
+                .WithParameter(TypedParameter.From(settings.RedisInstanceName));
 
             builder.RegisterType<CashTransfersCollector>()
                 .As<ICashTransfersCollector>()
                 .SingleInstance()
-                .WithParameter("redisInstanceName", settings.RedisInstanceName);
+                .WithParameter(TypedParameter.From(settings.RedisInstanceName));
 
             builder.RegisterType<LimitationChecker>()
                 .As<ILimitationCheck>()
                 .SingleInstance()
-                .WithParameter("limits", settings.Limits)
-                .WithParameter("attemptRetainInMinutes", settings.AttemptRetainInMinutes);            
-            
+                .WithParameter(TypedParameter.From(settings.Limits))
+                .WithParameter(TypedParameter.From(settings.AttemptRetainInMinutes));
+
             builder.Register(ctx =>
             {
                 var assetService = ctx.Resolve<IAssetsService>();
@@ -125,9 +127,24 @@ namespace Lykke.Service.Limitations.Modules
                         CashoutMinimalAmount = asset.CashoutMinimalAmount
                     });
                 }
-                
+
                 return assetsCache;
             }).SingleInstance();
+        }
+
+        private void RegisterAutomapper(ContainerBuilder builder)
+        {
+            builder.Register(c =>
+            {
+                var mapperConfiguration = new MapperConfiguration(cfg =>
+                {
+                    cfg.AddProfile(new ServiceProfile());
+                });
+
+                mapperConfiguration.AssertConfigurationIsValid();
+
+                return mapperConfiguration.CreateMapper();
+            }).As<IMapper>().SingleInstance();
         }
     }
 }

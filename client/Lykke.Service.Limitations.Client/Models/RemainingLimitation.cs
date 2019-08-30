@@ -1,5 +1,4 @@
-﻿using System;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
 namespace Lykke.Service.Limitations.Client.Models
@@ -18,15 +17,5 @@ namespace Lykke.Service.Limitations.Client.Models
 
         /// <summary>Remaining amount.</summary>
         public double RemainingAmount { get; set; }
-
-        public static RemainingLimitation FromModel(AutorestClient.Models.RemainingLimitation model)
-        {
-            return new RemainingLimitation
-            {
-                LimitationType = (LimitationType)Enum.Parse(typeof(LimitationType), model.LimitationType),
-                Asset = model.Asset,
-                RemainingAmount = model.RemainingAmount.Value,
-            };
-        }
     }
 }

@@ -17,9 +17,9 @@ namespace Lykke.Job.LimitOperationsCollector.Cqrs
         }
 
         [UsedImplicitly]
-        private async Task Handle(TransferCreatedEvent evt)
+        private Task Handle(TransferCreatedEvent evt)
         {
-            await _collector.AddDataItemAsync(new CashOperation
+            return _collector.AddDataItemAsync(new CashOperation
             {
                 Id = evt.TransferId,
                 ClientId = evt.ClientId,
