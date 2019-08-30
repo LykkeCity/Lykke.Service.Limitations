@@ -4,9 +4,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Common;
+using Lykke.Cqrs;
+using Lykke.Service.Limitations.Client;
+using Lykke.Service.Limitations.Client.Events;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
 using StackExchange.Redis;
+using CurrencyOperationType = Lykke.Service.Limitations.Core.Domain.CurrencyOperationType;
 
 namespace Lykke.Service.Limitations.Services
 {
@@ -22,19 +26,22 @@ namespace Lykke.Service.Limitations.Services
         private readonly Func<T, CurrencyOperationType> _opTypeResolver;
         private readonly string _instanceName;
         private readonly string _cacheType;
+        private readonly ICqrsEngine _cqrsEngine;
 
         internal ClientsDataHelper(
             IClientStateRepository<List<T>> stateRepository,
             IConnectionMultiplexer connectionMultiplexer,
             Func<T, CurrencyOperationType> opTypeResolver,
             string redisInstanceName,
-            string cashType)
+            string cashType,
+            ICqrsEngine cqrsEngine)
         {
             _stateRepository = stateRepository;
             _db = connectionMultiplexer.GetDatabase();
             _opTypeResolver = opTypeResolver;
             _instanceName = redisInstanceName;
             _cacheType = cashType;
+            _cqrsEngine = cqrsEngine;
         }
 
         internal async Task<(List<T>, bool)> GetClientDataAsync(string clientId, CurrencyOperationType? operationType = null)
@@ -45,12 +52,6 @@ namespace Lykke.Service.Limitations.Services
 
         internal async Task<bool> AddDataItemAsync(T item)
         {
-            var now = DateTime.UtcNow;
-            var ttl = item.DateTime.AddMonths(1).Subtract(now);
-
-            if (ttl.Ticks <= 0)
-                return true;
-
             if (!item.OperationType.HasValue)
                 item.OperationType = _opTypeResolver(item);
 
@@ -76,7 +77,7 @@ namespace Lykke.Service.Limitations.Services
                     _stateRepository.SaveClientStateAsync($"{item.ClientId}-{item.OperationType.Value}", clientData),
                 };
 
-                var setKeyTask = tx.StringSetAsync(operationKey, item.ToJson(), ttl);
+                var setKeyTask = tx.StringSetAsync(operationKey, item.ToJson());
                 tasks.Add(setKeyTask);
 
                 if (!await tx.ExecuteAsync())
@@ -86,6 +87,32 @@ namespace Lykke.Service.Limitations.Services
 
                 if (!setKeyTask.Result)
                     throw new InvalidOperationException($"Error during operations update for client {item.ClientId} with operation type {item.OperationType}");
+
+                switch (item.OperationType)
+                {
+                    case CurrencyOperationType.CardCashIn:
+                    case CurrencyOperationType.CryptoCashIn:
+                    case CurrencyOperationType.SwiftTransfer:
+                        _cqrsEngine.PublishEvent(new ClientDepositEvent
+                        {
+                            ClientId = item.ClientId,
+                            Asset = item.Asset,
+                            Amount = item.Volume,
+                            Total = clientData.Sum(x => x.Volume)
+                        }, LimitationsBoundedContext.Name);
+                        break;
+                    case CurrencyOperationType.CardCashOut:
+                    case CurrencyOperationType.CryptoCashOut:
+                    case CurrencyOperationType.SwiftTransferOut:
+                        _cqrsEngine.PublishEvent(new ClientWithdrawEvent
+                        {
+                            ClientId = item.ClientId,
+                            Asset = item.Asset,
+                            Amount = item.Volume,
+                            Total = clientData.Sum(x => x.Volume)
+                        }, LimitationsBoundedContext.Name);
+                        break;
+                }
             }
             finally
             {

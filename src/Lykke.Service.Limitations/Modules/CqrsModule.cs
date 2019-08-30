@@ -10,6 +10,8 @@ using Lykke.Messaging.Contract;
 using Lykke.Messaging.RabbitMq;
 using Lykke.Messaging.Serialization;
 using Lykke.Service.Assets.Contract.Events;
+using Lykke.Service.Limitations.Client;
+using Lykke.Service.Limitations.Client.Events;
 using Lykke.Service.Limitations.Projections;
 using Lykke.Service.Limitations.Settings;
 using Lykke.SettingsReader;
@@ -58,10 +60,16 @@ namespace Lykke.Service.Limitations.Modules
                             environment: "lykke",
                             exclusiveQueuePostfix: "k8s")),
 
-                    Register.BoundedContext("limitations")
+                    Register.BoundedContext(LimitationsBoundedContext.Name)
                         .ListeningEvents(typeof(AssetCreatedEvent), typeof(AssetUpdatedEvent))
-                        .From("assets").On("events")
-                        .WithProjection(typeof(AssetsProjection), "assets"));
+                        .From(Assets.BoundedContext.Name).On("events")
+                        .WithProjection(typeof(AssetsProjection), Assets.BoundedContext.Name)
+
+                        .PublishingEvents(
+                            typeof(ClientDepositEvent),
+                            typeof(ClientWithdrawEvent)
+                        ).With("events")
+                    );
 
                 engine.StartPublishers();
                 return engine;

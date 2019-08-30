@@ -76,28 +76,29 @@ namespace Lykke.Service.Limitations.Modules
             builder.RegisterType<CurrencyConverter>()
                 .As<ICurrencyConverter>()
                 .SingleInstance()
-                .WithParameter("convertibleCurrencies", settings.ConvertibleAssets);
+                .WithParameter(TypedParameter.From(settings.ConvertibleAssets))
+                .WithParameter(TypedParameter.From(settings.BaseAsset));
 
             builder.RegisterType<AntiFraudCollector>()
                 .As<IAntiFraudCollector>()
                 .SingleInstance()
-                .WithParameter("redisInstanceName", settings.RedisInstanceName);
+                .WithParameter(TypedParameter.From(settings.RedisInstanceName));
 
             builder.RegisterType<CashOperationsCollector>()
                 .As<ICashOperationsCollector>()
                 .SingleInstance()
-                .WithParameter("redisInstanceName", settings.RedisInstanceName);
+                .WithParameter(TypedParameter.From(settings.RedisInstanceName));
 
             builder.RegisterType<CashTransfersCollector>()
                 .As<ICashTransfersCollector>()
                 .SingleInstance()
-                .WithParameter("redisInstanceName", settings.RedisInstanceName);
+                .WithParameter(TypedParameter.From(settings.RedisInstanceName));
 
             builder.RegisterType<LimitationChecker>()
                 .As<ILimitationCheck>()
                 .SingleInstance()
-                .WithParameter("limits", settings.Limits)
-                .WithParameter("attemptRetainInMinutes", settings.AttemptRetainInMinutes);
+                .WithParameter(TypedParameter.From(settings.Limits))
+                .WithParameter(TypedParameter.From(settings.AttemptRetainInMinutes));
 
             builder.Register(ctx =>
             {
