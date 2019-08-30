@@ -10,6 +10,8 @@ using Lykke.Messaging.Contract;
 using Lykke.Messaging.RabbitMq;
 using Lykke.Messaging.Serialization;
 using Lykke.Service.Assets.Contract.Events;
+using Lykke.Service.Limitations.Client;
+using Lykke.Service.Limitations.Client.Events;
 using Lykke.Service.Limitations.Projections;
 using Lykke.Service.Limitations.Settings;
 using Lykke.SettingsReader;
@@ -31,6 +33,8 @@ namespace Lykke.Service.Limitations.Modules
             var rabbitMqSettings = new RabbitMQ.Client.ConnectionFactory { Uri = _appSettings.CurrentValue.SagasRabbitMq.RabbitConnectionString };
 
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>().SingleInstance();
+            MessagePackSerializerFactory.Defaults.FormatterResolver = MessagePack.Resolvers.ContractlessStandardResolver.Instance;
+
             builder.RegisterType<AssetsProjection>();
 
             builder.Register(ctx =>  new MessagingEngine(ctx.Resolve<ILogFactory>(),
@@ -42,6 +46,12 @@ namespace Lykke.Service.Limitations.Modules
 
             builder.Register(ctx =>
             {
+                var msgPackResolver = new RabbitMqConventionEndpointResolver(
+                    "RabbitMq",
+                    SerializationFormat.MessagePack,
+                    environment: "lykke",
+                    exclusiveQueuePostfix: "k8s");
+
                 var engine = new CqrsEngine(
                     ctx.Resolve<ILogFactory>(),
                     ctx.Resolve<IDependencyResolver>(),
@@ -51,17 +61,19 @@ namespace Lykke.Service.Limitations.Modules
 
                     Register.EventInterceptors(new DefaultEventLoggingInterceptor(ctx.Resolve<ILogFactory>())),
 
-                    Register.DefaultEndpointResolver(
-                        new RabbitMqConventionEndpointResolver(
-                            "RabbitMq",
-                            SerializationFormat.MessagePack,
-                            environment: "lykke",
-                            exclusiveQueuePostfix: "k8s")),
+                    Register.DefaultEndpointResolver(msgPackResolver),
 
-                    Register.BoundedContext("limitations")
+                    Register.BoundedContext(LimitationsBoundedContext.Name)
                         .ListeningEvents(typeof(AssetCreatedEvent), typeof(AssetUpdatedEvent))
-                        .From("assets").On("events")
-                        .WithProjection(typeof(AssetsProjection), "assets"));
+                        .From(Assets.BoundedContext.Name).On("events")
+                        .WithProjection(typeof(AssetsProjection), Assets.BoundedContext.Name)
+
+                        .PublishingEvents(
+                            typeof(ClientDepositEvent),
+                            typeof(ClientWithdrawEvent)
+                        ).With("events")
+                        .WithEndpointResolver(msgPackResolver)
+                    );
 
                 engine.StartPublishers();
                 return engine;
