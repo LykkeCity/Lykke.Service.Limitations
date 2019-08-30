@@ -14,6 +14,7 @@
     <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\client\Lykke.Service.Limitations.Client\Lykke.Service.Limitations.Client.csproj" />
     <ProjectReference Include="..\Lykke.Service.Limitations.Core\Lykke.Service.Limitations.Core.csproj" />
   </ItemGroup>
 </Project>

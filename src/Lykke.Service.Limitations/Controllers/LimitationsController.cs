@@ -1,5 +1,4 @@
-﻿using System;
-using Lykke.Service.Limitations.Core.Domain;
+﻿using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -58,13 +57,6 @@ namespace Lykke.Service.Limitations.Controllers
             return _mapper.Map<LimitationCheckResponse>(result);
         }
 
-//        [HttpGet("{clientId}")]
-//        public async Task<ClientDataResponse> GetClientDataAsync(string clientId)
-//        {
-//            throw new NotImplementedException();
-//        }
-
-        [Obsolete("Use GET /api/limitations/{clientId} instead")]
         [HttpPost("GetClientData")]
         [ProducesResponseType(typeof(ClientData), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ClientData), (int)HttpStatusCode.BadRequest)]
