@@ -1,6 +1,7 @@
 ﻿using StackExchange.Redis;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Lykke.Cqrs;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
 using Lykke.Service.Limitations.Core.Services;
@@ -20,7 +21,9 @@ namespace Lykke.Service.Limitations.Services
             IConnectionMultiplexer connectionMultiplexer,
             string redisInstanceName,
             string cashPrefix,
-            ICurrencyConverter currencyConverter)
+            ICurrencyConverter currencyConverter,
+            ICqrsEngine cqrsEngine
+            )
         {
             _currencyConverter = currencyConverter;
             _antiFraudCollector = antiFraudCollector;
@@ -29,7 +32,8 @@ namespace Lykke.Service.Limitations.Services
                 connectionMultiplexer,
                 GetOperationType,
                 redisInstanceName,
-                cashPrefix);
+                cashPrefix,
+                cqrsEngine);
         }
 
         public virtual async Task AddDataItemAsync(T item)
@@ -37,7 +41,7 @@ namespace Lykke.Service.Limitations.Services
             string originAsset = item.Asset;
             double originVolume = item.Volume;
 
-            var converted = await _currencyConverter.ConvertAsync(item.Asset, _currencyConverter.DefaultAsset, item.Volume);
+            var converted = await _currencyConverter.ConvertAsync(item.Asset, _currencyConverter.DefaultAsset, item.Volume, true);
 
             item.Asset = converted.Item1;
             item.Volume = converted.Item2;
