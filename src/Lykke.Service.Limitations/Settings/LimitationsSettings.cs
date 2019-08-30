@@ -30,5 +30,6 @@ namespace Lykke.Service.Limitations.Settings
         public List<CashOperationLimitation> Limits { get; set; }
 
         public List<string> ConvertibleAssets { get; set; }
+        public string BaseAsset { get; set; }
     }
 }
