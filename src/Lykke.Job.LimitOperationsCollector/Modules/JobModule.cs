@@ -70,23 +70,24 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
 
             builder.RegisterType<CurrencyConverter>()
                 .As<ICurrencyConverter>()
-                .WithParameter("convertibleCurrencies", _settings.CurrentValue.LimitOperationsCollectorJob.ConvertibleAssets)
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.LimitOperationsCollectorJob.ConvertibleAssets))
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.LimitOperationsCollectorJob.BaseAsset))
                 .SingleInstance();
 
             builder.RegisterType<AntiFraudCollector>()
                 .As<IAntiFraudCollector>()
                 .SingleInstance()
-                .WithParameter("redisInstanceName", _settings.CurrentValue.LimitOperationsCollectorJob.RedisInstanceName);
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.LimitOperationsCollectorJob.RedisInstanceName));
 
             builder.RegisterType<CashOperationsCollector>()
                 .As<ICashOperationsCollector>()
                 .SingleInstance()
-                .WithParameter("redisInstanceName", _settings.CurrentValue.LimitOperationsCollectorJob.RedisInstanceName);
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.LimitOperationsCollectorJob.RedisInstanceName));
 
             builder.RegisterType<CashTransfersCollector>()
                 .As<ICashTransfersCollector>()
                 .SingleInstance()
-                .WithParameter("redisInstanceName", _settings.CurrentValue.LimitOperationsCollectorJob.RedisInstanceName);
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.LimitOperationsCollectorJob.RedisInstanceName));
         }
 
         private void RegisterRabbitMqSubscribers(ContainerBuilder builder)
