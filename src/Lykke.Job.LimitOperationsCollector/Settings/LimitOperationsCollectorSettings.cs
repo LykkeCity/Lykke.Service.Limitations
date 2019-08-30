@@ -15,6 +15,7 @@ namespace Lykke.Job.LimitOperationsCollector.Settings
         public string RedisInstanceName { get; set; }
 
         public List<string> ConvertibleAssets { get; set; }
+        public string BaseAsset { get; set; }
 
         [AzureBlobCheck]
         public string BlobStorageConnectionString { get; set; }
