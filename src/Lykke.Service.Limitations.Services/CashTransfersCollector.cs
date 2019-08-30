@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Lykke.Cqrs;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;
 using Lykke.Service.Limitations.Core.Services;
@@ -15,14 +16,16 @@ namespace Lykke.Service.Limitations.Services
             IConnectionMultiplexer connectionMultiplexer,
             IAntiFraudCollector antifraudCollector,
             ICurrencyConverter currencyConverter,
-            string redisInstanceName)
+            string redisInstanceName,
+            ICqrsEngine cqrsEngine)
             : base(
                 stateRepository,
                 antifraudCollector,
                 connectionMultiplexer,
                 redisInstanceName,
                 nameof(CashTransferOperation),
-                currencyConverter)
+                currencyConverter,
+                cqrsEngine)
         {
         }
 
