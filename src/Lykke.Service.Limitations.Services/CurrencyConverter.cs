@@ -9,23 +9,23 @@ namespace Lykke.Service.Limitations.Services
 {
     public class CurrencyConverter : ICurrencyConverter
     {
-        private const string ConversionBaseAsset = "USD";
-
         private readonly HashSet<string> _convertibleCurrencies;
 
         private readonly IRateCalculatorClient _rateCalculatorClient;
         private readonly ILog _log;
 
-        public string DefaultAsset => ConversionBaseAsset;
+        public string DefaultAsset { get; set; }
 
         public CurrencyConverter(
             List<string> convertibleCurrencies,
+            string baseAsset,
             IRateCalculatorClient rateCalculatorClient,
             ILogFactory logFactory)
         {
             _convertibleCurrencies = new HashSet<string>(convertibleCurrencies);
             _rateCalculatorClient = rateCalculatorClient;
             _log = logFactory.CreateLog(this);
+            DefaultAsset = baseAsset;
         }
 
         public async Task<(string assetTo, double convertedAmount)> ConvertAsync(

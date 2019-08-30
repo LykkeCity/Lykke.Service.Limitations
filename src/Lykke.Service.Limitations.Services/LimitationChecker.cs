@@ -16,7 +16,7 @@ namespace Lykke.Service.Limitations.Services
 {
     public class LimitationChecker : ILimitationCheck
     {
-        private const int _cashOperationsTimeoutInMinutes = 10;
+        private const int CashOperationsTimeoutInMinutes = 10;
 
         private readonly int _attemptRetainInMinutes;
         private readonly ICashOperationsCollector _cashOperationsCollector;
@@ -152,7 +152,7 @@ namespace Lykke.Service.Limitations.Services
                     originalAsset,
                     originalAmount,
                     currencyOperationType == CurrencyOperationType.CardCashIn
-                        ? _cashOperationsTimeoutInMinutes
+                        ? CashOperationsTimeoutInMinutes
                         : _attemptRetainInMinutes,
                     currencyOperationType);
                 }
@@ -230,7 +230,7 @@ namespace Lykke.Service.Limitations.Services
                     originalAsset,
                     originalAmount,
                     currencyOperationType == CurrencyOperationType.CardCashIn
-                        ? _cashOperationsTimeoutInMinutes
+                        ? CashOperationsTimeoutInMinutes
                         : _attemptRetainInMinutes,
                     currencyOperationType);
                 }
@@ -466,7 +466,7 @@ namespace Lykke.Service.Limitations.Services
                 limit.LimitationType);
             if (limitValue < currentValue + amount + antiFraudValue)
             {
-                var forbidDuration = limit.LimitationType == LimitationType.CardCashIn ? _cashOperationsTimeoutInMinutes : _attemptRetainInMinutes;
+                var forbidDuration = limit.LimitationType == LimitationType.CardCashIn ? CashOperationsTimeoutInMinutes : _attemptRetainInMinutes;
                 return $"Please wait {forbidDuration} minute(s) after previous payment attempt";
             }
             return null;
