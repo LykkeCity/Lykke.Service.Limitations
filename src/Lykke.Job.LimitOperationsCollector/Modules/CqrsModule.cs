@@ -10,6 +10,8 @@ using Lykke.Job.LimitOperationsCollector.Settings;
 using Lykke.Job.LimitOperationsCollector.Cqrs;
 using Lykke.Messaging.Contract;
 using Lykke.Messaging.Serialization;
+using Lykke.Service.Limitations.Client;
+using Lykke.Service.Limitations.Client.Events;
 using Lykke.Service.Limitations.Services.Contracts.FxPaygate;
 using Lykke.SettingsReader;
 
@@ -53,6 +55,12 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                             SerializationFormat.ProtoBuf,
                             environment: "lykke",
                             exclusiveQueuePostfix: "k8s")),
+
+                    Register.BoundedContext(LimitationsBoundedContext.Name)
+                        .PublishingEvents(
+                            typeof(ClientDepositEvent),
+                            typeof(ClientWithdrawEvent)
+                        ).With("events"),
 
                     Register.BoundedContext("limit-operations-collector")
                         .ListeningEvents(typeof(TransferCreatedEvent)).From("me-cy").On("events")
