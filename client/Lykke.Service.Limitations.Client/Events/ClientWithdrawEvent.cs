@@ -14,11 +14,15 @@ namespace Lykke.Service.Limitations.Client.Events
         /// </summary>
         public string Asset { get; set; }
         /// <summary>
-        /// Total deposited amount including <see cref="Amount"/>
+        /// Total withdraw amount for the month including <see cref="Amount"/>
+        /// </summary>
+        public double TotalMonth { get; set; }
+        /// <summary>
+        /// Total withdraw amount including <see cref="Amount"/>
         /// </summary>
         public double Total { get; set; }
         /// <summary>
-        /// Current deposit amount
+        /// Current withdraw amount
         /// </summary>
         public double Amount { get; set; }
     }

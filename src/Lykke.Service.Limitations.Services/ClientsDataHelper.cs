@@ -88,6 +88,8 @@ namespace Lykke.Service.Limitations.Services
                 if (!setKeyTask.Result)
                     throw new InvalidOperationException($"Error during operations update for client {item.ClientId} with operation type {item.OperationType}");
 
+                var monthAgo = DateTime.UtcNow.AddMonths(-1);
+
                 switch (item.OperationType)
                 {
                     case CurrencyOperationType.CardCashIn:
@@ -98,6 +100,7 @@ namespace Lykke.Service.Limitations.Services
                             ClientId = item.ClientId,
                             Asset = item.Asset,
                             Amount = item.Volume,
+                            TotalMonth = clientData.Where(x => x.DateTime >= monthAgo).Sum(x => x.Volume),
                             Total = clientData.Sum(x => x.Volume)
                         }, LimitationsBoundedContext.Name);
                         break;
@@ -109,6 +112,7 @@ namespace Lykke.Service.Limitations.Services
                             ClientId = item.ClientId,
                             Asset = item.Asset,
                             Amount = item.Volume,
+                            TotalMonth = clientData.Where(x => x.DateTime >= monthAgo).Sum(x => x.Volume),
                             Total = clientData.Sum(x => x.Volume)
                         }, LimitationsBoundedContext.Name);
                         break;
@@ -183,15 +187,8 @@ namespace Lykke.Service.Limitations.Services
             if (clientState == null)
                 return;
 
-            var now = DateTime.UtcNow;
-
             foreach (var item in clientState)
             {
-                var ttl = item.DateTime.AddMonths(1).Subtract(now);
-
-                if (ttl.Ticks <= 0)
-                    continue;
-
                 if (!item.OperationType.HasValue)
                     item.OperationType = _opTypeResolver(item);
 
@@ -205,10 +202,10 @@ namespace Lykke.Service.Limitations.Services
                 var tx = _db.CreateTransaction();
                 var tasks = new List<Task>
                 {
-                    tx.SortedSetAddAsync(clientKey, operationSuffix, DateTime.UtcNow.Ticks),
+                    tx.SortedSetAddAsync(clientKey, operationSuffix, DateTime.UtcNow.Ticks)
                 };
 
-                var setKeyTask = tx.StringSetAsync(operationKey, item.ToJson(), ttl);
+                var setKeyTask = tx.StringSetAsync(operationKey, item.ToJson());
                 tasks.Add(setKeyTask);
 
                 if (!await tx.ExecuteAsync())
@@ -225,7 +222,6 @@ namespace Lykke.Service.Limitations.Services
         {
             var clientData = new List<T>();
             bool notCached = false;
-            var monthAgo = DateTime.UtcNow.Date.AddMonths(-1);
 
             List<T> oldAllData = null;
 
@@ -263,9 +259,7 @@ namespace Lykke.Service.Limitations.Services
                     if (oldAllData == null || oldAllData.Count == 0)
                         continue;
 
-                    var notExpired = oldAllData.Where(i => i.DateTime > monthAgo);
-
-                    foreach (var item in notExpired)
+                    foreach (var item in oldAllData)
                     {
                         if (!item.OperationType.HasValue)
                             item.OperationType = _opTypeResolver(item);
@@ -279,13 +273,11 @@ namespace Lykke.Service.Limitations.Services
                 }
                 else
                 {
-                    var notExpired = clientState.Where(i => i.DateTime > monthAgo);
+                    if (!clientState.Any())
+                        continue;
 
-                    if (notExpired.Any())
-                    {
-                        clientData.AddRange(clientState.Where(i => i.DateTime > monthAgo));
-                        notCached = true;
-                    }
+                    clientData.AddRange(clientState);
+                    notCached = true;
                 }
             }
 
@@ -294,20 +286,14 @@ namespace Lykke.Service.Limitations.Services
 
         private async Task<RedisKey[]> GetClientOperationsKeysAsync(string clientId)
         {
-            var actualPeriodStartScore = DateTime.UtcNow.AddMonths(-1).Ticks;
             string clientKey = string.Format(ClientSetKeyPattern, _instanceName, _cacheType, clientId);
             var tx = _db.CreateTransaction();
             tx.AddCondition(Condition.KeyExists(clientKey));
-            var tasks = new List<Task>
-            {
-                tx.SortedSetRemoveRangeByScoreAsync(clientKey, 0, actualPeriodStartScore)
-            };
 
-            var getKeysTask = tx.SortedSetRangeByScoreAsync(clientKey, actualPeriodStartScore, double.MaxValue);
-            tasks.Add(getKeysTask);
+            var getKeysTask = tx.SortedSetRangeByScoreAsync(clientKey, 0, double.MaxValue);
 
             if (await tx.ExecuteAsync())
-                await Task.WhenAll(tasks);
+                await getKeysTask;
             else
                 return new RedisKey[0];
 
