@@ -65,8 +65,10 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                     Register.BoundedContext("limit-operations-collector")
                         .ListeningEvents(typeof(TransferCreatedEvent)).From("me-cy").On("events")
                         .ListeningEvents(typeof(TransferCreatedEvent)).From("me-vu").On("events")
+                        .ListeningEvents(typeof(TransferCreatedEvent)).From("me").On("events")
                         .WithProjection(typeof(FiatTransfersProjection), "me-cy")
-                        .WithProjection(typeof(FiatTransfersProjection), "me-vu"));
+                        .WithProjection(typeof(FiatTransfersProjection), "me-vu")
+                        .WithProjection(typeof(FiatTransfersProjection), "me"));
 
                 engine.StartPublishers();
                 return engine;
