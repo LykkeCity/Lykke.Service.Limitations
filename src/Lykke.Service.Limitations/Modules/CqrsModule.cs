@@ -44,6 +44,12 @@ namespace Lykke.Service.Limitations.Modules
 
             builder.Register(ctx =>
             {
+                var msgPackResolver = new RabbitMqConventionEndpointResolver(
+                    "RabbitMq",
+                    SerializationFormat.MessagePack,
+                    environment: "lykke",
+                    exclusiveQueuePostfix: "k8s");
+
                 var engine = new CqrsEngine(
                     ctx.Resolve<ILogFactory>(),
                     ctx.Resolve<IDependencyResolver>(),
@@ -53,12 +59,7 @@ namespace Lykke.Service.Limitations.Modules
 
                     Register.EventInterceptors(new DefaultEventLoggingInterceptor(ctx.Resolve<ILogFactory>())),
 
-                    Register.DefaultEndpointResolver(
-                        new RabbitMqConventionEndpointResolver(
-                            "RabbitMq",
-                            SerializationFormat.MessagePack,
-                            environment: "lykke",
-                            exclusiveQueuePostfix: "k8s")),
+                    Register.DefaultEndpointResolver(msgPackResolver),
 
                     Register.BoundedContext(LimitationsBoundedContext.Name)
                         .ListeningEvents(typeof(AssetCreatedEvent), typeof(AssetUpdatedEvent))
@@ -69,6 +70,7 @@ namespace Lykke.Service.Limitations.Modules
                             typeof(ClientDepositEvent),
                             typeof(ClientWithdrawEvent)
                         ).With("events")
+                        .WithEndpointResolver(msgPackResolver)
                     );
 
                 engine.StartPublishers();

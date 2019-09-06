@@ -40,14 +40,20 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>().SingleInstance();
             builder.RegisterType<FiatTransfersProjection>().PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
 
-            var msgPackResolver = new RabbitMqConventionEndpointResolver(
-                "RabbitMq",
-                SerializationFormat.MessagePack,
-                environment: "lykke",
-                exclusiveQueuePostfix: "k8s");
-
             builder.Register(ctx =>
             {
+                var msgPackResolver = new RabbitMqConventionEndpointResolver(
+                    "RabbitMq",
+                    SerializationFormat.MessagePack,
+                    environment: "lykke",
+                    exclusiveQueuePostfix: "k8s");
+
+                var protobufResolver = new RabbitMqConventionEndpointResolver(
+                    "RabbitMq",
+                    SerializationFormat.ProtoBuf,
+                    environment: "lykke",
+                    exclusiveQueuePostfix: "k8s");
+
                 var engine = new CqrsEngine(ctx.Resolve<ILogFactory>(),
                     ctx.Resolve<IDependencyResolver>(),
                     ctx.Resolve<IMessagingEngine>(),
@@ -56,12 +62,14 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
 
                     Register.EventInterceptors(new DefaultEventLoggingInterceptor(ctx.Resolve<ILogFactory>())),
 
-                    Register.DefaultEndpointResolver(
-                        new RabbitMqConventionEndpointResolver(
-                            "RabbitMq",
-                            SerializationFormat.ProtoBuf,
-                            environment: "lykke",
-                            exclusiveQueuePostfix: "k8s")),
+                    Register.DefaultEndpointResolver(protobufResolver),
+
+                    Register.BoundedContext(LimitationsBoundedContext.Name)
+                        .PublishingEvents(
+                            typeof(ClientDepositEvent),
+                            typeof(ClientWithdrawEvent)
+                        ).With("events")
+                        .WithEndpointResolver(msgPackResolver),
 
                     Register.BoundedContext(LimitationsBoundedContext.Name)
                         .PublishingEvents(
