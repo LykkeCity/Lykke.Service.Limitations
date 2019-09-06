@@ -39,6 +39,13 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
 
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>().SingleInstance();
             builder.RegisterType<FiatTransfersProjection>().PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
+
+            var msgPackResolver = new RabbitMqConventionEndpointResolver(
+                "RabbitMq",
+                SerializationFormat.MessagePack,
+                environment: "lykke",
+                exclusiveQueuePostfix: "k8s");
+
             builder.Register(ctx =>
             {
                 var engine = new CqrsEngine(ctx.Resolve<ILogFactory>(),
@@ -60,7 +67,8 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                         .PublishingEvents(
                             typeof(ClientDepositEvent),
                             typeof(ClientWithdrawEvent)
-                        ).With("events"),
+                        ).With("events")
+                        .WithEndpointResolver(msgPackResolver),
 
                     Register.BoundedContext("limit-operations-collector")
                         .ListeningEvents(typeof(TransferCreatedEvent)).From("me-cy").On("events")
