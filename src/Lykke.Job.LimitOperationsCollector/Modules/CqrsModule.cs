@@ -71,13 +71,6 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                         ).With("events")
                         .WithEndpointResolver(msgPackResolver),
 
-                    Register.BoundedContext(LimitationsBoundedContext.Name)
-                        .PublishingEvents(
-                            typeof(ClientDepositEvent),
-                            typeof(ClientWithdrawEvent)
-                        ).With("events")
-                        .WithEndpointResolver(msgPackResolver),
-
                     Register.BoundedContext("limit-operations-collector")
                         .ListeningEvents(typeof(TransferCreatedEvent)).From("me-cy").On("events")
                         .ListeningEvents(typeof(TransferCreatedEvent)).From("me-vu").On("events")
