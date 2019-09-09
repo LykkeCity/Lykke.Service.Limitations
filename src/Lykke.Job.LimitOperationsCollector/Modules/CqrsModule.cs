@@ -38,6 +38,8 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
                 new RabbitMqTransportFactory(ctx.Resolve<ILogFactory>()))).As<IMessagingEngine>();
 
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>().SingleInstance();
+            MessagePackSerializerFactory.Defaults.FormatterResolver = MessagePack.Resolvers.ContractlessStandardResolver.Instance;
+
             builder.RegisterType<FiatTransfersProjection>().PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
 
             builder.Register(ctx =>

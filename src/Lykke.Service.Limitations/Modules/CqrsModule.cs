@@ -33,6 +33,8 @@ namespace Lykke.Service.Limitations.Modules
             var rabbitMqSettings = new RabbitMQ.Client.ConnectionFactory { Uri = _appSettings.CurrentValue.SagasRabbitMq.RabbitConnectionString };
 
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>().SingleInstance();
+            MessagePackSerializerFactory.Defaults.FormatterResolver = MessagePack.Resolvers.ContractlessStandardResolver.Instance;
+
             builder.RegisterType<AssetsProjection>();
 
             builder.Register(ctx =>  new MessagingEngine(ctx.Resolve<ILogFactory>(),
