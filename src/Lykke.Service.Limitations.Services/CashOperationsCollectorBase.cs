@@ -41,7 +41,7 @@ namespace Lykke.Service.Limitations.Services
             string originAsset = item.Asset;
             double originVolume = item.Volume;
 
-            var converted = await _currencyConverter.ConvertAsync(item.Asset, _currencyConverter.DefaultAsset, item.Volume);
+            var converted = await _currencyConverter.ConvertAsync(item.Asset, _currencyConverter.DefaultAsset, item.Volume, true);
 
             item.Asset = converted.Item1;
             item.Volume = converted.Item2;

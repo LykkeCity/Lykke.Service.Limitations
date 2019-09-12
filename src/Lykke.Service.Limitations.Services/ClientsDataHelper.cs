@@ -88,8 +88,6 @@ namespace Lykke.Service.Limitations.Services
                 if (!setKeyTask.Result)
                     throw new InvalidOperationException($"Error during operations update for client {item.ClientId} with operation type {item.OperationType}");
 
-                var monthAgo = DateTime.UtcNow.AddMonths(-1);
-
                 switch (item.OperationType)
                 {
                     case CurrencyOperationType.CardCashIn:
@@ -98,10 +96,9 @@ namespace Lykke.Service.Limitations.Services
                         _cqrsEngine.PublishEvent(new ClientDepositEvent
                         {
                             ClientId = item.ClientId,
+                            OperationId = item.Id,
                             Asset = item.Asset,
-                            Amount = item.Volume,
-                            TotalMonth = clientData.Where(x => x.DateTime >= monthAgo).Sum(x => x.Volume),
-                            Total = clientData.Sum(x => x.Volume)
+                            Amount = item.Volume
                         }, LimitationsBoundedContext.Name);
                         break;
                     case CurrencyOperationType.CardCashOut:
@@ -110,9 +107,12 @@ namespace Lykke.Service.Limitations.Services
                         _cqrsEngine.PublishEvent(new ClientWithdrawEvent
                         {
                             ClientId = item.ClientId,
+                            OperationId = item.Id,
                             Asset = item.Asset,
-                            Amount = item.Volume,
-                            TotalMonth = clientData.Where(x => x.DateTime >= monthAgo).Sum(x => x.Volume),
+                            Amount = item.Volume
+                        }, LimitationsBoundedContext.Name);
+                        break;
+                }
                             Total = clientData.Sum(x => x.Volume)
                         }, LimitationsBoundedContext.Name);
                         break;
