@@ -38,13 +38,10 @@ namespace Lykke.Service.Limitations.Services
 
         public virtual async Task AddDataItemAsync(T item)
         {
-            string originAsset = item.Asset;
-            double originVolume = item.Volume;
-
             var converted = await _currencyConverter.ConvertAsync(item.Asset, _currencyConverter.DefaultAsset, item.Volume, true);
 
-            item.Asset = converted.Item1;
-            item.Volume = converted.Item2;
+            item.BaseAsset = converted.Item1;
+            item.BaseVolume = converted.Item2;
             item.OperationType = GetOperationType(item);
 
             bool isNewItem = await _data.AddDataItemAsync(item);
@@ -52,8 +49,8 @@ namespace Lykke.Service.Limitations.Services
             if (isNewItem)
                 await _antiFraudCollector.RemoveOperationAsync(
                     item.ClientId,
-                    originAsset,
-                    originVolume,
+                    item.Asset,
+                    item.Volume,
                     item.OperationType.Value);
         }
 

@@ -98,7 +98,11 @@ namespace Lykke.Service.Limitations.Services
                             ClientId = item.ClientId,
                             OperationId = item.Id,
                             Asset = item.Asset,
-                            Amount = item.Volume
+                            Amount = item.Volume,
+                            BaseAsset = item.BaseAsset,
+                            BaseVolume = item.BaseVolume,
+                            OperationType = item.OperationType.ToString(),
+                            Date = item.DateTime
                         }, LimitationsBoundedContext.Name);
                         break;
                     case CurrencyOperationType.CardCashOut:
@@ -109,7 +113,11 @@ namespace Lykke.Service.Limitations.Services
                             ClientId = item.ClientId,
                             OperationId = item.Id,
                             Asset = item.Asset,
-                            Amount = item.Volume
+                            Amount = item.Volume,
+                            BaseAsset = item.BaseAsset,
+                            BaseVolume = item.BaseVolume,
+                            OperationType = item.OperationType.ToString(),
+                            Date = item.DateTime
                         }, LimitationsBoundedContext.Name);
                         break;
                 }
