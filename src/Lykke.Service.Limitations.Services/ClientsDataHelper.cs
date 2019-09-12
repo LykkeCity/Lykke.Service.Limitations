@@ -52,6 +52,11 @@ namespace Lykke.Service.Limitations.Services
 
         internal async Task<bool> AddDataItemAsync(T item)
         {
+            var now = DateTime.UtcNow;
+            var ttl = item.DateTime.AddMonths(1).Subtract(now);
+            if (ttl.Ticks <= 0)
+                return true;
+
             if (!item.OperationType.HasValue)
                 item.OperationType = _opTypeResolver(item);
 
@@ -77,7 +82,7 @@ namespace Lykke.Service.Limitations.Services
                     _stateRepository.SaveClientStateAsync($"{item.ClientId}-{item.OperationType.Value}", clientData),
                 };
 
-                var setKeyTask = tx.StringSetAsync(operationKey, item.ToJson());
+                var setKeyTask = tx.StringSetAsync(operationKey, item.ToJson(), ttl);
                 tasks.Add(setKeyTask);
 
                 if (!await tx.ExecuteAsync())
@@ -191,8 +196,13 @@ namespace Lykke.Service.Limitations.Services
             if (clientState == null)
                 return;
 
+            var now = DateTime.UtcNow;
             foreach (var item in clientState)
             {
+                var ttl = item.DateTime.AddMonths(1).Subtract(now);
+                if (ttl.Ticks <= 0)
+                    continue;
+
                 if (!item.OperationType.HasValue)
                     item.OperationType = _opTypeResolver(item);
 
@@ -209,7 +219,7 @@ namespace Lykke.Service.Limitations.Services
                     tx.SortedSetAddAsync(clientKey, operationSuffix, DateTime.UtcNow.Ticks)
                 };
 
-                var setKeyTask = tx.StringSetAsync(operationKey, item.ToJson());
+                var setKeyTask = tx.StringSetAsync(operationKey, item.ToJson(), ttl);
                 tasks.Add(setKeyTask);
 
                 if (!await tx.ExecuteAsync())
@@ -226,6 +236,7 @@ namespace Lykke.Service.Limitations.Services
         {
             var clientData = new List<T>();
             bool notCached = false;
+            var monthAgo = DateTime.UtcNow.Date.AddMonths(-1);
 
             List<T> oldAllData = null;
 
@@ -263,7 +274,8 @@ namespace Lykke.Service.Limitations.Services
                     if (oldAllData == null || oldAllData.Count == 0)
                         continue;
 
-                    foreach (var item in oldAllData)
+                    var notExpired = oldAllData.Where(i => i.DateTime > monthAgo);
+                    foreach (var item in notExpired)
                     {
                         if (!item.OperationType.HasValue)
                             item.OperationType = _opTypeResolver(item);
@@ -277,11 +289,12 @@ namespace Lykke.Service.Limitations.Services
                 }
                 else
                 {
-                    if (!clientState.Any())
-                        continue;
-
-                    clientData.AddRange(clientState);
-                    notCached = true;
+                    var notExpired = clientState.Where(i => i.DateTime > monthAgo);
+                    if (notExpired.Any())
+                    {
+                        clientData.AddRange(clientState.Where(i => i.DateTime > monthAgo));
+                        notCached = true;
+                    }
                 }
             }
 
@@ -290,14 +303,18 @@ namespace Lykke.Service.Limitations.Services
 
         private async Task<RedisKey[]> GetClientOperationsKeysAsync(string clientId)
         {
+            var actualPeriodStartScore = DateTime.UtcNow.AddMonths(-1).Ticks;
             string clientKey = string.Format(ClientSetKeyPattern, _instanceName, _cacheType, clientId);
             var tx = _db.CreateTransaction();
             tx.AddCondition(Condition.KeyExists(clientKey));
-
-            var getKeysTask = tx.SortedSetRangeByScoreAsync(clientKey, 0, double.MaxValue);
-
+            var tasks = new List<Task>
+            {
+                tx.SortedSetRemoveRangeByScoreAsync(clientKey, 0, actualPeriodStartScore)
+            };
+            var getKeysTask = tx.SortedSetRangeByScoreAsync(clientKey, actualPeriodStartScore, double.MaxValue);
+            tasks.Add(getKeysTask);
             if (await tx.ExecuteAsync())
-                await getKeysTask;
+                await Task.WhenAll(tasks);
             else
                 return new RedisKey[0];
 
