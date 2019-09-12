@@ -23,7 +23,7 @@ namespace Lykke.Service.Limitations.Client.Events
         /// Current withdraw amount
         /// </summary>
         public double Amount { get; set; }
-s        /// <summary>
+        /// <summary>
         /// Asset for <see cref="BaseVolume"/>
         /// </summary>
         public string BaseAsset { get; set; }
