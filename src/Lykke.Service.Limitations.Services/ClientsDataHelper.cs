@@ -113,10 +113,6 @@ namespace Lykke.Service.Limitations.Services
                         }, LimitationsBoundedContext.Name);
                         break;
                 }
-                            Total = clientData.Sum(x => x.Volume)
-                        }, LimitationsBoundedContext.Name);
-                        break;
-                }
             }
             finally
             {
