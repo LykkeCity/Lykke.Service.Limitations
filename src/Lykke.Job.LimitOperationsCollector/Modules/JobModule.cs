@@ -46,68 +46,62 @@ namespace Lykke.Job.LimitOperationsCollector.Modules
 
             builder.RegisterType<CashOperationsStateRepository>()
                 .As<ICashOperationsRepository>()
-                .SingleInstance();            
+                .SingleInstance();
 
             builder.RegisterType<CashTransfersStateRepository>()
-                .As<ICashTransfersRepository>()                
+                .As<ICashTransfersRepository>()
                 .SingleInstance();
-            
+
             builder.Register(ctx => AzureTableStorage<PaymentTransactionEntity>.Create(
                 _settings.ConnectionString(s => s.LimitOperationsCollectorJob.PaymentTransactionsConnectionString),
                 "PaymentTransactions",
                 ctx.Resolve<ILogFactory>())).SingleInstance();
 
             builder.RegisterType<PaymentTransactionsRepository>()
-                .As<IPaymentTransactionsRepository>()                
+                .As<IPaymentTransactionsRepository>()
                 .SingleInstance();
         }
 
         private void ReagisterServices(ContainerBuilder builder)
         {
-            builder.RegisterType<HealthService>()
-                .As<IHealthService>()
-                .SingleInstance();
-
             builder.RegisterType<StartupManager>()
                 .As<IStartupManager>()
                 .SingleInstance();
 
-            builder.RegisterType<ShutdownManager>()
-                .As<IShutdownManager>()
-                .AutoActivate()
-                .SingleInstance();
-
             builder.RegisterType<CurrencyConverter>()
                 .As<ICurrencyConverter>()
-                .WithParameter("convertibleCurrencies", _settings.CurrentValue.LimitOperationsCollectorJob.ConvertibleAssets)
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.LimitOperationsCollectorJob.ConvertibleAssets))
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.LimitOperationsCollectorJob.BaseAsset))
                 .SingleInstance();
 
             builder.RegisterType<AntiFraudCollector>()
                 .As<IAntiFraudCollector>()
                 .SingleInstance()
-                .WithParameter("redisInstanceName", _settings.CurrentValue.LimitOperationsCollectorJob.RedisInstanceName);
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.LimitOperationsCollectorJob.RedisInstanceName));
 
             builder.RegisterType<CashOperationsCollector>()
                 .As<ICashOperationsCollector>()
                 .SingleInstance()
-                .WithParameter("redisInstanceName", _settings.CurrentValue.LimitOperationsCollectorJob.RedisInstanceName);
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.LimitOperationsCollectorJob.RedisInstanceName));
 
             builder.RegisterType<CashTransfersCollector>()
                 .As<ICashTransfersCollector>()
                 .SingleInstance()
-                .WithParameter("redisInstanceName", _settings.CurrentValue.LimitOperationsCollectorJob.RedisInstanceName);
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.LimitOperationsCollectorJob.RedisInstanceName));
         }
 
         private void RegisterRabbitMqSubscribers(ContainerBuilder builder)
         {
             builder.RegisterType<CashOperationSubscriber>()
-                .As<IStartStop>()
+                .As<IStartable>()
+                .AutoActivate()
                 .SingleInstance()
                 .WithParameter("connectionString", _settings.CurrentValue.LimitOperationsCollectorJob.Rabbit.ConnectionString)
                 .WithParameter("exchangeName", _settings.CurrentValue.LimitOperationsCollectorJob.Rabbit.CashOperationsExchangeName);
 
             builder.RegisterType<CashTransferOperationSubscriber>()
-                .As<IStartStop>()
+                .As<IStartable>()
+                .AutoActivate()
                 .SingleInstance()
                 .WithParameter("connectionString", _settings.CurrentValue.LimitOperationsCollectorJob.Rabbit.ConnectionString)
                 .WithParameter("exchangeName", _settings.CurrentValue.LimitOperationsCollectorJob.Rabbit.CashTransfersExchangeName);

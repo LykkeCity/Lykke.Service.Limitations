@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Autofac;
 using Common.Log;
 using Lykke.Common.Log;
 using Lykke.MatchingEngine.Connector.Models.Events;
@@ -12,11 +13,12 @@ using Lykke.Service.Limitations.Core.Repositories;
 
 namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
 {
-    public class CashTransferOperationSubscriber : IStartStop
+    public class CashTransferOperationSubscriber : IStartable, IDisposable
     {
         private readonly IPaymentTransactionsRepository _paymentTransactionsRepository;
         private readonly ICashOperationsCollector _cashOperationsCollector;
         private readonly ICashTransfersCollector _cashTransfersCollector;
+        private readonly ILogFactory _logFactory;
         private readonly ILog _log;
         private readonly string _connectionString;
         private readonly string _exchangeName;
@@ -26,14 +28,15 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
             IPaymentTransactionsRepository paymentTransactionsRepository,
             ICashOperationsCollector cashOperationsCollector,
             ICashTransfersCollector cashTransfersCollector,
-            ILogFactory log,
+            ILogFactory logFactory,
             string connectionString,
             string exchangeName)
         {
             _paymentTransactionsRepository = paymentTransactionsRepository;
             _cashOperationsCollector = cashOperationsCollector;
             _cashTransfersCollector = cashTransfersCollector;
-            _log = log.CreateLog(this);
+            _logFactory = logFactory;
+            _log = logFactory.CreateLog(this);
             _connectionString = connectionString;
             _exchangeName = exchangeName;
         }
@@ -45,15 +48,14 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
                 .MakeDurable()
                 .UseRoutingKey(((int)MessageType.CashTransfer).ToString());
 
-            _subscriber = new RabbitMqSubscriber<CashTransferEvent>(
+            _subscriber = new RabbitMqSubscriber<CashTransferEvent>(_logFactory,
                     settings,
-                    new ResilientErrorHandlingStrategy(_log, settings,
+                    new ResilientErrorHandlingStrategy(_logFactory, settings,
                         retryTimeout: TimeSpan.FromSeconds(10),
-                        next: new DeadQueueErrorHandlingStrategy(_log, settings)))
+                        next: new DeadQueueErrorHandlingStrategy(_logFactory, settings)))
                 .SetMessageDeserializer(new ProtobufMessageDeserializer<CashTransferEvent>())
                 .Subscribe(ProcessMessageAsync)
                 .CreateDefaultBinding()
-                .SetLogger(_log)
                 .Start();
         }
 
@@ -63,6 +65,7 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
             try
             {
                 IPaymentTransaction paymentTransaction = null;
+
                 for (int i = 0; i < 3; i++)
                 {
                     paymentTransaction = await _paymentTransactionsRepository.GetByIdForClientAsync(id, item.CashTransfer.ToWalletId);
@@ -72,14 +75,16 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
                 }
 
                 double volume = double.Parse(item.CashTransfer.Volume);
+
                 if (item.CashTransfer.Fees != null)
+                {
                     foreach (var fee in item.CashTransfer.Fees)
                     {
                         if (string.IsNullOrWhiteSpace(fee.Transfer?.Volume))
                             continue;
 
                         volume -= double.Parse(fee.Transfer.Volume);
-                    }
+                    }}
 
                 if (paymentTransaction == null || paymentTransaction.PaymentSystem != CashInPaymentSystem.Swift)
                 {
@@ -91,6 +96,7 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
                         Volume = volume,
                         DateTime = item.Header.Timestamp,
                     };
+
                     await _cashOperationsCollector.AddDataItemAsync(cashOp);
                 }
                 else
@@ -109,16 +115,11 @@ namespace Lykke.Job.LimitOperationsCollector.RabbitSubscribers
             }
             catch (Exception exc)
             {
-                _log.WriteError(nameof(ProcessMessageAsync), item, exc);
+                _log.Error(exc, context: item);
             }
         }
 
         public void Dispose()
-        {
-            _subscriber?.Dispose();
-        }
-
-        public void Stop()
         {
             _subscriber?.Stop();
         }

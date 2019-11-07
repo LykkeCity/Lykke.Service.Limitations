@@ -1,5 +1,4 @@
 ﻿using AzureStorage;
-using Common.Log;
 using Lykke.Common.Log;
 using Lykke.Service.Limitations.Core.Domain;
 using Lykke.Service.Limitations.Core.Repositories;

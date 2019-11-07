@@ -1,18 +1,16 @@
-﻿using System.Threading.Tasks;
-using Lykke.Service.Limitations.Client.Models;
+﻿using JetBrains.Annotations;
+using Lykke.Service.Limitations.Client.Api;
 
 namespace Lykke.Service.Limitations.Client
 {
+    [PublicAPI]
     public interface ILimitationsServiceClient
     {
-        Task<LimitationCheckResponse> CheckAsync(
-            string clientId,
-            string asset,
-            double amount,
-            CurrencyOperationType operationType);
+        /// <summary>
+        /// Api for limitations
+        /// </summary>
+        ILimitationsApi Limitations { get; }
 
-        Task<ClientDataResponse> GetClientDataAsync(string clientId, LimitationPeriod period);
-
-        Task RemoveClientOperationAsync(string clientId, string operationId);
+        ISwiftLimitationsApi SwiftLimitations { get; }
     }
 }
