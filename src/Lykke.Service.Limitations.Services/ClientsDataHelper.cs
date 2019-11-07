@@ -107,7 +107,7 @@ namespace Lykke.Service.Limitations.Services
                             BaseAsset = item.BaseAsset,
                             BaseVolume = item.BaseVolume,
                             OperationType = item.OperationType.ToString(),
-                            Date = item.DateTime
+                            Timestamp = item.DateTime
                         }, LimitationsBoundedContext.Name);
                         break;
                     case CurrencyOperationType.CardCashOut:
@@ -122,7 +122,7 @@ namespace Lykke.Service.Limitations.Services
                             BaseAsset = item.BaseAsset,
                             BaseVolume = item.BaseVolume,
                             OperationType = item.OperationType.ToString(),
-                            Date = item.DateTime
+                            Timestamp = item.DateTime
                         }, LimitationsBoundedContext.Name);
                         break;
                 }
