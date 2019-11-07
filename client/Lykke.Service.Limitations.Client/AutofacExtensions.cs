@@ -22,7 +22,6 @@ namespace Lykke.Service.Limitations.Client
             builder.RegisterInstance(
                     new LimitationsServiceClient(HttpClientGenerator.HttpClientGenerator.BuildForUrl(serviceUrl)
                         .WithAdditionalCallsWrapper(new ExceptionHandlerCallsWrapper())
-                        .WithoutRetries()
                         .Create())
                 )
                 .As<ILimitationsServiceClient>()

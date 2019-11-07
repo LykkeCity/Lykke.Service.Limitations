@@ -38,6 +38,6 @@ namespace Lykke.Service.Limitations.Client.Events
         /// <summary>
         /// Date time of the operation
         /// </summary>
-        public DateTime Date { get; set; }
+        public DateTime Timestamp { get; set; }
     }
 }
