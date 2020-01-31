@@ -9,7 +9,7 @@
     <PackageReference Include="Lykke.Cqrs" Version="9.0.0" />
     <PackageReference Include="Lykke.Sdk" Version="5.14.0" />
     <PackageReference Include="Lykke.Service.RateCalculator.Client" Version="1.4.0" />
-    <PackageReference Include="MessagePack" Version="1.7.3.7" />
+    <PackageReference Include="MessagePack" Version="1.9.3" />
     <PackageReference Include="protobuf-net" Version="2.4.0" />
     <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
   </ItemGroup>
